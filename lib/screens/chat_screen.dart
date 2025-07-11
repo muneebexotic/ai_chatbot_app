@@ -126,53 +126,76 @@ class _ChatScreenState extends State<ChatScreen> {
         appBar: AppBar(
           title: const Text('AI ChatBot'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
+  IconButton(
+    icon: const Icon(Icons.settings),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      );
+    },
+  ),
+  IconButton(
+    icon: const Icon(Icons.brightness_6),
+    onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+  ),
+  IconButton(
+    icon: const Icon(Icons.delete),
+    onPressed: () async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Chat'),
+          content: const Text('Are you sure you want to delete this chat?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.pop(context, false),
             ),
-            IconButton(
-              icon: const Icon(Icons.brightness_6),
-              onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Chat'),
-                    content: const Text(
-                      'Are you sure you want to delete this chat?',
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () => Navigator.pop(context, false),
-                      ),
-                      TextButton(
-                        child: const Text('Delete'),
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  await context.read<ChatProvider>().deleteChat();
-                  Fluttertoast.showToast(msg: 'Chat deleted');
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => context.read<AuthProvider>().logout(),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () => Navigator.pop(context, true),
             ),
           ],
+        ),
+      );
+
+      if (confirmed == true) {
+        await context.read<ChatProvider>().deleteChat();
+        Fluttertoast.showToast(msg: 'Chat deleted');
+      }
+    },
+  ),
+  IconButton(
+    icon: const Icon(Icons.logout),
+    onPressed: () async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            TextButton(
+              child: const Text('Logout'),
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        await context.read<AuthProvider>().logout();
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    },
+  ),
+],
+
         ),
 
         body: Column(
