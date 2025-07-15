@@ -122,6 +122,15 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatProvider = Provider.of<ChatProvider>(context);
     final convoProvider = Provider.of<ConversationsProvider>(context);
 
+    // Get current conversation title safely
+    final currentTitle = convoProvider.conversations
+        .firstWhere(
+          (c) => c.id == chatProvider.conversationId,
+          orElse: () =>
+              ConversationSummary(id: '', title: 'New Chat', createdAt: ''),
+        )
+        .title;
+
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
@@ -211,80 +220,90 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         appBar: AppBar(
-          title: const Text('AI ChatBot'),
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+          centerTitle: true,
+          title: Text(
+            currentTitle,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
+          ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.brightness_6),
-              onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Chat'),
-                    content: const Text(
-                      'Are you sure you want to delete this chat?',
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () => Navigator.pop(context, false),
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                switch (value) {
+                  case 'clear':
+                    chatProvider.deleteChat();
+                    break;
+                  case 'rename':
+                    final convo = convoProvider.conversations.firstWhere(
+                      (c) => c.id == chatProvider.conversationId,
+                      orElse: () =>
+                          ConversationSummary(id: '', title: '', createdAt: ''),
+                    );
+                    final newTitle = await _showRenameDialog(
+                      context,
+                      convo.title,
+                    );
+                    if (newTitle != null && newTitle.trim().isNotEmpty) {
+                      await convoProvider.renameConversation(
+                        convo.id,
+                        newTitle.trim(),
+                      );
+                    }
+                    break;
+                  case 'delete':
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text('Delete Chat'),
+                        content: const Text(
+                          'Are you sure you want to delete this chat?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
                       ),
-                      TextButton(
-                        child: const Text('Delete'),
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  await context.read<ChatProvider>().deleteConversation();
-                  await context
-                      .read<ConversationsProvider>()
-                      .loadConversations();
-                  Fluttertoast.showToast(msg: 'Conversation deleted');
+                    );
+                    if (confirmed == true) {
+                      await chatProvider.deleteConversation();
+                      await convoProvider.loadConversations();
+                    }
+                    break;
+                  case 'settings':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                    break;
                 }
               },
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to log out?'),
-                    actions: [
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () => Navigator.pop(context, false),
-                      ),
-                      TextButton(
-                        child: const Text('Logout'),
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  await context.read<AuthProvider>().logout();
-                  if (!mounted) return;
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
-              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'clear', child: Text('Clear Chat')),
+                const PopupMenuItem(
+                  value: 'rename',
+                  child: Text('Rename Conversation'),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete Conversation'),
+                ),
+                const PopupMenuItem(value: 'settings', child: Text('Settings')),
+              ],
             ),
           ],
         ),
@@ -301,65 +320,78 @@ class _ChatScreenState extends State<ChatScreen> {
                     'hh:mm a',
                   ).format(msg.timestamp);
 
-                  return Align(
-                    alignment: isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isUser
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.grey[800],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            msg.text,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 8,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.black : Color(0xFF232627),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: isUser
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                timeString,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 10,
+                              const CircleAvatar(
+                                radius: 16,
+                                backgroundImage: AssetImage(
+                                  'assets/user.png',
+                                ), // or network image
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  msg.text,
+                                  style: const TextStyle(
+                                    fontFamily: 'Urbanist',
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
-                              if (!isUser) ...[
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.volume_up,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => _speak(msg.text),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.copy,
-                                    size: 18,
-                                    color: Colors.white,
+                                onPressed: () {
+                                  // edit logic (to be implemented)
+                                },
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.smart_toy, size: 20),
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: const Icon(Icons.volume_up, size: 20),
+                                    onPressed: () => _speak(msg.text),
                                   ),
-                                  onPressed: () => _copyText(msg.text),
+                                  IconButton(
+                                    icon: const Icon(Icons.copy, size: 20),
+                                    onPressed: () => _copyText(msg.text),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                msg.text,
+                                style: const TextStyle(
+                                  fontFamily: 'Urbanist',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                  color: Color(0xFFA0A0A5),
                                 ),
-                              ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
                   );
                 },
               ),
@@ -373,9 +405,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: TextField(
                       controller: _controller,
                       focusNode: _focusNode,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Type your message...',
-                        border: OutlineInputBorder(),
+                        hintStyle: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onSubmitted: (_) => _handleSend(),
                     ),

@@ -78,6 +78,9 @@ flutter:
   assets:
     - assets/logo.png
     - assets/google_logo.png
+    - assets/images/bot_icon.png
+    - assets/images/user_avatar.png
+    - assets/png_icons/copy.png
 
 
    
@@ -96,8 +99,17 @@ flutter:
   fonts:
     - family: Poppins
       fonts:
-        - asset: assets/fonts/Poppins-Medium.ttf
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
           weight: 500
+
+      
+
+    - family: Urbanist
+      fonts: 
+      - asset: assets/fonts/Urbanist/Urbanist-Medium.ttf
+        weight: 500
+      - asset: assets/fonts/Urbanist/Urbanist-Regular.ttf
+        weight: 400
 
 
   #
