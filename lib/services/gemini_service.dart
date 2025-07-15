@@ -8,9 +8,9 @@ class GeminiService {
   final String? _systemPrompt;
 
   GeminiService(BuildContext context)
-      : _systemPrompt = _getSystemPrompt(
-          Provider.of<SettingsProvider>(context, listen: false).persona,
-        ) {
+    : _systemPrompt = _getSystemPrompt(
+        Provider.of<SettingsProvider>(context, listen: false).persona,
+      ) {
     _model = GenerativeModel(
       model: 'gemini-2.5-flash',
       apiKey: 'AIzaSyAss8fSmad3Q60ynhwZPUnfKgsSuMZMtJY',
@@ -28,9 +28,72 @@ class GeminiService {
       }
 
       final response = await _model.generateContent(input);
-      return response.text?.trim();
+
+      // ✅ Proper extraction for Gemini 2.5
+      final candidates = response.candidates;
+      if (candidates.isNotEmpty &&
+          candidates[0].content.parts.isNotEmpty &&
+          candidates[0].content.parts.first is TextPart) {
+        final text = (candidates[0].content.parts.first as TextPart).text
+            .trim();
+        return text;
+      }
+
+      debugPrint('⚠️ Gemini returned no usable text');
+      return null;
     } catch (e) {
       debugPrint('❌ Gemini error: $e');
+      return null;
+    }
+  }
+
+  /// Generate a conversation title based on the conversation context
+  Future<String?> generateConversationTitle(List<String> conversationMessages) async {
+    try {
+      // Take first 6 messages (3 exchanges) for context
+      final contextMessages = conversationMessages.take(6).join('\n');
+      
+      final prompt = '''
+Based on this conversation, generate a short, descriptive title (maximum 40 characters). 
+The title should capture the main topic or question being discussed.
+Do not include quotes or special characters.
+
+Conversation:
+$contextMessages
+
+Generate a concise title:''';
+
+      final input = [Content.text(prompt)];
+      final response = await _model.generateContent(input);
+
+      final candidates = response.candidates;
+      if (candidates.isNotEmpty &&
+          candidates[0].content.parts.isNotEmpty &&
+          candidates[0].content.parts.first is TextPart) {
+        String title = (candidates[0].content.parts.first as TextPart).text
+            .trim()
+            .replaceAll('"', '')
+            .replaceAll("'", '')
+            .replaceAll('Title:', '')
+            .replaceAll('Generate a concise title:', '')
+            .trim();
+        
+        // Clean up common prefixes
+        if (title.startsWith('Title: ')) {
+          title = title.substring(7);
+        }
+        
+        // Ensure max length
+        if (title.length > 40) {
+          title = title.substring(0, 37) + '...';
+        }
+        
+        return title.isNotEmpty ? title : null;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ Title generation error: $e');
       return null;
     }
   }
