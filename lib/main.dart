@@ -1,3 +1,4 @@
+import 'package:ai_chatbot_app/providers/conversation_provider.dart';
 import 'package:ai_chatbot_app/providers/settings_provider.dart';
 import 'package:ai_chatbot_app/screens/forgot_password_screen.dart';
 import 'package:ai_chatbot_app/screens/signup_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/chat_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +31,18 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProxyProvider2<
-          AuthProvider,
-          SettingsProvider,
-          ChatProvider
-        >(
+
+        // 🔄 ConversationsProvider - depends on AuthProvider
+        ChangeNotifierProxyProvider<AuthProvider, ConversationsProvider>(
+          create: (_) => ConversationsProvider(userId: ''),
+          update: (_, auth, previous) {
+            final userId = auth.user?.uid ?? '';
+            return ConversationsProvider(userId: userId);
+          },
+        ),
+
+        // 💬 ChatProvider - depends on AuthProvider and SettingsProvider
+        ChangeNotifierProxyProvider2<AuthProvider, SettingsProvider, ChatProvider>(
           create: (context) => ChatProvider(userId: '', context: context),
           update: (context, auth, settings, previous) {
             final userId = auth.user?.uid ?? '';

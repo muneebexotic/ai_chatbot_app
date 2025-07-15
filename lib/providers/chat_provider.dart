@@ -1,6 +1,4 @@
-import 'package:ai_chatbot_app/providers/settings_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
 import '../services/firestore_service.dart';
 import '../services/gemini_service.dart';
@@ -12,11 +10,11 @@ class ChatProvider with ChangeNotifier {
   final BuildContext context;
   late final GeminiService _geminiService;
 
+  String? _conversationId;
+  String? get conversationId => _conversationId;
+
   ChatProvider({required this.userId, required this.context}) {
     _geminiService = GeminiService(context);
-    if (userId.isNotEmpty) {
-      _loadMessages();
-    }
   }
 
   List<ChatMessage> get messages => _messages;
@@ -28,7 +26,25 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> startNewConversation() async {
+    _conversationId = await _firestoreService.createConversation(userId);
+    _messages.clear();
+    notifyListeners();
+  }
+
+  Future<void> loadConversation(String conversationId) async {
+    _conversationId = conversationId;
+    _messages.clear();
+    final fetched = await _firestoreService.getMessages(userId, conversationId);
+    _messages.addAll(fetched);
+    notifyListeners();
+  }
+
   Future<void> sendMessage(String userInput) async {
+    if (_conversationId == null) {
+      await startNewConversation();
+    }
+
     final userMessage = ChatMessage(text: userInput, sender: 'user');
     _messages.add(userMessage);
     _setTyping(true);
@@ -36,7 +52,7 @@ class ChatProvider with ChangeNotifier {
     print('✅ User message added: ${userMessage.text}');
 
     try {
-      await _firestoreService.saveMessage(userId, userMessage);
+      await _firestoreService.saveMessage(userId, _conversationId!, userMessage);
 
       final aiReply = await _geminiService.sendMessage(userInput);
 
@@ -49,7 +65,7 @@ class ChatProvider with ChangeNotifier {
       notifyListeners();
       print('🤖 Gemini reply: ${botReply.text}');
 
-      await _firestoreService.saveMessage(userId, botReply);
+      await _firestoreService.saveMessage(userId, _conversationId!, botReply);
     } catch (e) {
       print('❌ Error in sendMessage: $e');
     } finally {
@@ -57,32 +73,21 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  Future<void> clearChat() async {
-    _messages.clear();
-    notifyListeners();
-  }
-
-  /// 🔥 Delete chat from Firestore + local memory
-  Future<void> deleteChat() async {
+  Future<void> deleteConversation() async {
+    if (_conversationId == null) return;
     try {
-      await _firestoreService.deleteAllMessages(userId);
+      await _firestoreService.deleteConversation(userId, _conversationId!);
       _messages.clear();
+      _conversationId = null;
       notifyListeners();
-      print('🗑️ All messages deleted for user $userId');
+      print('🗑️ Conversation deleted');
     } catch (e) {
-      print('❌ Error deleting messages: $e');
+      print('❌ Error deleting conversation: $e');
     }
   }
 
-  Future<void> _loadMessages() async {
-    if (_messages.isNotEmpty) return;
-    try {
-      final fetched = await _firestoreService.getMessages(userId);
-      _messages.addAll(fetched);
-      notifyListeners();
-      print('📦 Messages loaded: ${fetched.length}');
-    } catch (e) {
-      print('❌ Error loading messages: $e');
-    }
+  /// 👇 Wrapper for UI that expects `deleteChat()` method
+  Future<void> deleteChat() async {
+    await deleteConversation();
   }
 }

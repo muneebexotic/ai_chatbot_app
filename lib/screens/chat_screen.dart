@@ -6,6 +6,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../providers/chat_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/conversation_provider.dart';
 import '../models/chat_message.dart';
 import 'package:ai_chatbot_app/providers/themes_provider.dart';
 import '../widgets/loading_indicator.dart';
@@ -43,9 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       onError: (val) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone error or permission denied'),
-          ),
+          const SnackBar(content: Text('Microphone error or permission denied')),
         );
         setState(() => _isListening = false);
       },
@@ -83,28 +82,24 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleSend() {
     final message = _controller.text.trim();
     if (message.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a message')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a message')));
       return;
     }
 
     _controller.clear();
     _focusNode.unfocus();
 
-    Provider.of<ChatProvider>(context, listen: false).sendMessage(message).then(
-      (_) {
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      },
-    );
+    Provider.of<ChatProvider>(context, listen: false).sendMessage(message).then((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    });
   }
 
   @override
@@ -119,85 +114,131 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
+    final convoProvider = Provider.of<ConversationsProvider>(context);
 
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
+        drawer: Drawer(
+          child: Column(
+            children: [
+              const DrawerHeader(
+                child: Text('Conversations', style: TextStyle(fontSize: 20)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('New Chat'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await chatProvider.startNewConversation();
+                  await convoProvider.loadConversations();
+                },
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: convoProvider.conversations.length,
+                  itemBuilder: (context, index) {
+                    final convo = convoProvider.conversations[index];
+                    final isSelected = convo.id == chatProvider.conversationId;
+
+                    return ListTile(
+                      title: Text(convo.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      selected: isSelected,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await chatProvider.loadConversation(convo.id);
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, size: 18),
+                        onPressed: () async {
+                          await convoProvider.deleteConversation(convo.id);
+                          if (convo.id == chatProvider.conversationId) {
+                            await chatProvider.deleteConversation();
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
         appBar: AppBar(
           title: const Text('AI ChatBot'),
           actions: [
-  IconButton(
-    icon: const Icon(Icons.settings),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      );
-    },
-  ),
-  IconButton(
-    icon: const Icon(Icons.brightness_6),
-    onPressed: () => context.read<ThemeProvider>().toggleTheme(),
-  ),
-  IconButton(
-    icon: const Icon(Icons.delete),
-    onPressed: () async {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Delete Chat'),
-          content: const Text('Are you sure you want to delete this chat?'),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.pop(context, false),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
             ),
-            TextButton(
-              child: const Text('Delete'),
-              onPressed: () => Navigator.pop(context, true),
+            IconButton(
+              icon: const Icon(Icons.brightness_6),
+              onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Chat'),
+                    content: const Text('Are you sure you want to delete this chat?'),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: const Text('Delete'),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  await context.read<ChatProvider>().deleteConversation();
+                  await context.read<ConversationsProvider>().loadConversations();
+                  Fluttertoast.showToast(msg: 'Conversation deleted');
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to log out?'),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: const Text('Logout'),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  await context.read<AuthProvider>().logout();
+                  if (!mounted) return;
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
+              },
             ),
           ],
         ),
-      );
-
-      if (confirmed == true) {
-        await context.read<ChatProvider>().deleteChat();
-        Fluttertoast.showToast(msg: 'Chat deleted');
-      }
-    },
-  ),
-  IconButton(
-    icon: const Icon(Icons.logout),
-    onPressed: () async {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to log out?'),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            TextButton(
-              child: const Text('Logout'),
-              onPressed: () => Navigator.pop(context, true),
-            ),
-          ],
-        ),
-      );
-
-      if (confirmed == true) {
-        await context.read<AuthProvider>().logout();
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    },
-  ),
-],
-
-        ),
-
         body: Column(
           children: [
             Expanded(
@@ -207,19 +248,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemBuilder: (context, index) {
                   final msg = chatProvider.messages[index];
                   final isUser = msg.sender == 'user';
-                  final timeString = DateFormat(
-                    'hh:mm a',
-                  ).format(msg.timestamp);
+                  final timeString = DateFormat('hh:mm a').format(msg.timestamp);
 
                   return Align(
-                    alignment: isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isUser
@@ -231,10 +265,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            msg.text,
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                          Text(msg.text, style: const TextStyle(color: Colors.white)),
                           const SizedBox(height: 4),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -249,19 +280,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               if (!isUser) ...[
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.volume_up,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
+                                  icon: const Icon(Icons.volume_up, size: 18, color: Colors.white),
                                   onPressed: () => _speak(msg.text),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.copy,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
+                                  icon: const Icon(Icons.copy, size: 18, color: Colors.white),
                                   onPressed: () => _copyText(msg.text),
                                 ),
                               ],
