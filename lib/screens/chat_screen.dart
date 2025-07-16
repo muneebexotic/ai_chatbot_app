@@ -29,6 +29,90 @@ class _ChatScreenState extends State<ChatScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
 
+  // Chip data structure
+  final List<Map<String, dynamic>> _chipData = [
+    {
+      'label': 'Brainstorm',
+      'icon': Icons.lightbulb_outline,
+      'suggestions': [
+        'Help me brainstorm ideas for a new project',
+        'Generate creative solutions for problem-solving',
+        'What are some innovative approaches to marketing',
+        'Brainstorm unique business name ideas'
+      ]
+    },
+    {
+      'label': 'Create Image',
+      'icon': Icons.image_outlined,
+      'suggestions': [
+        'Generate a beautiful landscape image',
+        'Create an abstract art piece',
+        'Design a logo for my business',
+        'Make a cartoon character illustration'
+      ]
+    },
+    {
+      'label': 'Get Advice',
+      'icon': Icons.psychology_outlined,
+      'suggestions': [
+        'Give me advice on career development',
+        'How to improve my communication skills',
+        'Tips for maintaining work-life balance',
+        'Advice on building healthy relationships'
+      ]
+    },
+    {
+      'label': 'Make a Plan',
+      'icon': Icons.calendar_today_outlined,
+      'suggestions': [
+        'Create a 30-day fitness plan',
+        'Plan a weekend trip itinerary',
+        'Make a study schedule for exams',
+        'Design a meal prep plan for the week'
+      ]
+    },
+    {
+      'label': 'Surprise Me',
+      'icon': Icons.auto_awesome_outlined,
+      'suggestions': [
+        'Tell me an interesting random fact',
+        'Share a fun riddle or brain teaser',
+        'Recommend something new to try today',
+        'Give me a creative writing prompt'
+      ]
+    },
+    {
+      'label': 'Generate Images',
+      'icon': Icons.palette_outlined,
+      'suggestions': [
+        'Create a futuristic city skyline',
+        'Generate a cozy coffee shop interior',
+        'Design a minimalist poster',
+        'Make a fantasy creature illustration'
+      ]
+    },
+    {
+      'label': 'Help Me Write',
+      'icon': Icons.edit_outlined,
+      'suggestions': [
+        'Write a professional email template',
+        'Help me draft a resume summary',
+        'Create a compelling story opening',
+        'Write a persuasive product description'
+      ]
+    },
+    {
+      'label': 'Pamper Me',
+      'icon': Icons.spa_outlined,
+      'suggestions': [
+        'Suggest a relaxing evening routine',
+        'Recommend self-care activities',
+        'Create a meditation script',
+        'Give me compliments and motivation'
+      ]
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +189,131 @@ class _ChatScreenState extends State<ChatScreen> {
           }
         });
       },
+    );
+  }
+
+  void _showChipModal(BuildContext context, List<String> suggestions) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.85),
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Stack(
+          children: [
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 120, // Position above the text field
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF141718),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: suggestions.map((suggestion) {
+                      return InkWell(
+                        onTap: () {
+                          _controller.text = suggestion;
+                          Navigator.of(context).pop();
+                          _focusNode.requestFocus();
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            suggestion,
+                            style: const TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildChip(Map<String, dynamic> chipData) {
+    return GestureDetector(
+      onTap: () => _showChipModal(context, chipData['suggestions']),
+      child: Container(
+        margin: const EdgeInsets.all(4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              chipData['icon'],
+              size: 18,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              chipData['label'],
+              style: const TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'What can I help with?',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: _chipData.map((chipData) => _buildChip(chipData)).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -314,93 +523,95 @@ class _ChatScreenState extends State<ChatScreen> {
         body: Column(
           children: [
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: chatProvider.messages.length,
-                itemBuilder: (context, index) {
-                  final msg = chatProvider.messages[index];
-                  final isUser = msg.sender == 'user';
-                  final timeString = DateFormat(
-                    'hh:mm a',
-                  ).format(msg.timestamp);
+              child: chatProvider.messages.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: chatProvider.messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = chatProvider.messages[index];
+                        final isUser = msg.sender == 'user';
+                        final timeString = DateFormat(
+                          'hh:mm a',
+                        ).format(msg.timestamp);
 
-                  return Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 8,
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isUser ? Color(0xFF141718) : Colors.black,
-                      //borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: isUser
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment
-                                .center, // Changed from .start to .center
-                            children: [
-                              const CircleAvatar(
-                                radius: 16,
-                                backgroundImage: AssetImage(
-                                  'assets/images/user_avatar.png',
-                                ), // or network image
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  msg.text,
-                                  style: const TextStyle(
-                                    fontFamily: 'Urbanist',
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  // edit logic (to be implemented)
-                                },
-                              ),
-                            ],
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Image.asset('assets/images/bot_icon.png'),
-                                  //const Icon(Icons.smart_toy, size: 20),
-                                  const Spacer(),
-                                  IconButton(
-                                    icon: const Icon(Icons.volume_up, size: 20),
-                                    onPressed: () => _speak(msg.text),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.copy, size: 20),
-                                    onPressed: () => _copyText(msg.text),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                msg.text,
-                                style: const TextStyle(
-                                  fontFamily: 'Urbanist',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 16,
-                                  color: Color(0xFFA0A0A5),
-                                ),
-                              ),
-                            ],
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
                           ),
-                  );
-                },
-              ),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isUser ? Color(0xFF141718) : Colors.black,
+                            //borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: isUser
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .center, // Changed from .start to .center
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 16,
+                                      backgroundImage: AssetImage(
+                                        'assets/images/user_avatar.png',
+                                      ), // or network image
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        msg.text,
+                                        style: const TextStyle(
+                                          fontFamily: 'Urbanist',
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        // edit logic (to be implemented)
+                                      },
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Image.asset('assets/images/bot_icon.png'),
+                                        //const Icon(Icons.smart_toy, size: 20),
+                                        const Spacer(),
+                                        IconButton(
+                                          icon: const Icon(Icons.volume_up, size: 20),
+                                          onPressed: () => _speak(msg.text),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.copy, size: 20),
+                                          onPressed: () => _copyText(msg.text),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      msg.text,
+                                      style: const TextStyle(
+                                        fontFamily: 'Urbanist',
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                        color: Color(0xFFA0A0A5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        );
+                      },
+                    ),
             ),
             if (chatProvider.isTyping) const LoadingIndicator(),
             Padding(
@@ -409,47 +620,49 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Expanded(
                     child: TextField(
-  cursorColor: Colors.white,
-  controller: _controller,
-  focusNode: _focusNode,
-  decoration: InputDecoration(
-    hintText: 'Type your message...',
-    filled: true,
-    fillColor: Color.fromARGB(255, 66, 73, 75),
-    hintStyle: TextStyle(
-      fontFamily: 'Urbanist',
-      fontWeight: FontWeight.w400,
-      fontSize: 16,
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(34),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(34),
-      borderSide: BorderSide(color: Colors.white), // White border when focused
-    ),
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 12,
-    ),
-    suffixIcon: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(
-            _isListening ? Icons.mic : Icons.mic_none,
-          ),
-          onPressed: _startListening,
-        ),
-        IconButton(
-          icon: const Icon(Icons.send),
-          onPressed: _handleSend,
-        ),
-      ],
-    ),
-  ),
-  onSubmitted: (_) => _handleSend(),
-),
+                      cursorColor: Colors.white,
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Type your message...',
+                        filled: true,
+                        fillColor: Color.fromARGB(255, 66, 73, 75),
+                        hintStyle: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(34),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(34),
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                          ), // White border when focused
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _isListening ? Icons.mic : Icons.mic_none,
+                              ),
+                              onPressed: _startListening,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: _handleSend,
+                            ),
+                          ],
+                        ),
+                      ),
+                      onSubmitted: (_) => _handleSend(),
+                    ),
                   ),
                 ],
               ),
