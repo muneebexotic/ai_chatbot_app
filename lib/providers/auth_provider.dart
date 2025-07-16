@@ -45,25 +45,31 @@ class AuthProvider with ChangeNotifier {
 
   // 🔐 Google Sign-In
   Future<void> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // Cancelled
+  try {
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return; // Cancelled
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
 
-      final userCredential = await _auth.signInWithCredential(credential);
-      user = userCredential.user;
-      notifyListeners();
-    } catch (e) {
-      rethrow; // Let the UI handle error messages
-    }
+    final userCredential = await _auth.signInWithCredential(credential);
+    
+    // 🔁 Force refresh to ensure latest user state
+    await userCredential.user?.reload(); 
+    user = _auth.currentUser;
+    
+    notifyListeners();
+  } catch (e) {
+    print('❌ Google Sign-In Error: $e');
+    rethrow;
   }
+}
+
 
   bool get isLoggedIn => user != null;
 }

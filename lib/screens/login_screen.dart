@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Google Sign-In failed: \$e')));
+      ).showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
     }
     setState(() => loading = false);
   }
@@ -71,10 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                  ),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/welcome'),
                 ),
               ),
               const SizedBox(height: 40),

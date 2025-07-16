@@ -28,9 +28,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         Navigator.pushReplacementNamed(context, '/chat');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign Up failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sign Up failed: $e')));
     }
     setState(() => _isLoading = false);
   }
@@ -181,12 +181,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: () async {
-                        final authProvider =
-                            Provider.of<AuthProvider>(context, listen: false);
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
                         try {
                           await authProvider.signInWithGoogle();
+
+                          // Debug log
+                          print(
+                            "✅ After signInWithGoogle, isLoggedIn: ${authProvider.isLoggedIn}",
+                          );
+
                           if (authProvider.isLoggedIn) {
                             Navigator.pushReplacementNamed(context, '/chat');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  '❌ Google Sign-In succeeded, but user is null.',
+                                ),
+                              ),
+                            );
                           }
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -196,12 +212,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           );
                         }
                       },
+
                       child: Container(
                         width: 60,
                         height: 60,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
                         child: Center(
                           child: Image.asset(
                             'assets/google_logo.png',
