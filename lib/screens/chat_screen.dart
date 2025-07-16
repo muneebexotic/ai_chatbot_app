@@ -134,7 +134,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
+        backgroundColor: Colors.black,
         drawer: Drawer(
+          backgroundColor: Color(0xFF141718),
           child: Column(
             children: [
               const DrawerHeader(
@@ -220,6 +222,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         appBar: AppBar(
+          backgroundColor: Colors.black,
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu),
@@ -232,11 +235,12 @@ class _ChatScreenState extends State<ChatScreen> {
             style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
-              fontSize: 16,
+              fontSize: 22,
             ),
           ),
           actions: [
             PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
               onSelected: (value) async {
                 switch (value) {
                   case 'clear':
@@ -328,17 +332,18 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.black : Color(0xFF232627),
-                      borderRadius: BorderRadius.circular(12),
+                      color: isUser ? Color(0xFF141718) : Colors.black,
+                      //borderRadius: BorderRadius.circular(12),
                     ),
                     child: isUser
                         ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment
+                                .center, // Changed from .start to .center
                             children: [
                               const CircleAvatar(
                                 radius: 16,
                                 backgroundImage: AssetImage(
-                                  'assets/user.png',
+                                  'assets/images/user_avatar.png',
                                 ), // or network image
                               ),
                               const SizedBox(width: 8),
@@ -368,7 +373,8 @@ class _ChatScreenState extends State<ChatScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.smart_toy, size: 20),
+                                  Image.asset('assets/images/bot_icon.png'),
+                                  //const Icon(Icons.smart_toy, size: 20),
                                   const Spacer(),
                                   IconButton(
                                     icon: const Icon(Icons.volume_up, size: 20),
@@ -403,33 +409,47 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      decoration: InputDecoration(
-                        hintText: 'Type your message...',
-                        hintStyle: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      onSubmitted: (_) => _handleSend(),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-                    onPressed: _startListening,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: _handleSend,
+  cursorColor: Colors.white,
+  controller: _controller,
+  focusNode: _focusNode,
+  decoration: InputDecoration(
+    hintText: 'Type your message...',
+    filled: true,
+    fillColor: Color.fromARGB(255, 66, 73, 75),
+    hintStyle: TextStyle(
+      fontFamily: 'Urbanist',
+      fontWeight: FontWeight.w400,
+      fontSize: 16,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(34),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(34),
+      borderSide: BorderSide(color: Colors.white), // White border when focused
+    ),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 12,
+    ),
+    suffixIcon: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            _isListening ? Icons.mic : Icons.mic_none,
+          ),
+          onPressed: _startListening,
+        ),
+        IconButton(
+          icon: const Icon(Icons.send),
+          onPressed: _handleSend,
+        ),
+      ],
+    ),
+  ),
+  onSubmitted: (_) => _handleSend(),
+),
                   ),
                 ],
               ),

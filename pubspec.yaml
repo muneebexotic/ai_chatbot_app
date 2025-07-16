@@ -81,6 +81,7 @@ flutter:
     - assets/images/bot_icon.png
     - assets/images/user_avatar.png
     - assets/png_icons/copy.png
+    - assets/png_icons/three_dot_icon.png
 
 
    
