@@ -15,6 +15,7 @@ import '../services/voice_service.dart';
 import '../services/clipboard_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
+import '../models/conversation.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -29,6 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _focusNode = FocusNode();
   final VoiceService _voiceService = VoiceService();
   final SpeechService _speechService = SpeechService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isListening = false;
 
   @override
@@ -36,11 +38,15 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
   }
 
+  void _onDrawerClosed() {
+    final convoProvider = Provider.of<ConversationsProvider>(context, listen: false);
+    convoProvider.clearSearch();
+  }
+
   Future<String?> _showRenameDialog(BuildContext context, String currentTitle) {
     return showDialog<String>(
       context: context,
-      builder: (context) =>
-          RenameConversationDialog(currentTitle: currentTitle),
+      builder: (context) => RenameConversationDialog(currentTitle: currentTitle),
     );
   }
 
@@ -55,9 +61,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() => _isListening = false);
       },
       onError: (msg) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         setState(() => _isListening = false);
       },
     );
@@ -75,28 +79,26 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleSend() {
     final message = _controller.text.trim();
     if (message.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a message')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a message')),
+      );
       return;
     }
 
     _controller.clear();
     _focusNode.unfocus();
 
-    Provider.of<ChatProvider>(context, listen: false).sendMessage(message).then(
-      (_) {
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      },
-    );
+    Provider.of<ChatProvider>(context, listen: false).sendMessage(message).then((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    });
   }
 
   void _showChipModal(BuildContext context, List<String> suggestions) {
@@ -110,12 +112,12 @@ class _ChatScreenState extends State<ChatScreen> {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 120, // Position above the text field
+              bottom: 120,
               child: Material(
                 color: Colors.transparent,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Color(0xFF141718),
+                    color: const Color(0xFF141718),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: Colors.grey.withOpacity(0.3),
@@ -154,37 +156,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildChip(Map<String, dynamic> chipData) {
-    return GestureDetector(
-      onTap: () => _showChipModal(context, chipData['suggestions']),
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(chipData['icon'], size: 18, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              chipData['label'],
-              style: const TextStyle(
-                fontFamily: 'Urbanist',
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -238,21 +209,27 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatProvider = Provider.of<ChatProvider>(context);
     final convoProvider = Provider.of<ConversationsProvider>(context);
 
-    // Get current conversation title safely
     final currentTitle = convoProvider.conversations
         .firstWhere(
           (c) => c.id == chatProvider.conversationId,
-          orElse: () =>
-              ConversationSummary(id: '', title: 'New Chat', createdAt: ''),
+          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: ''),
         )
         .title;
 
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: Colors.black,
-        drawer: ConversationDrawer(onRenameDialog: _showRenameDialog),
-
+        onDrawerChanged: (isOpened) {
+          if (!isOpened) {
+            _onDrawerClosed();
+          }
+        },
+        drawer: ConversationDrawer(
+          onRenameDialog: _showRenameDialog,
+          onDrawerClosed: _onDrawerClosed,
+        ),
         appBar: AppBar(
           backgroundColor: Colors.black,
           leading: Builder(
@@ -264,7 +241,7 @@ class _ChatScreenState extends State<ChatScreen> {
           centerTitle: true,
           title: Text(
             currentTitle,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500,
               fontSize: 22,
@@ -281,18 +258,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   case 'rename':
                     final convo = convoProvider.conversations.firstWhere(
                       (c) => c.id == chatProvider.conversationId,
-                      orElse: () =>
-                          ConversationSummary(id: '', title: '', createdAt: ''),
+                      orElse: () => ConversationSummary(id: '', title: '', createdAt: ''),
                     );
-                    final newTitle = await _showRenameDialog(
-                      context,
-                      convo.title,
-                    );
+                    final newTitle = await _showRenameDialog(context, convo.title);
                     if (newTitle != null && newTitle.trim().isNotEmpty) {
-                      await convoProvider.renameConversation(
-                        convo.id,
-                        newTitle.trim(),
-                      );
+                      await convoProvider.renameConversation(convo.id, newTitle.trim());
                     }
                     break;
                   case 'delete':
@@ -300,9 +270,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       context: context,
                       builder: (_) => AlertDialog(
                         title: const Text('Delete Chat'),
-                        content: const Text(
-                          'Are you sure you want to delete this chat?',
-                        ),
+                        content: const Text('Are you sure you want to delete this chat?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
@@ -330,14 +298,8 @@ class _ChatScreenState extends State<ChatScreen> {
               },
               itemBuilder: (_) => [
                 const PopupMenuItem(value: 'clear', child: Text('Clear Chat')),
-                const PopupMenuItem(
-                  value: 'rename',
-                  child: Text('Rename Conversation'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete Conversation'),
-                ),
+                const PopupMenuItem(value: 'rename', child: Text('Rename Conversation')),
+                const PopupMenuItem(value: 'delete', child: Text('Delete Conversation')),
                 const PopupMenuItem(value: 'settings', child: Text('Settings')),
               ],
             ),
@@ -354,22 +316,19 @@ class _ChatScreenState extends State<ChatScreen> {
                       itemBuilder: (context, index) {
                         final msg = chatProvider.messages[index];
                         final isUser = msg.sender == 'user';
-                        final timeString = DateFormat(
-                          'hh:mm a',
-                        ).format(msg.timestamp);
+                        final timeString = DateFormat('hh:mm a').format(msg.timestamp);
 
                         return isUser
                             ? UserMessageBubble(
                                 message: msg.text,
                                 onEdit: () {
-                                  // edit logic (to be implemented)
+                                  // TODO: edit logic
                                 },
                               )
                             : BotMessageBubble(
                                 message: msg.text,
                                 onSpeak: () => _voiceService.speak(msg.text),
-                                onCopy: () =>
-                                    ClipboardService.copyText(msg.text),
+                                onCopy: () => ClipboardService.copyText(msg.text),
                               );
                       },
                     ),
