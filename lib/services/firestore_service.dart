@@ -78,6 +78,37 @@ class FirestoreService {
     }).toList();
   }
 
+  /// Search conversations by title (server-side search for large datasets)
+  Future<List<Map<String, dynamic>>> searchConversations(
+    String userId,
+    String searchQuery,
+  ) async {
+    if (searchQuery.trim().isEmpty) {
+      return getConversations(userId);
+    }
+
+    // For simple text search, we'll use array-contains-any for keywords
+    // Note: This requires preprocessing titles into keywords when saving
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('conversations')
+        .where('title', isGreaterThanOrEqualTo: searchQuery)
+        .where('title', isLessThan: searchQuery + '\uf8ff')
+        .orderBy('title')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'id': doc.id,
+        'title': data['title'],
+        'createdAt': data['createdAt'],
+      };
+    }).toList();
+  }
+
   /// Update a conversation title
   Future<void> updateConversationTitle(
     String userId,
