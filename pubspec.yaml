@@ -44,6 +44,13 @@ dependencies:
   http: ^1.4.0
   google_generative_ai: ^0.4.7
   shared_preferences: ^2.5.3
+  image_picker: ^1.1.2  
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  firebase_storage: ^12.4.9
+  path: ^1.9.1
+  cloudinary_api: ^1.1.1
+  cloudinary_url_gen: ^1.8.0
 
 
 

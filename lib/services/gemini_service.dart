@@ -1,5 +1,6 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:ai_chatbot_app/providers/settings_provider.dart';
+import 'package:ai_chatbot_app/models/chat_message.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +18,54 @@ class GeminiService {
     );
   }
 
-  Future<String?> sendMessage(String prompt) async {
+  // 🔥 NEW METHOD: Send message with full conversation history
+  Future<String?> sendMessageWithHistory(List<ChatMessage> messages) async {
+    try {
+      final input = <Content>[];
+
+      // Add system prompt if available
+      if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
+        input.add(Content.text(_systemPrompt!));
+      }
+
+      // Convert chat messages to Gemini format
+      for (final message in messages) {
+        if (message.sender == 'user') {
+          input.add(Content.text(message.text));
+        } else if (message.sender == 'bot') {
+          input.add(Content.model([TextPart(message.text)]));
+        }
+      }
+
+      final response = await _model.generateContent(input);
+
+      // Extract response text
+      final candidates = response.candidates;
+      if (candidates.isNotEmpty &&
+          candidates[0].content.parts.isNotEmpty &&
+          candidates[0].content.parts.first is TextPart) {
+        final text = (candidates[0].content.parts.first as TextPart).text.trim();
+        return text;
+      }
+
+      debugPrint('⚠️ Gemini returned no usable text');
+      return null;
+    } catch (e) {
+      debugPrint('❌ Gemini error: $e');
+      return null;
+    }
+  }
+
+  // 🔥 UPDATED: Keep old method for backward compatibility but add history parameter
+  Future<String?> sendMessage(String prompt, {List<ChatMessage>? conversationHistory}) async {
+    if (conversationHistory != null && conversationHistory.isNotEmpty) {
+      // Create a new list with the conversation history + new message
+      final updatedHistory = List<ChatMessage>.from(conversationHistory);
+      updatedHistory.add(ChatMessage(text: prompt, sender: 'user'));
+      return sendMessageWithHistory(updatedHistory);
+    }
+    
+    // Fallback to old behavior for single messages
     try {
       final input = <Content>[];
 
@@ -29,13 +77,11 @@ class GeminiService {
 
       final response = await _model.generateContent(input);
 
-      // ✅ Proper extraction for Gemini 2.5
       final candidates = response.candidates;
       if (candidates.isNotEmpty &&
           candidates[0].content.parts.isNotEmpty &&
           candidates[0].content.parts.first is TextPart) {
-        final text = (candidates[0].content.parts.first as TextPart).text
-            .trim();
+        final text = (candidates[0].content.parts.first as TextPart).text.trim();
         return text;
       }
 
@@ -108,7 +154,7 @@ Generate a concise title:''';
         return 'Be kind, warm, and friendly while helping the user.';
       case 'none':
       default:
-        return null; // 👈 No system prompt for default
+        return null;
     }
   }
 }

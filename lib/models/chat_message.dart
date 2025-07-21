@@ -4,6 +4,8 @@ class ChatMessage {
   final String text;
   final String sender; // 'user' or 'bot'
   final DateTime timestamp;
+  String? _userPhotoUrl;
+  String? get userPhotoUrl => _userPhotoUrl;
 
   ChatMessage({
     required this.text,

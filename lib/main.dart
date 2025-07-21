@@ -1,7 +1,4 @@
-import 'package:ai_chatbot_app/providers/conversation_provider.dart';
-import 'package:ai_chatbot_app/providers/settings_provider.dart';
-import 'package:ai_chatbot_app/screens/forgot_password_screen.dart';
-import 'package:ai_chatbot_app/screens/signup_screen.dart';
+import 'package:ai_chatbot_app/screens/photo_upload_screen';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -9,10 +6,15 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/themes_provider.dart';
-import 'screens/chat_screen.dart';
-import 'screens/login_screen.dart';
+import 'providers/conversation_provider.dart';
+import 'providers/settings_provider.dart';
+
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/chat_screen.dart';
 
 
 void main() async {
@@ -32,19 +34,19 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
 
-        // 🔄 ConversationsProvider - depends on AuthProvider
+        /// ConversationsProvider depends on AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, ConversationsProvider>(
           create: (_) => ConversationsProvider(userId: ''),
-          update: (_, auth, previous) {
+          update: (_, auth, __) {
             final userId = auth.user?.uid ?? '';
             return ConversationsProvider(userId: userId);
           },
         ),
 
-        // 💬 ChatProvider - depends on AuthProvider and SettingsProvider
+        /// ChatProvider depends on Auth and Settings
         ChangeNotifierProxyProvider2<AuthProvider, SettingsProvider, ChatProvider>(
           create: (context) => ChatProvider(userId: '', context: context),
-          update: (context, auth, settings, previous) {
+          update: (context, auth, settings, __) {
             final userId = auth.user?.uid ?? '';
             return ChatProvider(userId: userId, context: context);
           },
@@ -58,13 +60,14 @@ class MyApp extends StatelessWidget {
             theme: ThemeData.light(),
             darkTheme: ThemeData.dark(),
             themeMode: themeProvider.themeMode,
-            home: const SplashScreen(),
+            home: const SplashScreen(), // 👈 set splash screen here
             routes: {
-              '/login': (_) => const LoginScreen(),
-              '/chat': (_) => const ChatScreen(),
-              '/signup': (_) => const SignUpScreen(),
               '/welcome': (_) => const WelcomeScreen(),
+              '/signup': (_) => const SignUpScreen(),
+              '/login': (_) => const LoginScreen(),
               '/forgot-password': (_) => const ForgotPasswordScreen(),
+              '/chat': (_) => const ChatScreen(),
+              '/photo-upload': (_) => const PhotoUploadScreen(), // ✅ Added
             },
           );
         },

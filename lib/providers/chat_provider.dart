@@ -94,55 +94,55 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sendMessage(String userInput) async {
-    if (_conversationId == null) {
-      // Create new conversation with placeholder title
-      _conversationId = await _firestoreService.createConversationWithTitle(
-        userId,
-        'New Chat',
-      );
-      _messages.clear();
-      _titleGenerated = false;
-      notifyListeners();
-    }
-
-    final userMessage = ChatMessage(text: userInput, sender: 'user');
-    _messages.add(userMessage);
-    _setTyping(true);
+Future<void> sendMessage(String userInput) async {
+  if (_conversationId == null) {
+    // Create new conversation with placeholder title
+    _conversationId = await _firestoreService.createConversationWithTitle(
+      userId,
+      'New Chat',
+    );
+    _messages.clear();
+    _titleGenerated = false;
     notifyListeners();
-    print('✅ User message added: ${userMessage.text}');
-
-    try {
-      await _firestoreService.saveMessage(
-        userId,
-        _conversationId!,
-        userMessage,
-      );
-
-      final aiReply = await _geminiService.sendMessage(userInput);
-
-      final botReply = ChatMessage(
-        text: aiReply ?? "Sorry, I couldn't understand that.",
-        sender: 'bot',
-      );
-
-      _messages.add(botReply);
-      notifyListeners();
-      print('🤖 Gemini reply: ${botReply.text}');
-
-      await _firestoreService.saveMessage(userId, _conversationId!, botReply);
-
-      // Generate AI title after 2nd bot response (4 total messages)
-      if (!_titleGenerated && _messages.length >= 4) {
-        await _generateConversationTitle();
-      }
-    } catch (e) {
-      print('❌ Error in sendMessage: $e');
-    } finally {
-      _setTyping(false);
-    }
   }
 
+  final userMessage = ChatMessage(text: userInput, sender: 'user');
+  _messages.add(userMessage);
+  _setTyping(true);
+  notifyListeners();
+  print('✅ User message added: ${userMessage.text}');
+
+  try {
+    await _firestoreService.saveMessage(
+      userId,
+      _conversationId!,
+      userMessage,
+    );
+
+    // 🔥 FIX: Pass the entire conversation history to Gemini
+    final aiReply = await _geminiService.sendMessageWithHistory(_messages);
+
+    final botReply = ChatMessage(
+      text: aiReply ?? "Sorry, I couldn't understand that.",
+      sender: 'bot',
+    );
+
+    _messages.add(botReply);
+    notifyListeners();
+    print('🤖 Gemini reply: ${botReply.text}');
+
+    await _firestoreService.saveMessage(userId, _conversationId!, botReply);
+
+    // Generate AI title after 2nd bot response (4 total messages)
+    if (!_titleGenerated && _messages.length >= 4) {
+      await _generateConversationTitle();
+    }
+  } catch (e) {
+    print('❌ Error in sendMessage: $e');
+  } finally {
+    _setTyping(false);
+  }
+}
   Future<void> deleteConversation() async {
     if (_conversationId == null) return;
     try {

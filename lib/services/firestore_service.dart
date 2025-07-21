@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_message.dart';
+import '../models/app_user.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -61,6 +62,11 @@ class FirestoreService {
 
   /// Get all conversation summaries (for sidebar list)
   Future<List<Map<String, dynamic>>> getConversations(String userId) async {
+    if (userId.isEmpty) {
+      print('❌ Error: userId is empty in getConversations');
+      return [];
+    }
+
     final snapshot = await _db
         .collection('users')
         .doc(userId)
@@ -87,8 +93,6 @@ class FirestoreService {
       return getConversations(userId);
     }
 
-    // For simple text search, we'll use array-contains-any for keywords
-    // Note: This requires preprocessing titles into keywords when saving
     final snapshot = await _db
         .collection('users')
         .doc(userId)
@@ -146,5 +150,32 @@ class FirestoreService {
 
     batch.delete(convoRef);
     await batch.commit();
+  }
+
+  /// Save AppUser to Firestore (overwrite or merge)
+  Future<void> saveUser(AppUser user) async {
+    try {
+      await _db.collection('users').doc(user.uid).set(
+        user.toMap(),
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      print('Error saving user: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AppUser from Firestore
+  Future<AppUser?> getUser(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists && doc.data() != null) {
+        return AppUser.fromMap(uid, doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user: $e');
+      return null;
+    }
   }
 }

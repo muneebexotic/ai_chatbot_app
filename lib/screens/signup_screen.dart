@@ -16,24 +16,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  void _signUp() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    setState(() => _isLoading = true);
-    try {
-      await authProvider.signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-      if (authProvider.isLoggedIn) {
+void _signUp() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  setState(() => _isLoading = true);
+
+  final fullName = _fullNameController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all fields')),
+    );
+    setState(() => _isLoading = false);
+    return;
+  }
+
+  try {
+    final isNewUser = await authProvider.signUp(email, password, fullName);
+
+    if (authProvider.isLoggedIn) {
+      if (isNewUser) {
+        Navigator.pushReplacementNamed(context, '/photo-upload');
+      } else {
         Navigator.pushReplacementNamed(context, '/chat');
       }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Sign Up failed: $e')));
     }
-    setState(() => _isLoading = false);
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sign Up failed: $e')),
+    );
   }
+
+  setState(() => _isLoading = false);
+}
+
 
   @override
   Widget build(BuildContext context) {

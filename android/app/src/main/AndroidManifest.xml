@@ -4,6 +4,19 @@
     <!-- ✅ Microphone permission for speech_to_text -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Camera permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Storage permissions -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- For Android 13+ photo picker -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Camera feature -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:label="ai_chatbot_app"
         android:name="${applicationName}"
