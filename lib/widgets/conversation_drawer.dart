@@ -1,8 +1,11 @@
+import 'package:ai_chatbot_app/widgets/user_drawer_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/conversation.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../providers/auth_provider.dart';
 
 class ConversationDrawer extends StatefulWidget {
   final Future<String?> Function(BuildContext, String) onRenameDialog;
@@ -37,13 +40,19 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
   }
 
   void _onSearchChanged() {
-    final convoProvider = Provider.of<ConversationsProvider>(context, listen: false);
+    final convoProvider = Provider.of<ConversationsProvider>(
+      context,
+      listen: false,
+    );
     convoProvider.searchConversations(_searchController.text);
   }
 
   void _clearSearch() {
     _searchController.clear();
-    final convoProvider = Provider.of<ConversationsProvider>(context, listen: false);
+    final convoProvider = Provider.of<ConversationsProvider>(
+      context,
+      listen: false,
+    );
     convoProvider.clearSearch();
     _searchFocusNode.unfocus();
   }
@@ -60,6 +69,9 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
     final convoProvider = Provider.of<ConversationsProvider>(context);
+    final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
+    final username = Provider.of<AuthProvider>(context).displayName;
+
 
     return Drawer(
       backgroundColor: const Color(0xFF141718),
@@ -81,7 +93,7 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
               ],
             ),
           ),
-          
+
           // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -97,10 +109,7 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
               child: TextField(
                 controller: _searchController,
                 focusNode: _searchFocusNode,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'Search conversations and messages...',
                   hintStyle: TextStyle(
@@ -131,9 +140,9 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // New Chat Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -155,14 +164,14 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
               },
             ),
           ),
-          
+
           const SizedBox(height: 8),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(color: Colors.grey),
           ),
           const SizedBox(height: 8),
-          
+
           // Conversations List
           Expanded(
             child: convoProvider.filteredConversations.isEmpty
@@ -172,8 +181,10 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
                     itemCount: convoProvider.filteredConversations.length,
                     itemBuilder: (context, index) {
                       final convo = convoProvider.filteredConversations[index];
-                      final searchResult = convoProvider.getSearchResultForConversation(convo.id);
-                      final isSelected = convo.id == chatProvider.conversationId;
+                      final searchResult = convoProvider
+                          .getSearchResultForConversation(convo.id);
+                      final isSelected =
+                          convo.id == chatProvider.conversationId;
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(
@@ -191,7 +202,7 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
                           ),
                           selected: isSelected,
                           selectedTileColor: const Color(0xFF2A3D47),
-                          tileColor: isSelected 
+                          tileColor: isSelected
                               ? const Color(0xFF2A3D47)
                               : Colors.transparent,
                           onTap: () async {
@@ -208,28 +219,36 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     ListTile(
-                                      leading: const Icon(Icons.edit, color: Colors.white),
+                                      leading: const Icon(
+                                        Icons.edit,
+                                        color: Colors.white,
+                                      ),
                                       title: const Text(
                                         'Rename',
                                         style: TextStyle(color: Colors.white),
                                       ),
                                       onTap: () async {
                                         Navigator.pop(context);
-                                        final newTitle = await widget.onRenameDialog(
-                                          context,
-                                          convo.title,
-                                        );
+                                        final newTitle = await widget
+                                            .onRenameDialog(
+                                              context,
+                                              convo.title,
+                                            );
                                         if (newTitle != null &&
                                             newTitle.trim().isNotEmpty) {
-                                          await convoProvider.renameConversation(
-                                            convo.id,
-                                            newTitle.trim(),
-                                          );
+                                          await convoProvider
+                                              .renameConversation(
+                                                convo.id,
+                                                newTitle.trim(),
+                                              );
                                         }
                                       },
                                     ),
                                     ListTile(
-                                      leading: const Icon(Icons.delete, color: Colors.white),
+                                      leading: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
                                       title: const Text(
                                         'Delete',
                                         style: TextStyle(color: Colors.white),
@@ -239,8 +258,10 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
                                         await convoProvider.deleteConversation(
                                           convo.id,
                                         );
-                                        if (convo.id == chatProvider.conversationId) {
-                                          await chatProvider.deleteConversation();
+                                        if (convo.id ==
+                                            chatProvider.conversationId) {
+                                          await chatProvider
+                                              .deleteConversation();
                                         }
                                       },
                                     ),
@@ -254,6 +275,8 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
                     },
                   ),
           ),
+          // Footer Avatar
+          const UserDrawerTile(),
         ],
       ),
     );
@@ -269,12 +292,16 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
       children: [
         // Conversation title (always show with highlighting if it matches)
         _buildHighlightedTitle(conversation.title, searchQuery),
-        
+
         // Message snippet (only show if this is a message match)
-        if (searchResult?.isMessageMatch == true && searchResult?.messageSnippet != null)
+        if (searchResult?.isMessageMatch == true &&
+            searchResult?.messageSnippet != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: _buildHighlightedSnippet(searchResult!.messageSnippet!, searchQuery),
+            child: _buildHighlightedSnippet(
+              searchResult!.messageSnippet!,
+              searchQuery,
+            ),
           ),
       ],
     );
@@ -382,9 +409,7 @@ class _ConversationDrawerState extends State<ConversationDrawer> {
             ),
             const SizedBox(height: 16),
             Text(
-              isSearching 
-                  ? 'No conversations found'
-                  : 'No conversations yet',
+              isSearching ? 'No conversations found' : 'No conversations yet',
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.grey.withOpacity(0.7),

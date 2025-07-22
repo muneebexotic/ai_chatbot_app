@@ -17,6 +17,7 @@ class AuthProvider with ChangeNotifier {
 
   User? user;
   AppUser? currentUser;
+  bool _isGoogleSignIn = false; // Track if it's Google sign-in
 
   String get displayName => currentUser?.username ?? "User";
   String? _userPhotoUrl;
@@ -35,13 +36,22 @@ class AuthProvider with ChangeNotifier {
         print('👋 User signed out or null');
         currentUser = null;
         _userPhotoUrl = null;
+        _isGoogleSignIn = false;
       }
       notifyListeners();
     });
   }
 
+  // Generate a unique DiceBear avatar URL
+  String _generateAvatarUrl() {
+    final seed = DateTime.now().millisecondsSinceEpoch.toString();
+    return 'https://api.dicebear.com/7.x/avataaars/svg?seed=$seed';
+  }
+
   Future<bool> signUp(String email, String password, String username) async {
     try {
+      _isGoogleSignIn = false; // Mark as manual signup
+      
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -51,15 +61,17 @@ class AuthProvider with ChangeNotifier {
       final uid = userCredential.user?.uid;
       
       if (uid != null) {
+        // For manual signup, don't generate avatar - let them upload one
         final newUser = AppUser(
           uid: uid,
           email: email,
           username: username,
-          photoUrl: '',
+          photoUrl: '', // Empty for manual signup to trigger photo upload screen
           createdAt: DateTime.now(),
         );
         await _firestoreService.saveUser(newUser);
         currentUser = newUser;
+        _userPhotoUrl = null; // Ensure it's null to trigger photo upload
       }
 
       user = userCredential.user;
@@ -73,6 +85,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> login(String email, String password) async {
     try {
+      _isGoogleSignIn = false; // Mark as manual login
+      
       final cred = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -96,6 +110,7 @@ class AuthProvider with ChangeNotifier {
       user = null;
       currentUser = null;
       _userPhotoUrl = null;
+      _isGoogleSignIn = false;
       notifyListeners();
     } catch (e) {
       print('Error during logout: $e');
@@ -105,8 +120,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     try {
+      _isGoogleSignIn = true; // Mark as Google sign-in
+      
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return;
+      if (googleUser == null) {
+        _isGoogleSignIn = false;
+        return;
+      }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -121,29 +141,67 @@ class AuthProvider with ChangeNotifier {
       user = _auth.currentUser;
 
       if (user != null) {
+        // Check if user exists in Firestore
         currentUser = await _firestoreService.getUser(user!.uid);
+        
+        print('🔍 Checking Google user: ${user!.uid}');
+        print('🔍 Current user from Firestore: ${currentUser?.uid}');
+        print('🔍 Google photo URL: ${user!.photoURL}');
 
+        // If new Google user, create with Google's photo URL (or empty)
         if (currentUser == null) {
+          print('🆕 New Google user - using Google avatar');
+          
+          // Use Google's provided photo URL (includes auto-generated letter avatars)
+          final String googlePhotoUrl = user!.photoURL ?? '';
+          final String googleDisplayName = user!.displayName ?? user!.email!.split('@')[0];
+          
+          print('🎭 Google photo URL: $googlePhotoUrl');
+          print('👤 Google display name: $googleDisplayName');
+
           currentUser = AppUser(
             uid: user!.uid,
             email: user!.email!,
-            username: user!.displayName ?? user!.email!.split('@')[0],
-            photoUrl: user!.photoURL,
+            username: googleDisplayName, // Use Google's display name
+            photoUrl: googlePhotoUrl, // Use Google's avatar (letter avatar or actual photo)
             createdAt: DateTime.now(),
           );
+
           await _firestoreService.saveUser(currentUser!);
+          print('✅ New Google user saved with Google avatar and name');
+        } else {
+          // For existing Google users, update the display name if it has changed
+          final String currentGoogleName = user!.displayName ?? user!.email!.split('@')[0];
+          if (currentUser!.username != currentGoogleName) {
+            print('🔄 Updating Google user display name from "${currentUser!.username}" to "$currentGoogleName"');
+            currentUser = AppUser(
+              uid: currentUser!.uid,
+              email: currentUser!.email,
+              username: currentGoogleName, // Update to current Google display name
+              photoUrl: currentUser!.photoUrl,
+              createdAt: currentUser!.createdAt,
+            );
+            await _firestoreService.saveUser(currentUser!);
+          }
         }
 
+        // Ensure _userPhotoUrl is updated
         _userPhotoUrl = currentUser?.photoUrl;
+        print('🖼️ User photo URL set to: $_userPhotoUrl');
       }
+
       notifyListeners();
+      print('✅ Google sign-in completed successfully');
+      
     } catch (e) {
       print('❌ Google Sign-In Error: $e');
+      _isGoogleSignIn = false;
       throw Exception(e.toString());
     }
   }
 
   bool get isLoggedIn => user != null;
+  bool get isGoogleSignIn => _isGoogleSignIn;
 
   Future<void> uploadUserPhoto(File imageFile) async {
     try {
@@ -220,18 +278,43 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  bool get hasCompletedProfile =>
-      _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty;
+  // Updated logic: Google users always have avatars (from Google), manual users need upload
+  bool get hasCompletedProfile {
+    if (_isGoogleSignIn) {
+      // Google users always have a profile (Google provides letter avatars even without photos)
+      return true; // Google users don't need photo upload
+    } else {
+      // Manual signup users need to upload a photo
+      return _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty;
+    }
+  }
 
   Future<bool> checkIfNewUser() async {
     try {
       if (user == null) return false;
 
       final userData = await _firestoreService.getUser(user!.uid);
-      return userData == null || userData.photoUrl == null || userData.photoUrl!.isEmpty;
+      
+      if (_isGoogleSignIn) {
+        // For Google users, they're "new" if they don't exist in Firestore
+        // But once created, they should have an avatar automatically
+        return userData == null;
+      } else {
+        // For manual users, they're "new" if no photo is uploaded
+        return userData == null || userData.photoUrl == null || userData.photoUrl!.isEmpty;
+      }
     } catch (e) {
       print('Error checking if new user: $e');
       return false;
+    }
+  }
+
+  // Helper method to check if user needs photo upload screen
+  bool get needsPhotoUpload {
+    if (_isGoogleSignIn) {
+      return false; // Google users don't need photo upload screen
+    } else {
+      return !hasCompletedProfile; // Manual users need it if no photo
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:ai_chatbot_app/screens/photo_upload_screen';
+import 'package:ai_chatbot_app/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -67,7 +68,9 @@ class MyApp extends StatelessWidget {
               '/login': (_) => const LoginScreen(),
               '/forgot-password': (_) => const ForgotPasswordScreen(),
               '/chat': (_) => const ChatScreen(),
-              '/photo-upload': (_) => const PhotoUploadScreen(), // ✅ Added
+              '/photo-upload': (_) => const PhotoUploadScreen(),
+              '/settings': (_) => const SettingsScreen()
+            
             },
           );
         },
