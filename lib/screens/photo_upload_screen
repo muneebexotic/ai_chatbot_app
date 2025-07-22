@@ -5,6 +5,8 @@ import '../services/photo_service.dart';
 import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import 'chat_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart'; 
+
 
 class PhotoUploadScreen extends StatefulWidget {
   const PhotoUploadScreen({super.key});
@@ -80,49 +82,79 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     );
   }
 
-  Widget _buildPhotoPreview() {
-    return Container(
+
+
+Widget _buildPhotoPreview() {
+  return Container(
+    width: 150,
+    height: 150,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(
+        color: Colors.grey[300]!,
+        width: 2,
+      ),
+    ),
+    child: ClipOval(
+      child: _selectedImage != null
+          ? Image.file(
+              _selectedImage!,
+              width: 150,
+              height: 150,
+              fit: BoxFit.cover,
+            )
+          : _avatarUrl != null
+              ? _buildAvatarWidget()
+              : Container(
+                  color: Colors.grey[100],
+                  child: Icon(
+                    Icons.person,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
+                ),
+    ),
+  );
+}
+
+Widget _buildAvatarWidget() {
+  // Check if the URL is an SVG (DiceBear returns SVG)
+  if (_avatarUrl!.contains('.svg') || _avatarUrl!.contains('dicebear')) {
+    return SvgPicture.network(
+      _avatarUrl!,
       width: 150,
       height: 150,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 2,
-        ),
-      ),
-      child: ClipOval(
-        child: _selectedImage != null
-            ? Image.file(
-                _selectedImage!,
-                width: 150,
-                height: 150,
-                fit: BoxFit.cover,
-              )
-            : _avatarUrl != null
-                ? Image.network(
-                    _avatarUrl!,
-                    width: 150,
-                    height: 150,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    },
-                  )
-                : Container(
-                    color: Colors.grey[100],
-                    child: Icon(
-                      Icons.person,
-                      size: 80,
-                      color: Colors.grey[400],
-                    ),
-                  ),
+      fit: BoxFit.cover,
+      placeholderBuilder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+  } else {
+    // For regular images (PNG, JPG, etc.)
+    return Image.network(
+      _avatarUrl!,
+      width: 150,
+      height: 150,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey[100],
+          child: Icon(
+            Icons.error,
+            size: 40,
+            color: Colors.grey[400],
+          ),
+        );
+      },
+    );
   }
+}
 
   Widget _buildPhotoOptions() {
     return Column(
