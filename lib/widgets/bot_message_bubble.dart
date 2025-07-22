@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
-//import 'package:flutter_highlight/themes/github_dark.dart';
+import 'package:flutter_highlight/themes/agate.dart';
 import 'package:markdown/markdown.dart' as md;
 
 class BotMessageBubble extends StatelessWidget {
@@ -222,7 +222,7 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
           child: HighlightView(
             code,
             language: language,
-            //theme: githubDarkTheme,
+            theme: agateTheme,
             padding: const EdgeInsets.all(12.0),
             textStyle: const TextStyle(
               fontFamily: 'Courier',
