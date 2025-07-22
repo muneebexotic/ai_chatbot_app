@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class UserMessageBubble extends StatelessWidget {
   final String message;
@@ -12,6 +14,8 @@ class UserMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
@@ -22,9 +26,11 @@ class UserMessageBubble extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 16,
-            backgroundImage: AssetImage('assets/images/user_avatar.png'),
+            backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                ? NetworkImage(avatarUrl)
+                : const AssetImage('assets/images/user_avatar.png') as ImageProvider,
           ),
           const SizedBox(width: 8),
           Expanded(
