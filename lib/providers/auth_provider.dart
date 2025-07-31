@@ -22,6 +22,8 @@ class AuthProvider with ChangeNotifier {
   String get displayName => currentUser?.username ?? "User";
   String? _userPhotoUrl;
   String? get userPhotoUrl => _userPhotoUrl ?? currentUser?.photoUrl;
+  String get email => currentUser?.email ?? 'user@example.com';
+
 
   AuthProvider() {
     user = _auth.currentUser;
@@ -308,6 +310,16 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+  try {
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+  } on FirebaseAuthException catch (e) {
+    throw Exception(e.code);
+  } catch (e) {
+    throw Exception('Failed to send password reset email');
+  }
+}
 
   // Helper method to check if user needs photo upload screen
   bool get needsPhotoUpload {
