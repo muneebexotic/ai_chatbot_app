@@ -11,6 +11,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <!-- Add to android/app/src/main/AndroidManifest.xml -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
     <!-- For Android 13+ photo picker -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
