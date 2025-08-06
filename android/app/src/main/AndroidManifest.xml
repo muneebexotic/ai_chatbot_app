@@ -1,5 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ai_chatbot_app">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
 
     <!-- ✅ Microphone permission for speech_to_text -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -11,6 +11,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Add to android/app/src/main/AndroidManifest.xml -->
     <uses-permission android:name="com.android.vending.BILLING" />
 
@@ -21,7 +24,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
-        android:label="ai_chatbot_app"
+        android:label="ChadGPT"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
