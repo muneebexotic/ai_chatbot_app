@@ -444,18 +444,18 @@ class _ChatScreenState extends State<ChatScreen> {
             Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
           },
         ),
-        floatingActionButton: _showScrollToTop
-            ? Positioned(
-                left: 32,
-                bottom: 100,
-                child: FloatingActionButton(
-                  mini: true,
-                  backgroundColor: AppColors.primary,
-                  onPressed: _scrollToTop,
-                  child: Icon(Icons.keyboard_arrow_up, color: AppColors.textPrimary),
-                ),
-              )
-            : null,
+        // floatingActionButton: _showScrollToTop
+        //     ? Positioned(
+        //         left: 32,
+        //         bottom: 100,
+        //         child: FloatingActionButton(
+        //           mini: true,
+        //           backgroundColor: AppColors.primary,
+        //           onPressed: _scrollToTop,
+        //           child: Icon(Icons.keyboard_arrow_up, color: AppColors.textPrimary),
+        //         ),
+        //       )
+        //     : null,
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

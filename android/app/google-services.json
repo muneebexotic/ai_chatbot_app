@@ -14,11 +14,48 @@
       },
       "oauth_client": [
         {
-          "client_id": "630453425342-m6umt3g0idcc8s9qllgkfjep3if6cf69.apps.googleusercontent.com",
+          "client_id": "630453425342-8pcscrbjqdo06btin6c70tig9sjf0i7j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxT_Xn8dmLjphNZZNBKhXEa1nFxQ8qPOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "630453425342-8pcscrbjqdo06btin6c70tig9sjf0i7j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:630453425342:android:e1d84eba0857827eeabaef",
+        "android_client_info": {
+          "package_name": "com.muneeb.aichatbot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "630453425342-a6eqeu96i57836do39h69c3ls0avb3le.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.ai_chatbot_app",
-            "certificate_hash": "7e1099b2a1a10e265217f7306cdb1c075ac0b938"
+            "package_name": "com.muneeb.aichatbot",
+            "certificate_hash": "2eb48fae9e2e408bd1c1da5e443e582a75ce26fe"
+          }
+        },
+        {
+          "client_id": "630453425342-bg7u8qv2qsfgm4bupo2htipp1dhi8gj4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.muneeb.aichatbot",
+            "certificate_hash": "c9350fd9d148fe1a67c388b8a775fa7eae10b808"
           }
         },
         {

@@ -11,22 +11,24 @@ import '../services/cloudinary_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance; // Updated for v7
   final FirestoreService _firestoreService = FirestoreService();
   final CloudinaryService _cloudinaryService = CloudinaryService();
 
   User? user;
   AppUser? currentUser;
-  bool _isGoogleSignIn = false; // Track if it's Google sign-in
+  GoogleSignInAccount? _googleSignInAccount; // Manual state management for v7
+  bool _isGoogleSignIn = false;
+  bool _isGoogleSignInInitialized = false; // Track initialization
 
   String get displayName => currentUser?.username ?? "User";
   String? _userPhotoUrl;
   String? get userPhotoUrl => _userPhotoUrl ?? currentUser?.photoUrl;
   String get email => currentUser?.email ?? 'user@example.com';
 
-
   AuthProvider() {
     user = _auth.currentUser;
+    _initializeGoogleSignIn();
     _auth.authStateChanges().listen((u) async {
       user = u;
       if (user != null) {
@@ -39,9 +41,29 @@ class AuthProvider with ChangeNotifier {
         currentUser = null;
         _userPhotoUrl = null;
         _isGoogleSignIn = false;
+        _googleSignInAccount = null; // Clear Google account state
       }
       notifyListeners();
     });
+  }
+
+  // Initialize GoogleSignIn asynchronously (required for v7)
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      await _googleSignIn.initialize();
+      _isGoogleSignInInitialized = true;
+      print('✅ Google Sign-In initialized');
+    } catch (e) {
+      print('❌ Failed to initialize Google Sign-In: $e');
+      _isGoogleSignInInitialized = false;
+    }
+  }
+
+  // Ensure GoogleSignIn is initialized before use
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (!_isGoogleSignInInitialized) {
+      await _initializeGoogleSignIn();
+    }
   }
 
   // Generate a unique DiceBear avatar URL
@@ -108,11 +130,14 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     try {
       await _auth.signOut();
-      await _googleSignIn.signOut();
+      if (_isGoogleSignInInitialized) {
+        await _googleSignIn.signOut();
+      }
       user = null;
       currentUser = null;
       _userPhotoUrl = null;
       _isGoogleSignIn = false;
+      _googleSignInAccount = null; // Clear Google account state
       notifyListeners();
     } catch (e) {
       print('Error during logout: $e');
@@ -122,20 +147,35 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     try {
-      _isGoogleSignIn = true; // Mark as Google sign-in
+      await _ensureGoogleSignInInitialized();
       
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        _isGoogleSignIn = false;
-        return;
+      if (!_googleSignIn.supportsAuthenticate()) {
+        throw Exception('Google Sign-In not supported on this platform');
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      _isGoogleSignIn = true; // Mark as Google sign-in
+      
+      // Use authenticate() instead of signIn() for v7
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate(
+        scopeHint: ['email'], // Specify required scopes
+      );
+      
+      _googleSignInAccount = googleUser; // Store Google account state
+
+      // Get authorization for Firebase scopes using authorizationClient (v7 way)
+      final authClient = _googleSignIn.authorizationClient;
+      final authorization = await authClient.authorizationForScopes(['email']);
+
+      if (authorization == null) {
+        throw Exception('Failed to get authorization for required scopes');
+      }
+
+      // Get authentication tokens (idToken is still available from GoogleSignInAuthentication)
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        accessToken: authorization.accessToken, // Use authorization.accessToken from v7
+        idToken: googleAuth.idToken, // idToken is still available from GoogleSignInAuthentication
       );
 
       final userCredential = await _auth.signInWithCredential(credential);
@@ -195,10 +235,37 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       print('✅ Google sign-in completed successfully');
       
+    } on GoogleSignInException catch (e) {
+      print('❌ Google Sign-In Exception: ${e.code.name} - ${e.description}');
+      _isGoogleSignIn = false;
+      _googleSignInAccount = null;
+      throw Exception(_getGoogleSignInErrorMessage(e));
     } catch (e) {
       print('❌ Google Sign-In Error: $e');
       _isGoogleSignIn = false;
+      _googleSignInAccount = null;
       throw Exception(e.toString());
+    }
+  }
+
+  // Helper method to convert GoogleSignInException to user-friendly messages
+  String _getGoogleSignInErrorMessage(GoogleSignInException exception) {
+    switch (exception.code.name) {
+      case 'canceled':
+        return 'Sign-in was cancelled. Please try again if you want to continue.';
+      case 'interrupted':
+        return 'Sign-in was interrupted. Please try again.';
+      case 'clientConfigurationError':
+        return 'There is a configuration issue with Google Sign-In. Please contact support.';
+      case 'providerConfigurationError':
+        return 'Google Sign-In is currently unavailable. Please try again later or contact support.';
+      case 'uiUnavailable':
+        return 'Google Sign-In is currently unavailable. Please try again later or contact support.';
+      case 'userMismatch':
+        return 'There was an issue with your account. Please sign out and try again.';
+      case 'unknownError':
+      default:
+        return 'An unexpected error occurred during Google Sign-In. Please try again.';
     }
   }
 
@@ -312,14 +379,14 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
-  try {
-    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-  } on FirebaseAuthException catch (e) {
-    throw Exception(e.code);
-  } catch (e) {
-    throw Exception('Failed to send password reset email');
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.code);
+    } catch (e) {
+      throw Exception('Failed to send password reset email');
+    }
   }
-}
 
   // Helper method to check if user needs photo upload screen
   bool get needsPhotoUpload {

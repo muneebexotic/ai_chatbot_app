@@ -8,7 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
-import '../../components/ui/app_text.dart';
+
 
 class UserMessageBubble extends StatelessWidget {
   final String message;
