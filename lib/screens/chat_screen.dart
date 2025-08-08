@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
+import '../providers/auth_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../widgets/typing_indicator.dart';
@@ -16,6 +17,8 @@ import '../services/clipboard_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
 import '../models/conversation.dart';
+import '../screens/subscription_screen.dart';
+import '../services/payment_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -51,12 +54,29 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  // CRITICAL FIX: Check if user can send voice messages
   Future<void> _startListening() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Check if user can send voice messages
+    if (!await authProvider.canSendVoice()) {
+      _showUpgradeDialog(
+        'Voice Limit Reached',
+        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_VOICE} voice messages.',
+        'Upgrade to Premium for unlimited voice messages!',
+      );
+      return;
+    }
+
     HapticFeedback.lightImpact();
     
     final available = await _speechService.startListening(
       onResult: (text) => setState(() => _controller.text = text),
-      onDone: () => setState(() => _isListening = false),
+      onDone: () async {
+        setState(() => _isListening = false);
+        // Increment voice usage when voice input is used
+        await authProvider.incrementVoiceUsage();
+      },
       onError: (msg) {
         _showErrorSnackBar(msg);
         setState(() => _isListening = false);
@@ -95,17 +115,158 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _handleSend() {
+  // CRITICAL FIX: Add usage restrictions to message sending
+  void _handleSend() async {
     final message = _controller.text.trim();
     if (message.isEmpty) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // CRITICAL: Check if user can send messages
+    if (!await authProvider.canSendMessage()) {
+      _showUpgradeDialog(
+        'Message Limit Reached',
+        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_MESSAGES} messages.',
+        'Upgrade to Premium for unlimited messages!',
+      );
+      return;
+    }
 
     HapticFeedback.selectionClick();
     _controller.clear();
     _focusNode.unfocus();
 
-    Provider.of<ChatProvider>(context, listen: false)
-        .sendMessage(message)
-        .then((_) => _scrollToTop());
+    try {
+      // Send the message
+      await Provider.of<ChatProvider>(context, listen: false).sendMessage(message);
+      
+      // Increment usage count after successful message
+      await authProvider.incrementMessageUsage();
+      
+      _scrollToTop();
+    } catch (e) {
+      _showErrorSnackBar('Failed to send message: $e');
+    }
+  }
+
+  // CRITICAL FIX: Add upgrade dialog for premium features
+  void _showUpgradeDialog(String title, String description, String benefits) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.star, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AppText.displayMedium(
+                title,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText.bodyMedium(
+              description,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    'Premium Benefits:',
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 8),
+                  AppText.bodySmall(
+                    '• Unlimited messages\n• Unlimited images & voice\n• All personas unlocked\n• Priority support',
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Usage status
+            Consumer<AuthProvider>(
+              builder: (context, auth, child) {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppColors.error, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText.bodySmall(
+                          auth.usageText,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: AppText.bodyMedium(
+              'Later',
+              color: AppColors.textSecondary,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: AppText.bodyMedium(
+              'Upgrade Now',
+              color: AppColors.background,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToTop() {
@@ -255,6 +416,80 @@ class _ChatScreenState extends State<ChatScreen> {
             
             const SizedBox(height: 32),
             
+            // Usage status for free users
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                if (authProvider.isPremium) return const SizedBox.shrink();
+                
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText.bodyMedium(
+                                  'Daily Usage',
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                const SizedBox(height: 4),
+                                AppText.bodySmall(
+                                  authProvider.usageText,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SubscriptionScreen(),
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: AppText.bodySmall(
+                            'Upgrade for Unlimited Access',
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
             // Tip
             Container(
               padding: const EdgeInsets.all(16),
@@ -314,6 +549,41 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
+          // ADDITION: Show usage indicator for free users
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, child) {
+              if (authProvider.isPremium) {
+                return IconButton(
+                  icon: Icon(Icons.star, color: AppColors.primary, size: 20),
+                  onPressed: () {},
+                  tooltip: 'Premium User',
+                );
+              }
+              
+              return IconButton(
+                icon: Stack(
+                  children: [
+                    Icon(Icons.show_chart, color: AppColors.textSecondary),
+                    if (!authProvider.isPremium)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                onPressed: () => _showUsageDialog(authProvider),
+                tooltip: 'Usage Status',
+              );
+            },
+          ),
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: AppColors.textPrimary),
             color: AppColors.surface,
@@ -324,6 +594,90 @@ class _ChatScreenState extends State<ChatScreen> {
               _buildMenuItem('delete', 'Delete', Icons.delete_outline),
               _buildMenuItem('settings', 'Settings', Icons.settings),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ADDITION: Usage dialog for free users
+  void _showUsageDialog(AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.show_chart, color: AppColors.primary, size: 24),
+            const SizedBox(width: 12),
+            AppText.displayMedium(
+              'Daily Usage',
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText.bodyMedium(
+              authProvider.usageText,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    'Free Plan Limits:',
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 8),
+                  AppText.bodySmall(
+                    '• ${PaymentService.FREE_DAILY_MESSAGES} messages per day\n• ${PaymentService.FREE_DAILY_IMAGES} images per day\n• ${PaymentService.FREE_DAILY_VOICE} voice inputs per day\n• ${PaymentService.FREE_PERSONAS_COUNT} personas available',
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: AppText.bodyMedium(
+              'Close',
+              color: AppColors.textSecondary,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: AppText.bodyMedium(
+              'Upgrade',
+              color: AppColors.background,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -444,18 +798,6 @@ class _ChatScreenState extends State<ChatScreen> {
             Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
           },
         ),
-        // floatingActionButton: _showScrollToTop
-        //     ? Positioned(
-        //         left: 32,
-        //         bottom: 100,
-        //         child: FloatingActionButton(
-        //           mini: true,
-        //           backgroundColor: AppColors.primary,
-        //           onPressed: _scrollToTop,
-        //           child: Icon(Icons.keyboard_arrow_up, color: AppColors.textPrimary),
-        //         ),
-        //       )
-        //     : null,
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

@@ -29,15 +29,38 @@ class SearchResult {
 
 class ConversationsProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
-  final String userId;
+  
+  String _userId;
+  String get userId => _userId;
+  
   List<ConversationSummary> _conversations = [];
   List<SearchResult> _searchResults = [];
   String _searchQuery = '';
   bool _isSearching = false;
   Timer? _debounceTimer;
 
-  ConversationsProvider({required this.userId}) {
-    loadConversations();
+  ConversationsProvider({required String userId}) : _userId = userId {
+    if (_userId.isNotEmpty) {
+      loadConversations();
+    }
+  }
+
+  // Update userId when user changes (for provider proxy)
+  void updateUserId(String newUserId) {
+    if (_userId != newUserId) {
+      _userId = newUserId;
+      _conversations.clear(); // Clear old conversations
+      _searchResults.clear();
+      _searchQuery = '';
+      _isSearching = false;
+      _debounceTimer?.cancel();
+      
+      if (newUserId.isNotEmpty) {
+        loadConversations(); // Load conversations for new user
+      } else {
+        notifyListeners(); // Notify listeners of cleared state
+      }
+    }
   }
 
   List<ConversationSummary> get conversations => _conversations;
@@ -48,21 +71,35 @@ class ConversationsProvider with ChangeNotifier {
   bool get isSearching => _isSearching;
 
   Future<void> loadConversations() async {
-    final data = await _firestoreService.getConversations(userId);
-    _conversations = data.map((map) {
-      return ConversationSummary(
-        id: map['id'],
-        title: map['title'],
-        createdAt: map['createdAt'],
-      );
-    }).toList();
-    
-    // Update search results if search is active
-    if (_isSearching) {
-      await _performSearch(_searchQuery);
+    if (_userId.isEmpty) {
+      print('❌ Cannot load conversations: userId is empty');
+      return;
     }
-    
-    notifyListeners();
+
+    try {
+      print('📂 Loading conversations for user: $_userId');
+      final data = await _firestoreService.getConversations(_userId);
+      _conversations = data.map((map) {
+        return ConversationSummary(
+          id: map['id'],
+          title: map['title'],
+          createdAt: map['createdAt'],
+        );
+      }).toList();
+      
+      print('✅ Loaded ${_conversations.length} conversations');
+      
+      // Update search results if search is active
+      if (_isSearching) {
+        await _performSearch(_searchQuery);
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error loading conversations: $e');
+      _conversations = [];
+      notifyListeners();
+    }
   }
 
   void searchConversations(String query) {
@@ -85,6 +122,8 @@ class ConversationsProvider with ChangeNotifier {
   }
 
   Future<void> _performSearch(String query) async {
+    if (_userId.isEmpty) return;
+
     final lowerQuery = query.toLowerCase().trim();
     _searchResults.clear();
 
@@ -103,7 +142,7 @@ class ConversationsProvider with ChangeNotifier {
       }
       
       try {
-        final messages = await _firestoreService.getMessages(userId, conversation.id);
+        final messages = await _firestoreService.getMessages(_userId, conversation.id);
         
         for (final message in messages) {
           if (message.text.toLowerCase().contains(lowerQuery)) {
@@ -212,39 +251,14 @@ class ConversationsProvider with ChangeNotifier {
   }
 
   Future<void> addConversation(String title) async {
-    final id = await _firestoreService.createConversationWithTitle(userId, title);
-    _conversations.insert(
-      0,
-      ConversationSummary(id: id, title: title, createdAt: DateTime.now().toIso8601String()),
-    );
-    
-    // Update search results if search is active
-    if (_isSearching) {
-      await _performSearch(_searchQuery);
-    }
-    
-    notifyListeners();
-  }
+    if (_userId.isEmpty) return;
 
-  Future<void> deleteConversation(String conversationId) async {
-    await _firestoreService.deleteConversation(userId, conversationId);
-    _conversations.removeWhere((c) => c.id == conversationId);
-    
-    // Update search results if search is active
-    if (_isSearching) {
-      _searchResults.removeWhere((r) => r.conversation.id == conversationId);
-    }
-    
-    notifyListeners();
-  }
-
-  Future<void> renameConversation(String conversationId, String newTitle) async {
-    final convoIndex = _conversations.indexWhere((c) => c.id == conversationId);
-    if (convoIndex != -1) {
-      _conversations[convoIndex].title = newTitle;
-      
-      // Update in Firestore
-      await _firestoreService.updateConversationTitle(userId, conversationId, newTitle);
+    try {
+      final id = await _firestoreService.createConversationWithTitle(_userId, title);
+      _conversations.insert(
+        0,
+        ConversationSummary(id: id, title: title, createdAt: DateTime.now().toIso8601String()),
+      );
       
       // Update search results if search is active
       if (_isSearching) {
@@ -252,7 +266,93 @@ class ConversationsProvider with ChangeNotifier {
       }
       
       notifyListeners();
+      print('✅ Conversation added: $title');
+    } catch (e) {
+      print('❌ Error adding conversation: $e');
+      rethrow;
     }
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    if (_userId.isEmpty) return;
+
+    try {
+      await _firestoreService.deleteConversation(_userId, conversationId);
+      _conversations.removeWhere((c) => c.id == conversationId);
+      
+      // Update search results if search is active
+      if (_isSearching) {
+        _searchResults.removeWhere((r) => r.conversation.id == conversationId);
+      }
+      
+      notifyListeners();
+      print('✅ Conversation deleted: $conversationId');
+    } catch (e) {
+      print('❌ Error deleting conversation: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> renameConversation(String conversationId, String newTitle) async {
+    if (_userId.isEmpty) return;
+
+    try {
+      final convoIndex = _conversations.indexWhere((c) => c.id == conversationId);
+      if (convoIndex != -1) {
+        _conversations[convoIndex].title = newTitle;
+        
+        // Update in Firestore
+        await _firestoreService.updateConversationTitle(_userId, conversationId, newTitle);
+        
+        // Update search results if search is active
+        if (_isSearching) {
+          await _performSearch(_searchQuery);
+        }
+        
+        notifyListeners();
+        print('✅ Conversation renamed: $conversationId -> $newTitle');
+      }
+    } catch (e) {
+      print('❌ Error renaming conversation: $e');
+      rethrow;
+    }
+  }
+
+  // Clear conversations when user logs out
+  void clearConversations() {
+    _conversations.clear();
+    _searchResults.clear();
+    _searchQuery = '';
+    _isSearching = false;
+    _debounceTimer?.cancel();
+    notifyListeners();
+  }
+
+  // Refresh conversations (useful after creating new conversation)
+  Future<void> refreshConversations() async {
+    await loadConversations();
+  }
+
+  // Get conversation by ID
+  ConversationSummary? getConversationById(String conversationId) {
+    try {
+      return _conversations.firstWhere((conv) => conv.id == conversationId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Check if a conversation exists
+  bool hasConversation(String conversationId) {
+    return _conversations.any((conv) => conv.id == conversationId);
+  }
+
+  // Get conversation count
+  int get conversationCount => _conversations.length;
+
+  // Get recent conversations (first 5)
+  List<ConversationSummary> get recentConversations {
+    return _conversations.take(5).toList();
   }
 
   @override
