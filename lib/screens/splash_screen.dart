@@ -18,6 +18,8 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  
+  bool _hasNavigated = false; // Prevent double navigation
 
   @override
   void initState() {
@@ -49,14 +51,101 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _startSplashSequence() {
     _animationController.forward();
-    Timer(const Duration(milliseconds: 2500), _navigate);
+    
+    // CRITICAL FIX: Wait for auth initialization AND minimum splash time
+    _waitForAuthAndNavigate();
+  }
+
+  Future<void> _waitForAuthAndNavigate() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Start minimum splash timer
+    final splashTimer = Timer(const Duration(milliseconds: 2500), () {
+      // This ensures minimum splash time regardless of auth speed
+    });
+
+    try {
+      // CRITICAL: Wait for both conditions:
+      // 1. Minimum splash time (for UX)
+      // 2. Auth provider to be fully initialized
+
+      await Future.wait([
+        // Wait for minimum splash time
+        Future.delayed(const Duration(milliseconds: 2500)),
+        
+        // Wait for auth initialization if user exists
+        _waitForAuthInitialization(authProvider),
+      ]);
+
+      // Navigate after both conditions are met
+      if (mounted && !_hasNavigated) {
+        _navigate();
+      }
+    } catch (e) {
+      print('❌ Error during splash initialization: $e');
+      
+      // Fallback: navigate anyway after timeout
+      if (mounted && !_hasNavigated) {
+        await Future.delayed(const Duration(milliseconds: 1000));
+        _navigate();
+      }
+    }
+  }
+
+  Future<void> _waitForAuthInitialization(AuthProvider authProvider) async {
+    // If no Firebase user, no need to wait
+    if (authProvider.user == null) {
+      print('✅ No user, skipping auth initialization wait');
+      return;
+    }
+
+    print('🔄 Waiting for auth initialization...');
+    
+    // Wait for current user data to be loaded
+    const maxWaitTime = Duration(seconds: 10); // Safety timeout
+    const checkInterval = Duration(milliseconds: 100);
+    
+    final stopwatch = Stopwatch()..start();
+    
+    while (stopwatch.elapsed < maxWaitTime) {
+      // Check if auth provider has finished loading user data
+      if (authProvider.currentUser != null) {
+        print('✅ Auth initialization completed in ${stopwatch.elapsedMilliseconds}ms');
+        return;
+      }
+      
+      // Wait before next check
+      await Future.delayed(checkInterval);
+    }
+    
+    // Timeout reached
+    print('⚠️ Auth initialization timeout after ${stopwatch.elapsedMilliseconds}ms');
   }
 
   void _navigate() {
+    if (_hasNavigated) return;
+    _hasNavigated = true;
+    
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isLoggedIn = authProvider.user != null;
+    
+    // CRITICAL FIX: Check both Firebase user AND currentUser data
+    final hasFirebaseUser = authProvider.user != null;
+    final hasUserData = authProvider.currentUser != null;
+    final isFullyLoggedIn = hasFirebaseUser && hasUserData;
 
-    Navigator.pushReplacementNamed(context, isLoggedIn ? '/chat' : '/welcome');
+    print('🧭 Navigation decision:');
+    print('   Firebase user: $hasFirebaseUser');
+    print('   User data: $hasUserData');
+    print('   Fully logged in: $isFullyLoggedIn');
+    print('   Premium status: ${authProvider.currentUser?.hasActiveSubscription}');
+
+    if (isFullyLoggedIn) {
+      print('✅ Navigating to chat screen');
+      Navigator.pushReplacementNamed(context, '/chat');
+    } else {
+      print('✅ Navigating to welcome screen');
+      Navigator.pushReplacementNamed(context, '/welcome');
+    }
   }
 
   @override
@@ -140,6 +229,28 @@ class _SplashScreenState extends State<SplashScreen>
                         'AI-Powered Conversations',
                         color: AppColors.textSecondary,
                         textAlign: TextAlign.center,
+                      ),
+                    ),
+                    
+                    // Add loading indicator for better UX
+                    const SizedBox(height: 48),
+                    
+                    FadeTransition(
+                      opacity: Tween<double>(begin: 0.0, end: 0.5).animate(
+                        CurvedAnimation(
+                          parent: _animationController,
+                          curve: const Interval(0.8, 1.0, curve: Curves.easeIn),
+                        ),
+                      ),
+                      child: const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.textTertiary,
+                          ),
+                        ),
                       ),
                     ),
                   ],
