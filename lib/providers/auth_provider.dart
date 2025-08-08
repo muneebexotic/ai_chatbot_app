@@ -54,7 +54,8 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
-  // CRITICAL FIX: Enhanced user sign-in with proper isolation
+  // REPLACE your existing _handleUserSignIn method in AuthProvider with this updated version:
+
   Future<void> _handleUserSignIn(User firebaseUser) async {
     try {
       print('🔄 Handling user sign-in: ${firebaseUser.uid}');
@@ -69,6 +70,21 @@ class AuthProvider with ChangeNotifier {
 
       // CRITICAL: Initialize payment service for this specific user AFTER loading user data
       await _paymentService.initializeForUser();
+
+      // NEW: Sync Google Play subscription status with Firestore
+      print('🔄 Syncing subscription status with Google Play...');
+      await _paymentService.syncSubscriptionWithGooglePlay();
+
+      // Reload user data after potential subscription sync
+      if (currentUser != null) {
+        final updatedUserData = await _firestoreService.getUser(
+          firebaseUser.uid,
+        );
+        if (updatedUserData != null) {
+          currentUser = updatedUserData;
+          print('✅ User data reloaded after subscription sync');
+        }
+      }
 
       // Sync and validate subscription status
       await _validateAndSyncUserSubscription();

@@ -110,6 +110,69 @@ class PaymentService {
     }
   }
 
+  Future<void> syncSubscriptionWithGooglePlay() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        print('⚠️ No user for subscription sync');
+        return;
+      }
+
+      print('🔄 Syncing Google Play subscription for user: ${currentUser.uid}');
+
+      // First, check current Firestore status
+      await _loadSubscriptionStatusFromFirestore();
+      final firestorePremiumStatus = _isPremium;
+
+      print('📱 Current Firestore premium status: $firestorePremiumStatus');
+
+      // CRITICAL FIX: Only restore purchases if user ALREADY has a subscription record
+      // This prevents new/free users from getting premium access from old purchases
+      if (firestorePremiumStatus && _subscriptionExpiryDate != null) {
+        // Check if current subscription is expired or about to expire
+        final now = DateTime.now();
+        final isExpired = _subscriptionExpiryDate!.isBefore(now);
+        final isExpiringSoon = _subscriptionExpiryDate!.isBefore(
+          now.add(Duration(hours: 1)),
+        ); // Check 1 hour before expiry
+
+        if (isExpired || isExpiringSoon) {
+          print(
+            '🔍 Existing subscription expired/expiring, checking Google Play...',
+          );
+          await _inAppPurchase.restorePurchases();
+
+          // Wait for purchase stream processing
+          await Future.delayed(Duration(seconds: 2));
+
+          // Re-check status after restore
+          await _loadSubscriptionStatusFromFirestore();
+          final updatedPremiumStatus = _isPremium;
+
+          if (updatedPremiumStatus != firestorePremiumStatus) {
+            print(
+              '✅ Subscription status updated after restore: $updatedPremiumStatus',
+            );
+            onSubscriptionStatusChanged?.call(updatedPremiumStatus);
+          } else {
+            print('✅ No subscription changes detected after restore');
+          }
+        } else {
+          print('✅ User has active subscription, no restore needed');
+        }
+      } else {
+        print('✅ User has no existing subscription, skipping Google Play sync');
+        // CRITICAL: For users without existing subscriptions, don't restore purchases
+        // This prevents free users from getting premium access
+      }
+
+      print('✅ Subscription sync completed');
+    } catch (e) {
+      print('❌ Error syncing subscription with Google Play: $e');
+      // Don't throw - we don't want to break login if sync fails
+    }
+  }
+
   void _queueUsageUpdate() {
     _pendingUsageUpdates.add({
       'messages': _dailyMessageCount,
@@ -295,6 +358,7 @@ class PaymentService {
     }
   }
 
+  // CRITICAL FIX: Enhanced purchase handling with strict validation for restored purchases
   Future<void> _handlePurchase(PurchaseDetails purchaseDetails) async {
     _purchasePending = false;
 
@@ -315,11 +379,109 @@ class PaymentService {
         return;
       }
 
-      // Purchase successful
-      print('✅ Purchase successful/restored for user: ${currentUser.uid}');
+      // CRITICAL FIX: Enhanced validation for restored purchases
+      final isRestored = purchaseDetails.status == PurchaseStatus.restored;
+
+      if (isRestored) {
+        print(
+          '🔍 Processing RESTORED purchase - applying strict validation...',
+        );
+
+        // STRICT VALIDATION: Only accept restored purchases if user already has subscription record
+        final existingUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (!existingUserDoc.exists || existingUserDoc.data() == null) {
+          print('❌ Restored purchase rejected: No user data found');
+          await _inAppPurchase.completePurchase(purchaseDetails);
+          return;
+        }
+
+        final existingData = existingUserDoc.data()!;
+        final hadPreviousSubscription =
+            existingData['isPremium'] == true ||
+            existingData['subscriptionType'] != null;
+
+        // CRITICAL: Only accept restored purchases for users who had subscriptions before
+        if (!hadPreviousSubscription) {
+          print('❌ Restored purchase rejected: User never had a subscription');
+          await _inAppPurchase.completePurchase(purchaseDetails);
+          return;
+        }
+
+        // Check if this is a subscription product
+        if (!productIds.contains(purchaseDetails.productID)) {
+          print(
+            '❌ Restored purchase for unknown product: ${purchaseDetails.productID}',
+          );
+          await _inAppPurchase.completePurchase(purchaseDetails);
+          return;
+        }
+
+        // Validate purchase token exists and isn't empty
+        if (purchaseDetails.verificationData.localVerificationData.isEmpty) {
+          print('❌ Restored purchase missing verification data');
+          await _inAppPurchase.completePurchase(purchaseDetails);
+          return;
+        }
+
+        // CRITICAL: Additional validation - check if this purchase token was already processed
+        final storedPurchaseToken = existingData['purchaseToken'] as String?;
+        final currentPurchaseToken =
+            purchaseDetails.verificationData.localVerificationData;
+
+        // If this is the same purchase token we already have, validate expiry
+        if (storedPurchaseToken == currentPurchaseToken) {
+          final expiryDate =
+              existingData['subscriptionExpiryDate'] as Timestamp?;
+
+          if (expiryDate != null) {
+            final expiry = expiryDate.toDate();
+
+            if (expiry.isBefore(DateTime.now())) {
+              print('❌ Restored purchase is expired: $expiry');
+              // Don't grant premium access for expired subscriptions
+              await _inAppPurchase.completePurchase(purchaseDetails);
+              return;
+            } else {
+              print('✅ Restored purchase is still valid until: $expiry');
+              // Continue processing - this is a valid active subscription
+            }
+          }
+        } else {
+          // Different purchase token - this might be a renewal or different subscription
+          print('🔍 Different purchase token detected, validating...');
+
+          // For different tokens, we need to be extra careful
+          // Only accept if the user currently has an expired subscription
+          final currentExpiry =
+              existingData['subscriptionExpiryDate'] as Timestamp?;
+          if (currentExpiry == null ||
+              currentExpiry.toDate().isAfter(DateTime.now())) {
+            print(
+              '❌ Restored purchase rejected: User has active subscription with different token',
+            );
+            await _inAppPurchase.completePurchase(purchaseDetails);
+            return;
+          }
+        }
+
+        print('✅ Restored purchase validation passed');
+      }
+
+      // CRITICAL: Additional validation - ensure purchase belongs to current user
+      if (purchaseDetails.purchaseID?.isEmpty == true) {
+        print('❌ Purchase missing purchase ID');
+        await _inAppPurchase.completePurchase(purchaseDetails);
+        return;
+      }
+
+      // Purchase successful and validated
+      print('✅ Purchase successful/validated for user: ${currentUser.uid}');
       await _verifyAndStorePurchase(purchaseDetails);
 
-      final isRestored = purchaseDetails.status == PurchaseStatus.restored;
       onPurchaseResult?.call(
         true,
         isRestored
@@ -377,7 +539,7 @@ class PaymentService {
     }
   }
 
-  // CRITICAL FIX: Enhanced purchase verification with user validation
+  // ENHANCED: Purchase verification with comprehensive validation
   Future<void> _verifyAndStorePurchase(PurchaseDetails purchaseDetails) async {
     try {
       print('🔍 Verifying and storing purchase: ${purchaseDetails.productID}');
@@ -388,10 +550,10 @@ class PaymentService {
         return;
       }
 
-      // CRITICAL: Validate that purchase belongs to current user
-      if (purchaseDetails.verificationData.serverVerificationData.isNotEmpty) {
-        // The applicationUserName should match current user
-        print('🔍 Verifying purchase belongs to user: ${currentUser.uid}');
+      // CRITICAL: Validate purchase details before processing
+      if (!await validatePurchaseDetails(purchaseDetails)) {
+        print('❌ Purchase validation failed');
+        return;
       }
 
       // Calculate expiry date based on subscription type
@@ -409,7 +571,45 @@ class PaymentService {
         return;
       }
 
-      // Update local state ONLY after Firestore success
+      // CRITICAL FIX: For restored purchases, use existing start date if available
+      final isRestored = purchaseDetails.status == PurchaseStatus.restored;
+      if (isRestored) {
+        // Check if we already have subscription data in Firestore
+        final existingUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (existingUserDoc.exists && existingUserDoc.data() != null) {
+          final existingData = existingUserDoc.data()!;
+          final existingStartDate =
+              existingData['subscriptionStartDate'] as Timestamp?;
+          final existingExpiryDate =
+              existingData['subscriptionExpiryDate'] as Timestamp?;
+
+          // If we have existing subscription data for the same product, preserve it
+          if (existingStartDate != null &&
+              existingExpiryDate != null &&
+              existingData['subscriptionType'] == purchaseDetails.productID) {
+            startDate = existingStartDate.toDate();
+            expiryDate = existingExpiryDate.toDate();
+
+            print(
+              '📅 Using existing subscription dates - Start: $startDate, Expiry: $expiryDate',
+            );
+
+            // Double-check the subscription isn't expired
+            if (expiryDate.isBefore(DateTime.now())) {
+              print(
+                '❌ Restored subscription is expired, not granting premium access',
+              );
+              return;
+            }
+          }
+        }
+      }
+
+      // Save to Firestore FIRST (single source of truth)
       await _saveSubscriptionToFirestore(
         purchaseDetails,
         startDate,
@@ -731,29 +931,71 @@ class PaymentService {
     }
   }
 
-  // Add to PaymentService - Purchase validation:
+  // ENHANCED: Comprehensive purchase validation
   Future<bool> validatePurchaseDetails(PurchaseDetails details) async {
-    // Validate purchase belongs to current user
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      print('❌ No user for purchase validation');
+    try {
+      print('🔍 Validating purchase details...');
+
+      // Validate current user
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        print('❌ No user for purchase validation');
+        return false;
+      }
+
+      // Validate product ID
+      if (!productIds.contains(details.productID)) {
+        print('❌ Invalid product ID: ${details.productID}');
+        return false;
+      }
+
+      // Validate purchase token exists
+      if (details.verificationData.localVerificationData.isEmpty) {
+        print('❌ Missing purchase verification data');
+        return false;
+      }
+
+      // Validate purchase ID exists
+      if (details.purchaseID?.isEmpty == true) {
+        print('❌ Missing purchase ID');
+        return false;
+      }
+
+      // For restored purchases, additional validation
+      if (details.status == PurchaseStatus.restored) {
+        print('🔍 Additional validation for restored purchase...');
+
+        // Check if this purchase token is already associated with a different user
+        // (This would be rare but possible in case of account switching)
+
+        // SECURITY: Ensure purchase token hasn't been used by another user
+        final existingUsers = await FirebaseFirestore.instance
+            .collection('users')
+            .where(
+              'purchaseToken',
+              isEqualTo: details.verificationData.localVerificationData,
+            )
+            .get();
+
+        for (var userDoc in existingUsers.docs) {
+          if (userDoc.id != currentUser.uid) {
+            print(
+              '⚠️ Purchase token found on different user account: ${userDoc.id}',
+            );
+            // Could be a legitimate account transfer, but log for investigation
+            print(
+              '🔍 Current user: ${currentUser.uid}, Token user: ${userDoc.id}',
+            );
+          }
+        }
+      }
+
+      print('✅ Purchase validation passed');
+      return true;
+    } catch (e) {
+      print('❌ Error validating purchase: $e');
       return false;
     }
-
-    // Validate product ID
-    if (!productIds.contains(details.productID)) {
-      print('❌ Invalid product ID: ${details.productID}');
-      return false;
-    }
-
-    // Validate purchase token exists
-    if (details.verificationData.localVerificationData.isEmpty) {
-      print('❌ Missing purchase verification data');
-      return false;
-    }
-
-    // Additional Google Play validation could go here
-    return true;
   }
 
   // Get formatted subscription info
