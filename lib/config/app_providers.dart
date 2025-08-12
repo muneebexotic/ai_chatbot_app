@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/themes_provider.dart';
 import '../providers/conversation_provider.dart';
+import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
 
 List<SingleChildWidget> buildAppProviders() {
@@ -22,6 +23,20 @@ List<SingleChildWidget> buildAppProviders() {
         return settingsProvider;
       },
     ),
+
+    ChangeNotifierProxyProvider<AuthProvider, SubscriptionProvider>(
+      create: (context) {
+        final authProvider = context.read<AuthProvider>();
+        return SubscriptionProvider(authProvider.paymentService);
+      },
+      update: (_, authProvider, subscriptionProvider) {
+        if (subscriptionProvider != null) {
+          return subscriptionProvider;
+        }
+        return SubscriptionProvider(authProvider.paymentService);
+      },
+    ),
+
     ChangeNotifierProxyProvider<AuthProvider, ConversationsProvider>(
       create: (_) => ConversationsProvider(userId: ''),
       update: (_, auth, previous) {
