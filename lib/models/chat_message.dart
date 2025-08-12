@@ -13,6 +13,13 @@ class ChatMessage {
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 
+  /// Validation method to check if the message is valid
+  bool isValid() {
+    return text.trim().isNotEmpty && 
+           sender.trim().isNotEmpty && 
+           (sender == 'user' || sender == 'bot');
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'text': text,

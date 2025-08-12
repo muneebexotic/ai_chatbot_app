@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,127 +11,325 @@ import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
 import '../services/payment_service.dart';
 
+/// Enhanced AuthProvider with improved state management and error handling
 class AuthProvider with ChangeNotifier {
+  // Core services
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirestoreService _firestoreService = FirestoreService();
   final CloudinaryService _cloudinaryService = CloudinaryService();
   final PaymentService _paymentService = PaymentService();
 
-  User? user;
-  AppUser? currentUser;
+  // State variables
+  User? _firebaseUser;
+  AppUser? _currentUser;
   GoogleSignInAccount? _googleSignInAccount;
+  
+  // Status flags
   bool _isGoogleSignIn = false;
-  bool _isGoogleSignInInitialized = false;
-  bool _isPaymentServiceInitialized = false;
+  bool _isInitialized = false;
   bool _isRefreshing = false;
-  bool? _lastKnownPremiumStatus;
+  bool _isProcessingAuthChange = false;
+  
+  // Stream subscriptions for cleanup
+  StreamSubscription<User?>? _authStateSubscription;
+  Timer? _subscriptionCheckTimer;
+  
+  // Cache management
+  DateTime? _lastUserDataRefresh;
+  static const Duration USER_DATA_CACHE_DURATION = Duration(minutes: 3);
 
-  String get displayName => currentUser?.username ?? "User";
-  String? _userPhotoUrl;
-  String? get userPhotoUrl => _userPhotoUrl ?? currentUser?.photoUrl;
-  String get email => currentUser?.email ?? 'user@example.com';
-
-  // CRITICAL FIX: Payment service getters - Always use Firestore data as single source of truth
+  // Public getters
+  User? get user => _firebaseUser;
+  AppUser? get currentUser => _currentUser;
+  bool get isLoggedIn => _firebaseUser != null && _currentUser != null;
+  bool get isGoogleSignIn => _isGoogleSignIn;
+  bool get isInitialized => _isInitialized;
+  
+  // User info getters
+  String get displayName => _currentUser?.username ?? _firebaseUser?.displayName ?? "User";
+  String get email => _currentUser?.email ?? _firebaseUser?.email ?? 'user@example.com';
+  String? get userPhotoUrl => _currentUser?.photoUrl ?? _firebaseUser?.photoURL;
+  
+  // Subscription getters (delegated to current user data)
+  bool get isPremium => _currentUser?.hasActiveSubscription ?? false;
   PaymentService get paymentService => _paymentService;
-  bool get isPremium =>
-      currentUser?.hasActiveSubscription ?? false; // Only from Firestore
-  String get subscriptionStatus => _getSubscriptionStatus();
-  String get usageText => _getUsageText();
-
-  AuthProvider() {
-    user = _auth.currentUser;
-    _initializeServices();
-    _auth.authStateChanges().listen((u) async {
-      user = u;
-      if (user != null) {
-        print('✅ Firebase user detected: ${user!.uid}');
-        await _handleUserSignIn(user!);
-      } else {
-        print('👋 User signed out or null');
-        await _handleUserSignOut();
-      }
-      notifyListeners();
-    });
+  
+  String get subscriptionStatus {
+    if (_currentUser?.hasActiveSubscription == true) {
+      final type = _currentUser!.subscriptionType == 'premium_monthly' ? 'Monthly' : 'Yearly';
+      final days = _currentUser!.daysUntilExpiry;
+      return days > 0 ? 'Premium $type ($days days left)' : 'Premium $type (Expired)';
+    }
+    return 'Free Plan';
+  }
+  
+  String get usageText {
+    if (_currentUser?.hasActiveSubscription == true) return 'Unlimited usage';
+    
+    if (_currentUser != null) {
+      final messages = _currentUser!.dailyUsage['messages'] ?? 0;
+      final images = _currentUser!.dailyUsage['images'] ?? 0;
+      final voice = _currentUser!.dailyUsage['voice'] ?? 0;
+      
+      return 'Messages: $messages/${PaymentService.FREE_DAILY_MESSAGES}, '
+             'Images: $images/${PaymentService.FREE_DAILY_IMAGES}, '
+             'Voice: $voice/${PaymentService.FREE_DAILY_VOICE}';
+    }
+    
+    return 'No usage data';
   }
 
-  // REPLACE your existing _handleUserSignIn method in AuthProvider with this updated version:
+  /// Constructor - Initialize the provider
+  AuthProvider() {
+    _initialize();
+  }
 
-  Future<void> _handleUserSignIn(User firebaseUser) async {
+  /// Initialize the auth provider
+  Future<void> _initialize() async {
     try {
-      print('🔄 Handling user sign-in: ${firebaseUser.uid}');
-
-      // CRITICAL: Clear payment service before loading new user
-      await _paymentService.clearUserData();
-
-      // Load user data from Firestore
-      currentUser = await _firestoreService.getUser(firebaseUser.uid);
-      print('✅ Firestore user loaded: ${currentUser?.uid}');
-      _userPhotoUrl = currentUser?.photoUrl;
-
-      // CRITICAL: Initialize payment service for this specific user AFTER loading user data
-      await _paymentService.initializeForUser();
-
-      // NEW: Sync Google Play subscription status with Firestore
-      print('🔄 Syncing subscription status with Google Play...');
-      await _paymentService.syncSubscriptionWithGooglePlay();
-
-      // Reload user data after potential subscription sync
-      if (currentUser != null) {
-        final updatedUserData = await _firestoreService.getUser(
-          firebaseUser.uid,
-        );
-        if (updatedUserData != null) {
-          currentUser = updatedUserData;
-          print('✅ User data reloaded after subscription sync');
-        }
+      print('🔄 Initializing AuthProvider...');
+      
+      // Initialize payment service first
+      await _initializePaymentService();
+      
+      // Initialize Google Sign-In
+      await _initializeGoogleSignIn();
+      
+      // Set up auth state listener
+      _setupAuthStateListener();
+      
+      // Check current auth state
+      _firebaseUser = _auth.currentUser;
+      if (_firebaseUser != null) {
+        await _handleUserSignIn(_firebaseUser!);
       }
-
-      // Sync and validate subscription status
-      await _validateAndSyncUserSubscription();
-
-      print(
-        '✅ User sign-in completed for: ${firebaseUser.uid}, Premium: ${currentUser?.hasActiveSubscription}',
-      );
+      
+      // Start periodic subscription checks
+      _startPeriodicSubscriptionCheck();
+      
+      _isInitialized = true;
+      print('✅ AuthProvider initialized successfully');
+      
     } catch (e) {
-      print('❌ Error handling user sign-in: $e');
+      print('❌ AuthProvider initialization failed: $e');
+      _isInitialized = true; // Set to true even on failure to prevent blocking
     }
   }
 
-  // CRITICAL FIX: Complete user sign-out with proper cleanup
+  /// Initialize payment service with callbacks
+  Future<void> _initializePaymentService() async {
+    try {
+      await _paymentService.initialize();
+      
+      // Set up payment callbacks
+      _paymentService.onPurchaseResult = _handlePurchaseResult;
+      _paymentService.onSubscriptionStatusChanged = _handleSubscriptionStatusChange;
+      
+      print('✅ Payment service initialized with callbacks');
+      
+    } catch (e) {
+      print('❌ Payment service initialization failed: $e');
+    }
+  }
+
+  /// Initialize Google Sign-In
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      if (_googleSignIn.supportsAuthenticate()) {
+        await _googleSignIn.initialize();
+        print('✅ Google Sign-In initialized');
+      } else {
+        print('⚠️ Google Sign-In not supported on this platform');
+      }
+    } catch (e) {
+      print('❌ Google Sign-In initialization failed: $e');
+    }
+  }
+
+  /// Set up auth state change listener
+  void _setupAuthStateListener() {
+    _authStateSubscription?.cancel();
+    
+    _authStateSubscription = _auth.authStateChanges().listen(
+      (User? user) => _handleAuthStateChange(user),
+      onError: (error) => print('❌ Auth state change error: $error'),
+    );
+  }
+
+  /// Handle authentication state changes
+  Future<void> _handleAuthStateChange(User? user) async {
+    if (_isProcessingAuthChange) {
+      print('⚠️ Already processing auth change, skipping...');
+      return;
+    }
+    
+    _isProcessingAuthChange = true;
+    
+    try {
+      _firebaseUser = user;
+      
+      if (user != null) {
+        print('👤 User signed in: ${user.uid}');
+        await _handleUserSignIn(user);
+      } else {
+        print('👋 User signed out');
+        await _handleUserSignOut();
+      }
+      
+      if (!_isRefreshing) {
+        notifyListeners();
+      }
+      
+    } catch (e) {
+      print('❌ Error handling auth state change: $e');
+    } finally {
+      _isProcessingAuthChange = false;
+    }
+  }
+
+  /// Handle user sign in
+  Future<void> _handleUserSignIn(User firebaseUser) async {
+    try {
+      print('🔄 Processing user sign-in: ${firebaseUser.uid}');
+      
+      // Clear previous payment service data
+      await _paymentService.clearUserData();
+      
+      // Load or create user data
+      await _loadOrCreateUserData(firebaseUser);
+      
+      // Initialize payment service for this user
+      await _paymentService.initializeForUser(firebaseUser.uid);
+      
+      // Validate and sync subscription status
+      await _validateAndSyncSubscriptionStatus();
+      
+      print('✅ User sign-in completed: ${firebaseUser.uid}');
+      
+    } catch (e) {
+      print('❌ Error handling user sign-in: $e');
+      throw AuthException('Failed to process user sign-in: $e');
+    }
+  }
+
+  /// Load or create user data
+  Future<void> _loadOrCreateUserData(User firebaseUser) async {
+    try {
+      // Try to load existing user data
+      _currentUser = await _firestoreService.getUserWithCache(firebaseUser.uid);
+      
+      if (_currentUser == null) {
+        // Create new user
+        print('🆕 Creating new user profile');
+        await _createNewUserProfile(firebaseUser);
+      } else {
+        // Update existing user if needed
+        await _updateExistingUserProfile(firebaseUser);
+      }
+      
+      _lastUserDataRefresh = DateTime.now();
+      print('✅ User data loaded/created successfully');
+      
+    } catch (e) {
+      print('❌ Error loading/creating user data: $e');
+      rethrow;
+    }
+  }
+
+  /// Create new user profile
+  Future<void> _createNewUserProfile(User firebaseUser) async {
+    final displayName = firebaseUser.displayName ?? 
+                       firebaseUser.email?.split('@')[0] ?? 
+                       'User';
+    
+    _currentUser = AppUser(
+      uid: firebaseUser.uid,
+      email: firebaseUser.email!,
+      username: displayName,
+      photoUrl: firebaseUser.photoURL ?? '',
+      createdAt: DateTime.now(),
+    );
+    
+    await _firestoreService.saveUserWithRetry(_currentUser!);
+    print('✅ New user profile created');
+  }
+
+  /// Update existing user profile
+  Future<void> _updateExistingUserProfile(User firebaseUser) async {
+    bool needsUpdate = false;
+    AppUser updatedUser = _currentUser!;
+    
+    // Update display name if changed
+    final currentDisplayName = firebaseUser.displayName ?? 
+                              firebaseUser.email?.split('@')[0] ?? 
+                              'User';
+    
+    if (updatedUser.username != currentDisplayName) {
+      updatedUser = updatedUser.copyWith(username: currentDisplayName);
+      needsUpdate = true;
+    }
+    
+    // Update photo URL if changed (for Google users)
+    if (_isGoogleSignIn && firebaseUser.photoURL != updatedUser.photoUrl) {
+      updatedUser = updatedUser.copyWith(photoUrl: firebaseUser.photoURL);
+      needsUpdate = true;
+    }
+    
+    // Reset daily usage if needed
+    if (updatedUser.needsUsageReset()) {
+      updatedUser = updatedUser.resetDailyUsage();
+      needsUpdate = true;
+      print('🔄 Daily usage reset for new day');
+    }
+    
+    if (needsUpdate) {
+      _currentUser = updatedUser;
+      await _firestoreService.saveUserWithRetry(_currentUser!);
+      print('✅ User profile updated');
+    }
+  }
+
+  /// Handle user sign out
   Future<void> _handleUserSignOut() async {
     try {
-      print('🔄 Handling user sign-out...');
-
-      // CRITICAL: Clear payment service data FIRST
+      print('🔄 Processing user sign-out...');
+      
+      // Clear payment service data
       await _paymentService.clearUserData();
-
-      // Clear local user data
-      currentUser = null;
-      _userPhotoUrl = null;
+      
+      // Clear user cache
+      if (_currentUser != null) {
+        _firestoreService.clearUserCache(_currentUser!.uid);
+      }
+      
+      // Clear local state
+      _currentUser = null;
       _isGoogleSignIn = false;
       _googleSignInAccount = null;
-
-      print('✅ User sign-out cleanup completed');
+      _lastUserDataRefresh = null;
+      
+      print('✅ User sign-out completed');
+      
     } catch (e) {
       print('❌ Error handling user sign-out: $e');
     }
   }
 
-  // CRITICAL FIX: Validate and sync subscription status with comprehensive checks
-  Future<void> _validateAndSyncUserSubscription() async {
-    if (currentUser == null) return;
-
+  /// Validate and sync subscription status
+  Future<void> _validateAndSyncSubscriptionStatus() async {
+    if (_currentUser == null) return;
+    
     try {
-      print('🔄 Validating and syncing subscription status...');
-
+      print('🔄 Validating subscription status...');
+      
       bool needsUpdate = false;
-      AppUser updatedUser = currentUser!;
-
-      // Check if subscription has expired in Firestore
+      AppUser updatedUser = _currentUser!;
+      
+      // Check if subscription expired
       if (updatedUser.isSubscriptionExpired) {
-        print('⚠️ User subscription expired in Firestore, updating...');
-        await _firestoreService.cancelUserSubscription(user!.uid);
+        print('⚠️ Subscription expired, updating status...');
+        await _firestoreService.cancelUserSubscription(_firebaseUser!.uid);
         updatedUser = updatedUser.copyWith(
           isPremium: false,
           subscriptionType: null,
@@ -138,135 +337,64 @@ class AuthProvider with ChangeNotifier {
         );
         needsUpdate = true;
       }
-
-      // Reset daily usage if needed
-      if (updatedUser.needsUsageReset()) {
-        print('🔄 Resetting daily usage for new day');
-        updatedUser = updatedUser.resetDailyUsage();
-        needsUpdate = true;
-      }
-
-      // Save updated user data if changes were made
+      
+      // Save updates if needed
       if (needsUpdate) {
-        await _firestoreService.saveUser(updatedUser);
-        currentUser = updatedUser;
-        print('✅ User data updated and synced');
+        _currentUser = updatedUser;
+        await _firestoreService.saveUserWithRetry(_currentUser!);
+        print('✅ Subscription status updated');
+        notifyListeners();
       }
-
-      // Validate against payment service
-      final paymentServicePremium = _paymentService.isPremium;
-      final firestorePremium = currentUser!.hasActiveSubscription;
-
-      if (paymentServicePremium != firestorePremium) {
-        print('⚠️ Subscription status mismatch detected!');
-        print('📱 Payment Service: $paymentServicePremium');
-        print('🔥 Firestore: $firestorePremium');
-
-        // Firestore is the single source of truth - update payment service
-        print('🔄 Updating payment service to match Firestore...');
-        await _paymentService.initializeForUser(); // Re-sync with Firestore
-      }
-
-      print('✅ Subscription validation completed');
-      notifyListeners();
+      
     } catch (e) {
       print('❌ Error validating subscription: $e');
     }
   }
 
-  // Initialize both Google Sign-In and Payment Service
-  Future<void> _initializeServices() async {
-    await _initializeGoogleSignIn();
-    await _initializePaymentService();
-  }
-
-  Future<void> _initializeGoogleSignIn() async {
-    try {
-      await _googleSignIn.initialize();
-      _isGoogleSignInInitialized = true;
-      print('✅ Google Sign-In initialized');
-    } catch (e) {
-      print('❌ Failed to initialize Google Sign-In: $e');
-      _isGoogleSignInInitialized = false;
-    }
-  }
-
-  Future<void> _initializePaymentService() async {
-    try {
-      await _paymentService.initialize();
-
-      // Set up payment callbacks
-      _paymentService.onPurchaseResult = (success, message) {
-        _handlePurchaseResult(success, message);
-      };
-
-      _paymentService.onSubscriptionStatusChanged = (isSubscribed) {
-        _handleSubscriptionStatusChange(isSubscribed);
-      };
-
-      _isPaymentServiceInitialized = true;
-      print('✅ Payment Service initialized');
-    } catch (e) {
-      print('❌ Failed to initialize Payment Service: $e');
-      _isPaymentServiceInitialized = false;
-    }
-  }
-
+  /// Handle purchase result callback
   void _handlePurchaseResult(bool success, String message) {
     if (success) {
       Fluttertoast.showToast(
         msg: message,
         backgroundColor: Colors.green,
         textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG,
       );
-      // CRITICAL: Refresh user data from Firestore after successful purchase
       _refreshUserDataFromFirestore();
     } else {
       Fluttertoast.showToast(
         msg: message,
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG,
       );
     }
   }
 
+  /// Handle subscription status change callback
   void _handleSubscriptionStatusChange(bool isSubscribed) {
     print('💳 Subscription status changed: $isSubscribed');
-    // Only refresh if status actually changed
-    if (_lastKnownPremiumStatus != isSubscribed) {
-      _refreshUserDataFromFirestore();
-    }
+    _refreshUserDataFromFirestore();
   }
 
-  // CRITICAL FIX: Always refresh from Firestore as single source of truth
+  /// Refresh user data from Firestore
   Future<void> _refreshUserDataFromFirestore() async {
-    if (user == null || _isRefreshing)
-      return; // Prevent multiple simultaneous refreshes
-
-    _isRefreshing = true; // Add this flag to your class
-
+    if (_firebaseUser == null || _isRefreshing) return;
+    
+    _isRefreshing = true;
+    
     try {
       print('🔄 Refreshing user data from Firestore...');
-
-      // Reload user data from Firestore (single source of truth)
-      final freshUserData = await _firestoreService.getUser(user!.uid);
-
+      
+      final freshUserData = await _firestoreService.getUser(_firebaseUser!.uid);
       if (freshUserData != null) {
-        currentUser = freshUserData;
-
-        // Only re-initialize payment service if subscription status actually changed
-        final oldPremiumStatus = _lastKnownPremiumStatus;
-        final newPremiumStatus = currentUser!.hasActiveSubscription;
-
-        if (oldPremiumStatus != newPremiumStatus) {
-          _lastKnownPremiumStatus = newPremiumStatus;
-          await _paymentService.initializeForUser();
-          print('✅ Payment service re-initialized due to subscription change');
-        }
+        _currentUser = freshUserData;
+        _lastUserDataRefresh = DateTime.now();
+        print('✅ User data refreshed');
       }
-
-      print('✅ User data refreshed from Firestore');
+      
       notifyListeners();
+      
     } catch (e) {
       print('❌ Error refreshing user data: $e');
     } finally {
@@ -274,164 +402,25 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Ensure services are initialized before use
-  Future<void> _ensureServicesInitialized() async {
-    if (!_isGoogleSignInInitialized) {
-      await _initializeGoogleSignIn();
-    }
-    if (!_isPaymentServiceInitialized) {
-      await _initializePaymentService();
-    }
+  /// Start periodic subscription status checks
+  void _startPeriodicSubscriptionCheck() {
+    _subscriptionCheckTimer?.cancel();
+    
+    _subscriptionCheckTimer = Timer.periodic(
+      const Duration(hours: 1),
+      (_) => _validateAndSyncSubscriptionStatus(),
+    );
   }
 
-  // CRITICAL FIX: Usage validation methods - Firestore as primary source
-  Future<bool> canSendMessage() async {
-    // CRITICAL: Always check Firestore user data first (single source of truth)
-    if (currentUser?.hasActiveSubscription == true) {
-      return true;
-    }
-
-    // For free users, check current usage against limits
-    if (currentUser != null) {
-      final currentMessages = currentUser!.dailyUsage['messages'] ?? 0;
-      return currentMessages < PaymentService.FREE_DAILY_MESSAGES;
-    }
-
-    return false; // No user data = no access
+  /// Check if user data cache is valid
+  bool _isUserDataCacheValid() {
+    if (_lastUserDataRefresh == null) return false;
+    return DateTime.now().difference(_lastUserDataRefresh!) < USER_DATA_CACHE_DURATION;
   }
 
-  Future<bool> canUploadImage() async {
-    if (currentUser?.hasActiveSubscription == true) {
-      return true;
-    }
+  // AUTHENTICATION METHODS
 
-    if (currentUser != null) {
-      final currentImages = currentUser!.dailyUsage['images'] ?? 0;
-      return currentImages < PaymentService.FREE_DAILY_IMAGES;
-    }
-
-    return false;
-  }
-
-  Future<bool> canSendVoice() async {
-    if (currentUser?.hasActiveSubscription == true) {
-      return true;
-    }
-
-    if (currentUser != null) {
-      final currentVoice = currentUser!.dailyUsage['voice'] ?? 0;
-      return currentVoice < PaymentService.FREE_DAILY_VOICE;
-    }
-
-    return false;
-  }
-
-  bool canAccessAllPersonas() {
-    // Premium users can access all personas
-    return currentUser?.hasActiveSubscription == true;
-  }
-
-  // CRITICAL FIX: Usage increment methods with Firestore as primary data store
-  Future<void> incrementMessageUsage() async {
-    // Don't increment for premium users
-    if (currentUser?.hasActiveSubscription == true) return;
-
-    if (currentUser == null) return;
-
-    try {
-      // Update local user object
-      currentUser = currentUser!.incrementUsage('messages');
-
-      // Save to Firestore (single source of truth)
-      await _firestoreService.saveUser(currentUser!);
-
-      // Update payment service for UI consistency
-      await _paymentService.incrementMessageCount();
-
-      notifyListeners();
-      print(
-        '✅ Message usage incremented: ${currentUser!.dailyUsage['messages']}',
-      );
-    } catch (e) {
-      print('❌ Error incrementing message usage: $e');
-    }
-  }
-
-  Future<void> incrementImageUsage() async {
-    if (currentUser?.hasActiveSubscription == true) return;
-
-    if (currentUser == null) return;
-
-    try {
-      currentUser = currentUser!.incrementUsage('images');
-      await _firestoreService.saveUser(currentUser!);
-      await _paymentService.incrementImageCount();
-
-      notifyListeners();
-      print('✅ Image usage incremented: ${currentUser!.dailyUsage['images']}');
-    } catch (e) {
-      print('❌ Error incrementing image usage: $e');
-    }
-  }
-
-  Future<void> incrementVoiceUsage() async {
-    if (currentUser?.hasActiveSubscription == true) return;
-
-    if (currentUser == null) return;
-
-    try {
-      currentUser = currentUser!.incrementUsage('voice');
-      await _firestoreService.saveUser(currentUser!);
-      await _paymentService.incrementVoiceCount();
-
-      notifyListeners();
-      print('✅ Voice usage incremented: ${currentUser!.dailyUsage['voice']}');
-    } catch (e) {
-      print('❌ Error incrementing voice usage: $e');
-    }
-  }
-
-  // CRITICAL FIX: Get subscription status from Firestore data only
-  String _getSubscriptionStatus() {
-    if (currentUser?.hasActiveSubscription == true) {
-      final type = currentUser!.subscriptionType == 'premium_monthly'
-          ? 'Monthly'
-          : 'Yearly';
-      if (currentUser!.subscriptionExpiryDate != null) {
-        final days = currentUser!.daysUntilExpiry;
-        if (days > 0) {
-          return 'Premium $type ($days days left)';
-        } else {
-          return 'Premium $type (Expired)';
-        }
-      }
-      return 'Premium $type';
-    }
-    return 'Free Plan';
-  }
-
-  String _getUsageText() {
-    if (currentUser?.hasActiveSubscription == true) return 'Unlimited usage';
-
-    if (currentUser != null) {
-      final messages = currentUser!.dailyUsage['messages'] ?? 0;
-      final images = currentUser!.dailyUsage['images'] ?? 0;
-      final voice = currentUser!.dailyUsage['voice'] ?? 0;
-
-      return 'Messages: $messages/${PaymentService.FREE_DAILY_MESSAGES}, '
-          'Images: $images/${PaymentService.FREE_DAILY_IMAGES}, '
-          'Voice: $voice/${PaymentService.FREE_DAILY_VOICE}';
-    }
-
-    return 'No usage data';
-  }
-
-  // Generate a unique DiceBear avatar URL
-  String _generateAvatarUrl() {
-    final seed = DateTime.now().millisecondsSinceEpoch.toString();
-    return 'https://api.dicebear.com/7.x/avataaars/svg?seed=$seed';
-  }
-
+  /// Sign up with email and password
   Future<bool> signUp(String email, String password, String username) async {
     try {
       _isGoogleSignIn = false;
@@ -442,294 +431,383 @@ class AuthProvider with ChangeNotifier {
       );
 
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? true;
-      final uid = userCredential.user?.uid;
-
-      if (uid != null) {
-        final newUser = AppUser(
-          uid: uid,
-          email: email,
-          username: username,
-          photoUrl: '',
-          createdAt: DateTime.now(),
-        );
-        await _firestoreService.saveUser(newUser);
-        currentUser = newUser;
-        _userPhotoUrl = null;
-      }
-
-      user = userCredential.user;
-      // Payment service will be initialized by authStateChanges listener
-      notifyListeners();
-
+      
+      // User data will be handled by auth state change listener
+      
       return isNewUser;
+      
     } catch (e) {
-      throw Exception(e.toString());
+      print('❌ Sign up error: $e');
+      throw AuthException(_getAuthErrorMessage(e));
     }
   }
 
+  /// Login with email and password
   Future<void> login(String email, String password) async {
     try {
       _isGoogleSignIn = false;
 
-      final cred = await _auth.signInWithEmailAndPassword(
+      await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      user = cred.user;
-
-      // User data will be loaded by authStateChanges listener
-      notifyListeners();
+      
+      // User data will be handled by auth state change listener
+      
     } catch (e) {
-      throw Exception(e.toString());
+      print('❌ Login error: $e');
+      throw AuthException(_getAuthErrorMessage(e));
     }
   }
 
-  // CRITICAL FIX: Enhanced logout with complete data cleanup
-  Future<void> logout() async {
-    try {
-      print('🔄 Starting logout process...');
-
-      // CRITICAL: Clear payment service data BEFORE Firebase sign out
-      await _paymentService.clearUserData();
-
-      // Sign out from Google if applicable
-      if (_isGoogleSignInInitialized) {
-        try {
-          await _googleSignIn.signOut();
-          await _googleSignIn
-              .disconnect(); // Also disconnect to clear cached account
-        } catch (e) {
-          print('⚠️ Google sign out warning: $e');
-        }
-      }
-
-      // Sign out from Firebase (this will trigger authStateChanges)
-      await _auth.signOut();
-
-      print('✅ Logout completed successfully');
-    } catch (e) {
-      print('❌ Error during logout: $e');
-      throw Exception(e.toString());
-    }
-  }
-
+  /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
-      await _ensureServicesInitialized();
-
       if (!_googleSignIn.supportsAuthenticate()) {
-        throw Exception('Google Sign-In not supported on this platform');
+        throw AuthException('Google Sign-In not supported on this platform');
       }
 
       _isGoogleSignIn = true;
 
+      // Authenticate with Google
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate(
         scopeHint: ['email'],
       );
 
       _googleSignInAccount = googleUser;
 
+      // Get authorization
       final authClient = _googleSignIn.authorizationClient;
       final authorization = await authClient.authorizationForScopes(['email']);
 
       if (authorization == null) {
-        throw Exception('Failed to get authorization for required scopes');
+        throw AuthException('Failed to get Google authorization');
       }
 
+      // Get authentication details
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
+      // Create Firebase credential
       final credential = GoogleAuthProvider.credential(
         accessToken: authorization.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _auth.signInWithCredential(credential);
-      await userCredential.user?.reload();
-      user = _auth.currentUser;
+      // Sign in to Firebase
+      await _auth.signInWithCredential(credential);
+      
+      // User data will be handled by auth state change listener
 
-      if (user != null) {
-        // Check if user exists in Firestore
-        currentUser = await _firestoreService.getUser(user!.uid);
+      print('✅ Google sign-in completed');
+      
+    } on GoogleSignInException catch (e) {
+      _isGoogleSignIn = false;
+      _googleSignInAccount = null;
+      print('❌ Google Sign-In error: $e');
+      throw AuthException(_getGoogleSignInErrorMessage(e));
+    } catch (e) {
+      _isGoogleSignIn = false;
+      _googleSignInAccount = null;
+      print('❌ Google Sign-In error: $e');
+      throw AuthException('Google Sign-In failed: $e');
+    }
+  }
 
-        print('🔍 Checking Google user: ${user!.uid}');
-        print('🔍 Current user from Firestore: ${currentUser?.uid}');
-        print('🔍 Google photo URL: ${user!.photoURL}');
+  /// Logout
+  Future<void> logout() async {
+    try {
+      print('🔄 Starting logout process...');
 
-        if (currentUser == null) {
-          print('🆕 New Google user - creating profile');
-
-          final String googlePhotoUrl = user!.photoURL ?? '';
-          final String googleDisplayName =
-              user!.displayName ?? user!.email!.split('@')[0];
-
-          currentUser = AppUser(
-            uid: user!.uid,
-            email: user!.email!,
-            username: googleDisplayName,
-            photoUrl: googlePhotoUrl,
-            createdAt: DateTime.now(),
-          );
-
-          await _firestoreService.saveUser(currentUser!);
-          print('✅ New Google user saved');
-        } else {
-          // Update display name if it has changed
-          final String currentGoogleName =
-              user!.displayName ?? user!.email!.split('@')[0];
-          if (currentUser!.username != currentGoogleName) {
-            print('🔄 Updating Google user display name');
-            currentUser = currentUser!.copyWith(username: currentGoogleName);
-            await _firestoreService.saveUser(currentUser!);
-          }
+      // Sign out from Google if applicable
+      if (_isGoogleSignIn) {
+        try {
+          await _googleSignIn.signOut();
+          await _googleSignIn.disconnect();
+        } catch (e) {
+          print('⚠️ Google sign-out warning: $e');
         }
-
-        _userPhotoUrl = currentUser?.photoUrl;
-        print('🖼️ User photo URL set to: $_userPhotoUrl');
       }
 
-      notifyListeners();
-      print('✅ Google sign-in completed successfully');
-    } on GoogleSignInException catch (e) {
-      print('❌ Google Sign-In Exception: ${e.code.name} - ${e.description}');
-      _isGoogleSignIn = false;
-      _googleSignInAccount = null;
-      throw Exception(_getGoogleSignInErrorMessage(e));
+      // Sign out from Firebase (this will trigger auth state change)
+      await _auth.signOut();
+
+      print('✅ Logout completed');
+      
     } catch (e) {
-      print('❌ Google Sign-In Error: $e');
-      _isGoogleSignIn = false;
-      _googleSignInAccount = null;
-      throw Exception(e.toString());
+      print('❌ Logout error: $e');
+      throw AuthException('Logout failed: $e');
     }
   }
 
-  String _getGoogleSignInErrorMessage(GoogleSignInException exception) {
-    switch (exception.code.name) {
-      case 'canceled':
-        return 'Sign-in was cancelled. Please try again if you want to continue.';
-      case 'interrupted':
-        return 'Sign-in was interrupted. Please try again.';
-      case 'clientConfigurationError':
-        return 'There is a configuration issue with Google Sign-In. Please contact support.';
-      case 'providerConfigurationError':
-        return 'Google Sign-In is currently unavailable. Please try again later or contact support.';
-      case 'uiUnavailable':
-        return 'Google Sign-In is currently unavailable. Please try again later or contact support.';
-      case 'userMismatch':
-        return 'There was an issue with your account. Please sign out and try again.';
-      case 'unknownError':
-      default:
-        return 'An unexpected error occurred during Google Sign-In. Please try again.';
+  /// Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_getFirebaseAuthErrorMessage(e.code));
+    } catch (e) {
+      throw AuthException('Failed to send password reset email');
     }
   }
 
-  bool get isLoggedIn => user != null;
-  bool get isGoogleSignIn => _isGoogleSignIn;
+  // USER PROFILE METHODS
 
+  /// Upload user photo
   Future<void> uploadUserPhoto(File imageFile) async {
     try {
-      if (user == null || currentUser == null) {
-        throw Exception('User not authenticated');
+      if (_firebaseUser == null || _currentUser == null) {
+        throw AuthException('User not authenticated');
       }
 
       final downloadUrl = await _cloudinaryService.uploadImage(imageFile);
-
       if (downloadUrl == null) {
-        print('❌ Upload failed. No URL returned from Cloudinary.');
-        throw Exception('Cloudinary upload failed');
+        throw AuthException('Image upload failed');
       }
 
-      print('✅ Image uploaded: $downloadUrl');
+      _currentUser = _currentUser!.copyWith(photoUrl: downloadUrl);
+      await _firestoreService.saveUserWithRetry(_currentUser!);
 
-      currentUser = currentUser!.copyWith(photoUrl: downloadUrl);
-
-      await _firestoreService.saveUser(currentUser!);
-      _userPhotoUrl = downloadUrl;
-
-      Fluttertoast.showToast(msg: '✅ Photo uploaded successfully!');
-      print('✅ Upload successful: $downloadUrl');
+      Fluttertoast.showToast(
+        msg: '✅ Photo uploaded successfully!',
+        backgroundColor: Colors.green,
+      );
 
       notifyListeners();
+      
     } catch (e) {
-      print('❌ Error uploading user photo: $e');
-      Fluttertoast.showToast(msg: '❌ Failed to upload photo');
-      throw Exception('Failed to upload photo: ${e.toString()}');
+      print('❌ Photo upload error: $e');
+      Fluttertoast.showToast(
+        msg: '❌ Failed to upload photo',
+        backgroundColor: Colors.red,
+      );
+      throw AuthException('Photo upload failed: $e');
     }
   }
 
+  /// Set user avatar
   Future<void> setUserAvatar(String avatarUrl) async {
     try {
-      if (user == null || currentUser == null) {
-        throw Exception('User not authenticated');
+      if (_firebaseUser == null || _currentUser == null) {
+        throw AuthException('User not authenticated');
       }
 
-      currentUser = currentUser!.copyWith(photoUrl: avatarUrl);
-
-      await _firestoreService.saveUser(currentUser!);
-      _userPhotoUrl = avatarUrl;
+      _currentUser = _currentUser!.copyWith(photoUrl: avatarUrl);
+      await _firestoreService.saveUserWithRetry(_currentUser!);
 
       notifyListeners();
+      
     } catch (e) {
-      print('Error setting user avatar: $e');
-      throw Exception('Failed to set avatar: ${e.toString()}');
+      print('❌ Avatar setting error: $e');
+      throw AuthException('Failed to set avatar: $e');
     }
   }
 
-  Future<void> loadUserPhoto() async {
+  // USAGE METHODS
+
+  /// Check if user can send message
+  Future<bool> canSendMessage() async {
+    await _ensureUserDataFresh();
+    
+    if (_currentUser?.hasActiveSubscription == true) return true;
+    
+    if (_currentUser != null) {
+      final currentMessages = _currentUser!.dailyUsage['messages'] ?? 0;
+      return currentMessages < PaymentService.FREE_DAILY_MESSAGES;
+    }
+    
+    return false;
+  }
+
+  /// Check if user can upload image
+  Future<bool> canUploadImage() async {
+    await _ensureUserDataFresh();
+    
+    if (_currentUser?.hasActiveSubscription == true) return true;
+    
+    if (_currentUser != null) {
+      final currentImages = _currentUser!.dailyUsage['images'] ?? 0;
+      return currentImages < PaymentService.FREE_DAILY_IMAGES;
+    }
+    
+    return false;
+  }
+
+  /// Check if user can send voice
+  Future<bool> canSendVoice() async {
+    await _ensureUserDataFresh();
+    
+    if (_currentUser?.hasActiveSubscription == true) return true;
+    
+    if (_currentUser != null) {
+      final currentVoice = _currentUser!.dailyUsage['voice'] ?? 0;
+      return currentVoice < PaymentService.FREE_DAILY_VOICE;
+    }
+    
+    return false;
+  }
+
+  /// Check if user can access all personas
+  bool canAccessAllPersonas() {
+    return _currentUser?.hasActiveSubscription == true;
+  }
+
+  /// Increment message usage
+  Future<void> incrementMessageUsage() async {
+    await _incrementUsage('messages');
+  }
+
+  /// Increment image usage
+  Future<void> incrementImageUsage() async {
+    await _incrementUsage('images');
+  }
+
+  /// Increment voice usage
+  Future<void> incrementVoiceUsage() async {
+    await _incrementUsage('voice');
+  }
+
+  /// Generic usage increment
+  Future<void> _incrementUsage(String type) async {
+    if (_currentUser?.hasActiveSubscription == true) return;
+    if (_currentUser == null) return;
+
     try {
-      if (user == null) return;
-
-      final userData = await _firestoreService.getUser(user!.uid);
-      if (userData != null) {
-        _userPhotoUrl = userData.photoUrl;
-        notifyListeners();
+      // Update local user data
+      _currentUser = _currentUser!.incrementUsage(type);
+      
+      // Save to Firestore
+      await _firestoreService.saveUserWithRetry(_currentUser!);
+      
+      // Update payment service
+      switch (type) {
+        case 'messages':
+          await _paymentService.incrementMessageCount();
+          break;
+        case 'images':
+          await _paymentService.incrementImageCount();
+          break;
+        case 'voice':
+          await _paymentService.incrementVoiceCount();
+          break;
       }
+
+      notifyListeners();
+      print('✅ $type usage incremented: ${_currentUser!.dailyUsage[type]}');
+      
     } catch (e) {
-      print('Error loading user photo: $e');
+      print('❌ Error incrementing $type usage: $e');
     }
   }
 
+  // HELPER METHODS
+
+  /// Ensure user data is fresh
+  Future<void> _ensureUserDataFresh() async {
+    if (!_isUserDataCacheValid()) {
+      await _refreshUserDataFromFirestore();
+    }
+  }
+
+  /// Check if user has completed profile setup
   bool get hasCompletedProfile {
-    if (_isGoogleSignIn) {
-      return true;
-    } else {
-      return _userPhotoUrl != null && _userPhotoUrl!.isNotEmpty;
-    }
+    if (_isGoogleSignIn) return true;
+    return _currentUser?.photoUrl?.isNotEmpty == true;
   }
 
+  /// Check if user needs photo upload
+  bool get needsPhotoUpload {
+    return !_isGoogleSignIn && !hasCompletedProfile;
+  }
+
+  /// Check if user is new
   Future<bool> checkIfNewUser() async {
     try {
-      if (user == null) return false;
-
-      final userData = await _firestoreService.getUser(user!.uid);
+      if (_firebaseUser == null) return false;
 
       if (_isGoogleSignIn) {
-        return userData == null;
+        return _currentUser == null;
       } else {
-        return userData == null ||
-            userData.photoUrl == null ||
-            userData.photoUrl!.isEmpty;
+        return _currentUser?.photoUrl?.isEmpty != false;
       }
     } catch (e) {
-      print('Error checking if new user: $e');
+      print('❌ Error checking if new user: $e');
       return false;
     }
   }
 
-  Future<void> sendPasswordResetEmail(String email) async {
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.code);
-    } catch (e) {
-      throw Exception('Failed to send password reset email');
+  // ERROR MESSAGE HELPERS
+
+  /// Get readable auth error message
+  String _getAuthErrorMessage(dynamic error) {
+    if (error is FirebaseAuthException) {
+      return _getFirebaseAuthErrorMessage(error.code);
+    }
+    return error.toString();
+  }
+
+  /// Get Firebase auth error message
+  String _getFirebaseAuthErrorMessage(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found with this email address.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email address.';
+      case 'weak-password':
+        return 'Password is too weak. Please use a stronger password.';
+      case 'invalid-email':
+        return 'Invalid email address format.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'operation-not-allowed':
+        return 'This sign-in method is not enabled.';
+      default:
+        return 'Authentication failed. Please try again.';
     }
   }
 
-  bool get needsPhotoUpload {
-    if (_isGoogleSignIn) {
-      return false;
-    } else {
-      return !hasCompletedProfile;
+  /// Get Google Sign-In error message
+  String _getGoogleSignInErrorMessage(GoogleSignInException exception) {
+    switch (exception.code.name) {
+      case 'canceled':
+        return 'Sign-in was cancelled.';
+      case 'interrupted':
+        return 'Sign-in was interrupted. Please try again.';
+      case 'clientConfigurationError':
+      case 'providerConfigurationError':
+        return 'Google Sign-In configuration error. Please contact support.';
+      case 'uiUnavailable':
+        return 'Google Sign-In is currently unavailable.';
+      case 'userMismatch':
+        return 'Account mismatch detected. Please sign out and try again.';
+      default:
+        return 'Google Sign-In failed. Please try again.';
     }
   }
+
+  /// Dispose resources
+  @override
+  void dispose() {
+    print('🧹 Disposing AuthProvider...');
+    
+    _authStateSubscription?.cancel();
+    _subscriptionCheckTimer?.cancel();
+    _paymentService.dispose();
+    
+    super.dispose();
+    
+    print('✅ AuthProvider disposed');
+  }
+}
+
+/// Custom exception for authentication errors
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  
+  @override
+  String toString() => 'AuthException: $message';
 }
