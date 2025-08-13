@@ -34,7 +34,6 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _initializeAnimations();
     _animationController.forward();
-    
   }
 
   void _initializeAnimations() {
@@ -59,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen>
         );
   }
 
+  // For LoginScreen - Replace _login method
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -70,7 +70,13 @@ class _LoginScreenState extends State<LoginScreen>
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (authProvider.isLoggedIn && mounted) {
+
+      // Wait for both auth state AND user data to be ready
+      await _waitForUserDataReady(authProvider);
+
+      if (authProvider.isLoggedIn &&
+          authProvider.currentUser != null &&
+          mounted) {
         Navigator.pushReplacementNamed(context, '/chat');
       }
     } catch (e) {
@@ -97,7 +103,13 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       await authProvider.signInWithGoogle();
-      if (authProvider.isLoggedIn && mounted) {
+
+      // Wait for both auth state AND user data to be ready
+      await _waitForUserDataReady(authProvider);
+
+      if (authProvider.isLoggedIn &&
+          authProvider.currentUser != null &&
+          mounted) {
         Navigator.pushReplacementNamed(context, '/chat');
       }
     } catch (e) {
@@ -116,6 +128,27 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  // Enhanced helper method - waits for BOTH auth state AND user data
+  Future<void> _waitForUserDataReady(AuthProvider authProvider) async {
+    const maxWaitTime = Duration(seconds: 5); // Increased timeout for user data
+    const checkInterval = Duration(milliseconds: 150);
+
+    final stopwatch = Stopwatch()..start();
+
+    while (stopwatch.elapsed < maxWaitTime) {
+      if (authProvider.isLoggedIn && authProvider.currentUser != null) {
+        // Extra small delay to ensure everything is settled
+        await Future.delayed(const Duration(milliseconds: 50));
+        return;
+      }
+      await Future.delayed(checkInterval);
+    }
+
+    print(
+      '⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}',
+    );
   }
 
   @override
@@ -261,7 +294,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   obscureText: _obscurePassword,
                                   onToggleVisibility: () {
                                     setState(
-                                      () => _obscurePassword = !_obscurePassword,
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
                                     );
                                   },
                                   validator: (value) {
@@ -339,8 +373,10 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                     AppButton.text(
                                       text: 'Sign Up',
-                                      onPressed: () =>
-                                          Navigator.pushNamed(context, '/signup'),
+                                      onPressed: () => Navigator.pushNamed(
+                                        context,
+                                        '/signup',
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -357,11 +393,15 @@ class _LoginScreenState extends State<LoginScreen>
                                   Expanded(
                                     child: Container(
                                       height: 1,
-                                      color: AppColors.textTertiary.withOpacity(0.3),
+                                      color: AppColors.textTertiary.withOpacity(
+                                        0.3,
+                                      ),
                                     ),
                                   ),
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: AppText.bodyMedium(
                                       'or continue with',
                                       color: AppColors.textTertiary,
@@ -370,7 +410,9 @@ class _LoginScreenState extends State<LoginScreen>
                                   Expanded(
                                     child: Container(
                                       height: 1,
-                                      color: AppColors.textTertiary.withOpacity(0.3),
+                                      color: AppColors.textTertiary.withOpacity(
+                                        0.3,
+                                      ),
                                     ),
                                   ),
                                 ],
