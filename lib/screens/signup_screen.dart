@@ -71,7 +71,12 @@ class _SignUpScreenState extends State<SignUpScreen>
     try {
       final isNewUser = await authProvider.signUp(email, password, fullName);
 
-      if (authProvider.isLoggedIn && mounted) {
+      // Wait for both auth state AND user data to be ready
+      await _waitForUserDataReady(authProvider);
+
+      if (authProvider.isLoggedIn &&
+          authProvider.currentUser != null &&
+          mounted) {
         if (isNewUser) {
           Navigator.pushReplacementNamed(context, '/photo-upload');
         } else {
@@ -103,12 +108,19 @@ class _SignUpScreenState extends State<SignUpScreen>
     try {
       await authProvider.signInWithGoogle();
 
-      if (authProvider.isLoggedIn && mounted) {
+      // Wait for both auth state AND user data to be ready
+      await _waitForUserDataReady(authProvider);
+
+      if (authProvider.isLoggedIn &&
+          authProvider.currentUser != null &&
+          mounted) {
         Navigator.pushReplacementNamed(context, '/chat');
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Google Sign-In succeeded, but user is null.'),
+            content: const Text(
+              'Google Sign-In succeeded, but user data is not ready.',
+            ),
             backgroundColor: AppColors.warning,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -133,6 +145,27 @@ class _SignUpScreenState extends State<SignUpScreen>
     }
 
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  // Enhanced helper method - waits for BOTH auth state AND user data
+  Future<void> _waitForUserDataReady(AuthProvider authProvider) async {
+    const maxWaitTime = Duration(seconds: 5); // Increased timeout for user data
+    const checkInterval = Duration(milliseconds: 150);
+
+    final stopwatch = Stopwatch()..start();
+
+    while (stopwatch.elapsed < maxWaitTime) {
+      if (authProvider.isLoggedIn && authProvider.currentUser != null) {
+        // Extra small delay to ensure everything is settled
+        await Future.delayed(const Duration(milliseconds: 50));
+        return;
+      }
+      await Future.delayed(checkInterval);
+    }
+
+    print(
+      '⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}',
+    );
   }
 
   @override
