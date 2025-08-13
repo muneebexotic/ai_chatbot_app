@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/firestore_service.dart';
@@ -6,7 +7,7 @@ import '../models/chat_message.dart';
 class ConversationSummary {
   final String id;
   String title;
-  final String createdAt;
+  final DateTime createdAt; // Keep as DateTime
 
   ConversationSummary({
     required this.id,
@@ -29,10 +30,10 @@ class SearchResult {
 
 class ConversationsProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   String _userId;
   String get userId => _userId;
-  
+
   List<ConversationSummary> _conversations = [];
   List<SearchResult> _searchResults = [];
   String _searchQuery = '';
@@ -54,7 +55,7 @@ class ConversationsProvider with ChangeNotifier {
       _searchQuery = '';
       _isSearching = false;
       _debounceTimer?.cancel();
-      
+
       if (newUserId.isNotEmpty) {
         loadConversations(); // Load conversations for new user
       } else {
@@ -65,8 +66,9 @@ class ConversationsProvider with ChangeNotifier {
 
   List<ConversationSummary> get conversations => _conversations;
   List<SearchResult> get searchResults => _searchResults;
-  List<ConversationSummary> get filteredConversations => 
-      _isSearching ? _searchResults.map((r) => r.conversation).toList() : _conversations;
+  List<ConversationSummary> get filteredConversations => _isSearching
+      ? _searchResults.map((r) => r.conversation).toList()
+      : _conversations;
   String get searchQuery => _searchQuery;
   bool get isSearching => _isSearching;
 
@@ -83,17 +85,16 @@ class ConversationsProvider with ChangeNotifier {
         return ConversationSummary(
           id: map['id'],
           title: map['title'],
-          createdAt: map['createdAt'],
+          createdAt: _parseTimestamp(map['createdAt']), // Now returns DateTime
         );
       }).toList();
-      
+
       print('✅ Loaded ${_conversations.length} conversations');
-      
-      // Update search results if search is active
+
       if (_isSearching) {
         await _performSearch(_searchQuery);
       }
-      
+
       notifyListeners();
     } catch (e) {
       print('❌ Error loading conversations: $e');
@@ -102,12 +103,26 @@ class ConversationsProvider with ChangeNotifier {
     }
   }
 
+  // Helper method returns DateTime, not String
+  DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      return timestamp.toDate();
+    } else if (timestamp is String) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
+  }
+
   void searchConversations(String query) {
     _searchQuery = query;
-    
+
     // Cancel previous timer
     _debounceTimer?.cancel();
-    
+
     // Set up debounced search
     _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
       if (query.trim().isEmpty) {
@@ -128,67 +143,79 @@ class ConversationsProvider with ChangeNotifier {
     _searchResults.clear();
 
     // Step 1: Search conversation titles
-    final titleMatches = _conversations.where((conversation) {
-      return conversation.title.toLowerCase().contains(lowerQuery);
-    }).map((conv) => SearchResult(conversation: conv, isMessageMatch: false)).toList();
+    final titleMatches = _conversations
+        .where((conversation) {
+          return conversation.title.toLowerCase().contains(lowerQuery);
+        })
+        .map((conv) => SearchResult(conversation: conv, isMessageMatch: false))
+        .toList();
 
     // Step 2: Search message content
     final messageMatches = <SearchResult>[];
-    
+
     for (final conversation in _conversations) {
       // Skip if already matched by title
-      if (titleMatches.any((match) => match.conversation.id == conversation.id)) {
+      if (titleMatches.any(
+        (match) => match.conversation.id == conversation.id,
+      )) {
         continue;
       }
-      
+
       try {
-        final messages = await _firestoreService.getMessages(_userId, conversation.id);
-        
+        final messages = await _firestoreService.getMessages(
+          _userId,
+          conversation.id,
+        );
+
         for (final message in messages) {
           if (message.text.toLowerCase().contains(lowerQuery)) {
             final snippet = _generateSnippet(message.text, lowerQuery);
-            messageMatches.add(SearchResult(
-              conversation: conversation,
-              messageSnippet: snippet,
-              isMessageMatch: true,
-            ));
+            messageMatches.add(
+              SearchResult(
+                conversation: conversation,
+                messageSnippet: snippet,
+                isMessageMatch: true,
+              ),
+            );
             break; // Only take first matching message per conversation
           }
         }
       } catch (e) {
-        debugPrint('Error searching messages for conversation ${conversation.id}: $e');
+        debugPrint(
+          'Error searching messages for conversation ${conversation.id}: $e',
+        );
       }
     }
 
     // Combine and sort results (title matches first, then message matches)
     _searchResults = [...titleMatches, ...messageMatches];
-    
+
     // Sort title matches by relevance
     _searchResults.sort((a, b) {
       // Title matches always come before message matches
       if (a.isMessageMatch != b.isMessageMatch) {
         return a.isMessageMatch ? 1 : -1;
       }
-      
+
       if (!a.isMessageMatch && !b.isMessageMatch) {
         // Both are title matches - sort by relevance
         final aTitle = a.conversation.title.toLowerCase();
         final bTitle = b.conversation.title.toLowerCase();
-        
+
         // Exact matches first
         if (aTitle == lowerQuery && bTitle != lowerQuery) return -1;
         if (bTitle == lowerQuery && aTitle != lowerQuery) return 1;
-        
+
         // Then by how early the match appears
         final aIndex = aTitle.indexOf(lowerQuery);
         final bIndex = bTitle.indexOf(lowerQuery);
-        
+
         if (aIndex != bIndex) return aIndex.compareTo(bIndex);
-        
+
         // Finally by title length (shorter titles first)
         return aTitle.length.compareTo(bTitle.length);
       }
-      
+
       // Both are message matches - keep original order
       return 0;
     });
@@ -197,17 +224,20 @@ class ConversationsProvider with ChangeNotifier {
   String _generateSnippet(String messageText, String query) {
     const snippetLength = 100;
     const contextWords = 20;
-    
+
     final lowerText = messageText.toLowerCase();
     final lowerQuery = query.toLowerCase();
     final queryIndex = lowerText.indexOf(lowerQuery);
-    
+
     if (queryIndex == -1) return messageText;
-    
+
     // Calculate snippet boundaries
     int start = (queryIndex - contextWords).clamp(0, messageText.length);
-    int end = (queryIndex + query.length + contextWords).clamp(0, messageText.length);
-    
+    int end = (queryIndex + query.length + contextWords).clamp(
+      0,
+      messageText.length,
+    );
+
     // Adjust to word boundaries when possible
     if (start > 0) {
       final spaceIndex = messageText.indexOf(' ', start);
@@ -215,20 +245,20 @@ class ConversationsProvider with ChangeNotifier {
         start = spaceIndex + 1;
       }
     }
-    
+
     if (end < messageText.length) {
       final spaceIndex = messageText.lastIndexOf(' ', end);
       if (spaceIndex != -1 && end - spaceIndex < 10) {
         end = spaceIndex;
       }
     }
-    
+
     String snippet = messageText.substring(start, end);
-    
+
     // Add ellipsis if needed
     if (start > 0) snippet = '...$snippet';
     if (end < messageText.length) snippet = '$snippet...';
-    
+
     return snippet;
   }
 
@@ -244,7 +274,9 @@ class ConversationsProvider with ChangeNotifier {
   SearchResult? getSearchResultForConversation(String conversationId) {
     if (!_isSearching) return null;
     try {
-      return _searchResults.firstWhere((result) => result.conversation.id == conversationId);
+      return _searchResults.firstWhere(
+        (result) => result.conversation.id == conversationId,
+      );
     } catch (e) {
       return null;
     }
@@ -254,17 +286,24 @@ class ConversationsProvider with ChangeNotifier {
     if (_userId.isEmpty) return;
 
     try {
-      final id = await _firestoreService.createConversationWithTitle(_userId, title);
+      final id = await _firestoreService.createConversationWithTitle(
+        _userId,
+        title,
+      );
       _conversations.insert(
         0,
-        ConversationSummary(id: id, title: title, createdAt: DateTime.now().toIso8601String()),
+        ConversationSummary(
+          id: id,
+          title: title,
+          createdAt: DateTime.now(),
+        ),
       );
-      
+
       // Update search results if search is active
       if (_isSearching) {
         await _performSearch(_searchQuery);
       }
-      
+
       notifyListeners();
       print('✅ Conversation added: $title');
     } catch (e) {
@@ -279,12 +318,12 @@ class ConversationsProvider with ChangeNotifier {
     try {
       await _firestoreService.deleteConversation(_userId, conversationId);
       _conversations.removeWhere((c) => c.id == conversationId);
-      
+
       // Update search results if search is active
       if (_isSearching) {
         _searchResults.removeWhere((r) => r.conversation.id == conversationId);
       }
-      
+
       notifyListeners();
       print('✅ Conversation deleted: $conversationId');
     } catch (e) {
@@ -293,22 +332,31 @@ class ConversationsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> renameConversation(String conversationId, String newTitle) async {
+  Future<void> renameConversation(
+    String conversationId,
+    String newTitle,
+  ) async {
     if (_userId.isEmpty) return;
 
     try {
-      final convoIndex = _conversations.indexWhere((c) => c.id == conversationId);
+      final convoIndex = _conversations.indexWhere(
+        (c) => c.id == conversationId,
+      );
       if (convoIndex != -1) {
         _conversations[convoIndex].title = newTitle;
-        
+
         // Update in Firestore
-        await _firestoreService.updateConversationTitle(_userId, conversationId, newTitle);
-        
+        await _firestoreService.updateConversationTitle(
+          _userId,
+          conversationId,
+          newTitle,
+        );
+
         // Update search results if search is active
         if (_isSearching) {
           await _performSearch(_searchQuery);
         }
-        
+
         notifyListeners();
         print('✅ Conversation renamed: $conversationId -> $newTitle');
       }

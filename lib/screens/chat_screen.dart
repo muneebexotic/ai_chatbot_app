@@ -720,7 +720,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _handleRename(ConversationsProvider convoProvider, ChatProvider chatProvider) async {
     final convo = convoProvider.conversations.firstWhere(
       (c) => c.id == chatProvider.conversationId,
-      orElse: () => ConversationSummary(id: '', title: '', createdAt: ''),
+      orElse: () => ConversationSummary(id: '', title: '', createdAt:  DateTime.now()),
     );
     
     final newTitle = await showDialog<String>(
@@ -784,7 +784,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentTitle = convoProvider.conversations
         .firstWhere(
           (c) => c.id == chatProvider.conversationId,
-          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: ''),
+          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt:  DateTime.now()),
         )
         .title;
 
