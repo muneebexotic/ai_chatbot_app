@@ -41,11 +41,16 @@ List<SingleChildWidget> buildAppProviders() {
       create: (_) => ConversationsProvider(userId: ''),
       update: (_, auth, previous) {
         final userId = auth.user?.uid ?? '';
-        if (previous?.userId != userId) {
+
+        if (previous == null) {
           return ConversationsProvider(userId: userId);
         }
-        previous?.updateUserId(userId);
-        return previous ?? ConversationsProvider(userId: userId);
+
+        if (previous.userId != userId) {
+          previous.updateUserId(userId);
+        }
+
+        return previous;
       },
     ),
     ChangeNotifierProxyProvider2<AuthProvider, SettingsProvider, ChatProvider>(
