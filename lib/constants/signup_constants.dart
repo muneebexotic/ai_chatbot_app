@@ -66,9 +66,13 @@ class SignUpConstants {
   static const int minNameLength = 2;
   static const int minPasswordLength = 6;
 
-  // Regular Expressions
-  static const String emailRegex = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}'
-  ;
+  // Regular Expressions - FIXED
+  // Option 1: More comprehensive email regex
+  static const String emailRegex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+  
+  // Option 2: If you prefer the original pattern style, use this:
+  // static const String emailRegex = r'^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$';
+  
   static const String passwordRegex = r'^(?=.*[a-zA-Z])(?=.*\d)';
 
   // Semantic Labels (Accessibility)

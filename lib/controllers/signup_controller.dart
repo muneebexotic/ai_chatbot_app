@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../services/validation_service.dart';
+import '../utils/validation_utils.dart'; // Changed from validation_service
 import '../constants/signup_constants.dart';
 
 /// Controller for SignUp screen following clean architecture principles
@@ -101,19 +101,19 @@ class SignUpController extends ChangeNotifier {
     return _formKey.currentState?.validate() ?? false;
   }
 
-  /// Validate full name field
+  /// Validate full name field - Using ValidationUtils
   String? validateFullName(String? value) {
-    return ValidationService.validateFullName(value);
+    return ValidationUtils.validateFullName(value);
   }
 
-  /// Validate email field
+  /// Validate email field - Using ValidationUtils
   String? validateEmail(String? value) {
-    return ValidationService.validateEmail(value);
+    return ValidationUtils.validateEmail(value);
   }
 
-  /// Validate password field
+  /// Validate password field - Using ValidationUtils with complexity
   String? validatePassword(String? value) {
-    return ValidationService.validatePassword(value);
+    return ValidationUtils.validatePasswordComplex(value);
   }
 
   /// Sign up with email and password
