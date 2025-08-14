@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../controllers/signup_controller.dart';
+import '../mixins/signup_animations_mixin.dart';
+import '../constants/signup_constants.dart';
 import '../components/ui/app_text.dart';
 import '../components/ui/app_button.dart';
 import '../components/ui/app_input.dart';
@@ -8,6 +10,14 @@ import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
 
+/// Enhanced SignUp Screen with improved architecture and performance
+/// 
+/// Features:
+/// - Clean separation of concerns using controller pattern
+/// - Optimized animations with mixin pattern
+/// - Robust error handling and logging
+/// - Accessibility improvements
+/// - Performance optimizations
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -16,165 +26,76 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen>
-    with SingleTickerProviderStateMixin {
-  final _fullNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
+    with TickerProviderStateMixin, SignUpAnimationsMixin, WidgetsBindingObserver {
+  
+  late final SignUpController _controller;
+  
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _animationController.forward();
-  }
-
-  void _initializeAnimations() {
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
-      ),
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-          ),
-        );
-  }
-
-  Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    setState(() => _isLoading = true);
-
-    final fullName = _fullNameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    try {
-      final isNewUser = await authProvider.signUp(email, password, fullName);
-
-      // Wait for both auth state AND user data to be ready
-      await _waitForUserDataReady(authProvider);
-
-      if (authProvider.isLoggedIn &&
-          authProvider.currentUser != null &&
-          mounted) {
-        if (isNewUser) {
-          Navigator.pushReplacementNamed(context, '/photo-upload');
-        } else {
-          Navigator.pushReplacementNamed(context, '/chat');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign Up failed: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  Future<void> _signUpWithGoogle() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    setState(() => _isLoading = true);
-
-    try {
-      await authProvider.signInWithGoogle();
-
-      // Wait for both auth state AND user data to be ready
-      await _waitForUserDataReady(authProvider);
-
-      if (authProvider.isLoggedIn &&
-          authProvider.currentUser != null &&
-          mounted) {
-        Navigator.pushReplacementNamed(context, '/chat');
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Google Sign-In succeeded, but user data is not ready.',
-            ),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In failed: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  // Enhanced helper method - waits for BOTH auth state AND user data
-  Future<void> _waitForUserDataReady(AuthProvider authProvider) async {
-    const maxWaitTime = Duration(seconds: 5); // Increased timeout for user data
-    const checkInterval = Duration(milliseconds: 150);
-
-    final stopwatch = Stopwatch()..start();
-
-    while (stopwatch.elapsed < maxWaitTime) {
-      if (authProvider.isLoggedIn && authProvider.currentUser != null) {
-        // Extra small delay to ensure everything is settled
-        await Future.delayed(const Duration(milliseconds: 50));
-        return;
-      }
-      await Future.delayed(checkInterval);
-    }
-
-    print(
-      '⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}',
-    );
+    WidgetsBinding.instance.addObserver(this);
+    _controller = SignUpController();
+    initializeAnimations();
+    startAnimations();
   }
 
   @override
   void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _animationController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    disposeAnimations();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Handle app lifecycle changes for better UX
+    if (state == AppLifecycleState.resumed) {
+      _controller.refreshAuthState();
+    }
+  }
+
+  /// Handle sign up with email and password
+  void _handleSignUp() {
+    if (!_controller.validateForm()) return;
+    
+    _controller.signUpWithEmail(
+      onSuccess: (isNewUser) => _navigateAfterAuth(isNewUser),
+      onError: _showErrorSnackBar,
+    );
+  }
+
+  /// Handle Google sign up
+  void _handleGoogleSignUp() {
+    _controller.signUpWithGoogle(
+      onSuccess: (_) => _navigateAfterAuth(false), // Google users go to chat
+      onError: _showErrorSnackBar,
+    );
+  }
+
+  /// Navigate user based on their status
+  void _navigateAfterAuth(bool isNewUser) {
+    if (!mounted) return;
+    
+    final route = isNewUser ? '/photo-upload' : '/chat';
+    Navigator.pushReplacementNamed(context, route);
+  }
+
+  /// Show error message to user
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(SignUpConstants.borderRadius),
+        ),
+        duration: SignUpConstants.errorDisplayDuration,
+      ),
+    );
   }
 
   @override
@@ -185,276 +106,222 @@ class _SignUpScreenState extends State<SignUpScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A), Color(0xFF0A0A0A)],
-            stops: [0.0, 0.5, 1.0],
+            colors: SignUpConstants.backgroundGradient,
+            stops: SignUpConstants.gradientStops,
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Back Button
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: const AppBackButton(),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Title
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position: _slideAnimation,
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppText.displayLarge(
-                                'Create Your',
-                                color: Colors.white,
-                              ),
-                              AppText.displayLarge(
-                                'Account',
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 48),
-
-                      // Full Name Input
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position:
-                              Tween<Offset>(
-                                begin: const Offset(0, 0.1),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: const Interval(
-                                    0.3,
-                                    1.0,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              ),
-                          child: AppInput.text(
-                            controller: _fullNameController,
-                            label: 'Full Name',
-                            hintText: 'Enter your full name',
-                            prefixIcon: Icons.person_outline,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your full name';
-                              }
-                              if (value.length < 2) {
-                                return 'Name must be at least 2 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Email Input
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position:
-                              Tween<Offset>(
-                                begin: const Offset(0, 0.1),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: const Interval(
-                                    0.4,
-                                    1.0,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              ),
-                          child: AppInput.email(
-                            controller: _emailController,
-                            label: 'Email Address',
-                            hintText: 'Enter your email',
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(
-                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Password Input
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position:
-                              Tween<Offset>(
-                                begin: const Offset(0, 0.1),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: const Interval(
-                                    0.5,
-                                    1.0,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              ),
-                          child: AppInput.password(
-                            controller: _passwordController,
-                            label: 'Password',
-                            hintText: 'Create a strong password',
-                            obscureText: _obscurePassword,
-                            onToggleVisibility: () {
-                              setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              );
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              if (!RegExp(
-                                r'^(?=.*[a-zA-Z])(?=.*\d)',
-                              ).hasMatch(value)) {
-                                return 'Password must contain letters and numbers';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Sign Up Button
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: SlideTransition(
-                          position:
-                              Tween<Offset>(
-                                begin: const Offset(0, 0.1),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: const Interval(
-                                    0.6,
-                                    1.0,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              ),
-                          child: AppButton.primary(
-                            text: 'Create Account',
-                            onPressed: _signUp,
-                            isFullWidth: true,
-                            isLoading: _isLoading,
-                            size: AppButtonSize.large,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Login Link
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const AppText.bodyMedium(
-                                "Already have an account? ",
-                                color: AppColors.textSecondary,
-                              ),
-                              AppButton.text(
-                                text: 'Login',
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Divider
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: AppColors.textTertiary.withOpacity(0.3),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: AppText.bodyMedium(
-                                'or continue with',
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: AppColors.textTertiary.withOpacity(0.3),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Google Sign-In
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Center(
-                          child: SocialButton.google(
-                            onPressed: _signUpWithGoogle,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+          child: ChangeNotifierProvider.value(
+            value: _controller,
+            child: Consumer<SignUpController>(
+              builder: (context, controller, _) {
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(SignUpConstants.screenPadding),
+                  child: _buildForm(controller),
                 );
               },
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Build the main form with optimized animations
+  Widget _buildForm(SignUpController controller) {
+    return Form(
+      key: controller.formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildBackButton(),
+          const SizedBox(height: SignUpConstants.sectionSpacing),
+          _buildHeader(),
+          const SizedBox(height: SignUpConstants.largeSpacing),
+          _buildInputFields(controller),
+          const SizedBox(height: SignUpConstants.buttonSpacing),
+          _buildSignUpButton(controller),
+          const SizedBox(height: SignUpConstants.sectionSpacing),
+          _buildLoginLink(),
+          const SizedBox(height: SignUpConstants.largeSpacing),
+          _buildDivider(),
+          const SizedBox(height: SignUpConstants.buttonSpacing),
+          _buildGoogleButton(controller),
+          const SizedBox(height: SignUpConstants.bottomSpacing),
+        ],
+      ),
+    );
+  }
+
+  /// Optimized back button with fade animation
+  Widget _buildBackButton() {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: const AppBackButton(),
+    );
+  }
+
+  /// Animated header with slide transition
+  Widget _buildHeader() {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText.displayLarge(
+              SignUpConstants.headerLine1,
+              color: Colors.white,
+            ),
+            AppText.displayLarge(
+              SignUpConstants.headerLine2,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Input fields with staggered animations
+  Widget _buildInputFields(SignUpController controller) {
+    return Column(
+      children: [
+        _buildAnimatedInput(
+          controller: controller.fullNameController,
+          animation: inputAnimation1,
+          inputWidget: AppInput.text(
+            controller: controller.fullNameController,
+            label: SignUpConstants.fullNameLabel,
+            hintText: SignUpConstants.fullNameHint,
+            prefixIcon: Icons.person_outline,
+            validator: controller.validateFullName,
+          ),
+        ),
+        const SizedBox(height: SignUpConstants.inputSpacing),
+        _buildAnimatedInput(
+          controller: controller.emailController,
+          animation: inputAnimation2,
+          inputWidget: AppInput.email(
+            controller: controller.emailController,
+            label: SignUpConstants.emailLabel,
+            hintText: SignUpConstants.emailHint,
+            validator: controller.validateEmail,
+          ),
+        ),
+        const SizedBox(height: SignUpConstants.inputSpacing),
+        _buildAnimatedInput(
+          controller: controller.passwordController,
+          animation: inputAnimation3,
+          inputWidget: Consumer<SignUpController>(
+            builder: (context, ctrl, _) {
+              return AppInput.password(
+                controller: ctrl.passwordController,
+                label: SignUpConstants.passwordLabel,
+                hintText: SignUpConstants.passwordHint,
+                obscureText: ctrl.obscurePassword,
+                onToggleVisibility: ctrl.togglePasswordVisibility,
+                validator: ctrl.validatePassword,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Helper method for animated inputs
+  Widget _buildAnimatedInput({
+    required TextEditingController controller,
+    required Animation<Offset> animation,
+    required Widget inputWidget,
+  }) {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: SlideTransition(
+        position: animation,
+        child: inputWidget,
+      ),
+    );
+  }
+
+  /// Sign up button with loading state
+  Widget _buildSignUpButton(SignUpController controller) {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: SlideTransition(
+        position: buttonAnimation,
+        child: AppButton.primary(
+          text: SignUpConstants.signUpButtonText,
+          onPressed: controller.isLoading ? () {} : _handleSignUp,
+          isFullWidth: true,
+          isLoading: controller.isLoading,
+          size: AppButtonSize.large,
+        ),
+      ),
+    );
+  }
+
+  /// Login link
+  Widget _buildLoginLink() {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const AppText.bodyMedium(
+              SignUpConstants.loginPrompt,
+              color: AppColors.textSecondary,
+            ),
+            AppButton.text(
+              text: SignUpConstants.loginButtonText,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Divider with text
+  Widget _buildDivider() {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1,
+              color: AppColors.textTertiary.withOpacity(0.3),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: AppText.bodyMedium(
+              SignUpConstants.dividerText,
+              color: AppColors.textTertiary,
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: AppColors.textTertiary.withOpacity(0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Google sign up button
+  Widget _buildGoogleButton(SignUpController controller) {
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: Center(
+        child: SocialButton.google(
+          onPressed: controller.isLoading ? () {} : _handleGoogleSignUp,
         ),
       ),
     );
