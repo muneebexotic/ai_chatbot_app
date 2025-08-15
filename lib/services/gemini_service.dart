@@ -7,15 +7,29 @@ import 'package:provider/provider.dart';
 class GeminiService {
   late final GenerativeModel _model;
   final String? _systemPrompt;
+  final SettingsProvider _settingsProvider;
 
   GeminiService(BuildContext context)
-    : _systemPrompt = _getSystemPrompt(
+    : _settingsProvider = Provider.of<SettingsProvider>(context, listen: false),
+      _systemPrompt = _getSystemPrompt(
         Provider.of<SettingsProvider>(context, listen: false).persona,
       ) {
     _model = GenerativeModel(
       model: 'gemini-2.5-flash',
       apiKey: 'AIzaSyAss8fSmad3Q60ynhwZPUnfKgsSuMZMtJY',
     );
+    
+    // Debug log to verify persona is being applied
+    print('🎭 GeminiService initialized with persona: ${_settingsProvider.persona}');
+    print('🎭 System prompt: $_systemPrompt');
+  }
+
+  // 🔥 FIXED: Get current system prompt (for real-time updates)
+  String? get currentSystemPrompt {
+    final currentPersona = _settingsProvider.persona;
+    final prompt = _getSystemPrompt(currentPersona);
+    print('🎭 Current persona: $currentPersona, Prompt: $prompt');
+    return prompt;
   }
 
   // 🔥 NEW METHOD: Send message with full conversation history
@@ -23,9 +37,15 @@ class GeminiService {
     try {
       final input = <Content>[];
 
+      // Get the current system prompt (this ensures real-time persona updates)
+      final systemPrompt = currentSystemPrompt;
+      
       // Add system prompt if available
-      if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
-        input.add(Content.text(_systemPrompt!));
+      if (systemPrompt != null && systemPrompt.isNotEmpty) {
+        input.add(Content.text(systemPrompt));
+        print('🎭 Using system prompt: $systemPrompt');
+      } else {
+        print('🎭 No system prompt - using default behavior');
       }
 
       // Convert chat messages to Gemini format
@@ -68,11 +88,16 @@ class GeminiService {
     // Fallback to old behavior for single messages
     try {
       final input = <Content>[];
+      
+      // Get current system prompt
+      final systemPrompt = currentSystemPrompt;
 
-      if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
-        input.add(Content.text('$_systemPrompt\n$prompt'));
+      if (systemPrompt != null && systemPrompt.isNotEmpty) {
+        input.add(Content.text('$systemPrompt\n$prompt'));
+        print('🎭 Single message with system prompt: $systemPrompt');
       } else {
         input.add(Content.text(prompt));
+        print('🎭 Single message without system prompt');
       }
 
       final response = await _model.generateContent(input);
@@ -144,16 +169,23 @@ Generate a concise title:''';
     }
   }
 
+  // 🔥 FIXED: Use the correct persona IDs and system prompts
   static String? _getSystemPrompt(String persona) {
     switch (persona) {
-      case 'professional':
-        return 'Respond concisely and formally like a professional assistant.';
-      case 'funny':
-        return 'Add humor to your answers and use casual language.';
-      case 'friendly':
-        return 'Be kind, warm, and friendly while helping the user.';
-      case 'none':
+      case 'Default':
+        return null; // No system prompt for default
+      case 'Friendly Assistant':
+        return 'You are a friendly and helpful assistant. Answer casually and politely with a warm, approachable tone. Be conversational and use everyday language while remaining helpful and informative.';
+      case 'Strict Teacher':
+        return 'You are a strict, no-nonsense teacher. Be firm, direct, and to the point. Focus on accuracy and educational value. Do not use jokes or casual language. Provide clear, structured answers with proper explanations.';
+      case 'Wise Philosopher':
+        return 'You are a wise philosopher with deep understanding of life and human nature. Speak in thoughtful, profound language. Offer insights that provoke reflection and deeper thinking. Use philosophical concepts and encourage contemplation.';
+      case 'Sarcastic Developer':
+        return 'You are a sarcastic but knowledgeable software engineer. Use dry humor, technical sarcasm, and witty remarks. Be helpful but with a cynical edge. Reference programming concepts and developer culture when appropriate.';
+      case 'Motivational Coach':
+        return 'You are an enthusiastic motivational coach! Respond with high energy, encouragement, and positivity. Use motivational language, push for action, and inspire confidence. Be supportive and uplifting in every response.';
       default:
+        print('⚠️ Unknown persona: $persona, falling back to default');
         return null;
     }
   }
