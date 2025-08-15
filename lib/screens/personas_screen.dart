@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../screens/subscription_screen.dart';
+import '../providers/chat_provider.dart';
 
 class PersonaScreen extends StatelessWidget {
   const PersonaScreen({super.key});
@@ -14,7 +15,9 @@ class PersonaScreen extends StatelessWidget {
     return Consumer2<SettingsProvider, AuthProvider>(
       builder: (context, settingsProvider, authProvider, child) {
         final isPremium = authProvider.isPremium;
-        final availablePersonas = settingsProvider.getAvailablePersonas(isPremium);
+        final availablePersonas = settingsProvider.getAvailablePersonas(
+          isPremium,
+        );
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -49,7 +52,10 @@ class PersonaScreen extends StatelessWidget {
                       backgroundColor: Colors.transparent,
                       elevation: 0,
                       leading: IconButton(
-                        icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+                        icon: Icon(
+                          Icons.arrow_back_ios,
+                          color: AppColors.textPrimary,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       title: AppText.bodyLarge(
@@ -65,7 +71,8 @@ class PersonaScreen extends StatelessWidget {
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SubscriptionScreen(),
+                                builder: (context) =>
+                                    const SubscriptionScreen(),
                               ),
                             ),
                             tooltip: 'Upgrade to Premium',
@@ -74,7 +81,7 @@ class PersonaScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(24),
@@ -85,7 +92,9 @@ class PersonaScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.primary.withOpacity(0.1),
@@ -114,7 +123,8 @@ class PersonaScreen extends StatelessWidget {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       AppText.displayMedium(
                                         'Choose Your AI Persona',
@@ -123,12 +133,12 @@ class PersonaScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       AppText.bodyMedium(
-                                        isPremium 
-                                          ? 'Access all personas with your Premium subscription'
-                                          : 'Free users have access to ${availablePersonas.length} personas',
-                                        color: isPremium 
-                                          ? AppColors.success 
-                                          : AppColors.textSecondary,
+                                        isPremium
+                                            ? 'Access all personas with your Premium subscription'
+                                            : 'Free users have access to ${availablePersonas.length} personas',
+                                        color: isPremium
+                                            ? AppColors.success
+                                            : AppColors.textSecondary,
                                       ),
                                     ],
                                   ),
@@ -138,29 +148,33 @@ class PersonaScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Personas Section
                       _buildSection(
                         'Available Personas',
-                        SettingsProvider.availablePersonas.map((persona) => 
-                          _buildPersonaTile(
-                            _getPersonaIcon(persona['id']),
-                            persona['name'],
-                            settingsProvider.getPersonaDescription(persona['id']),
-                            persona['id'],
-                            persona['isPremium'] ?? false,
-                            settingsProvider.persona,
-                            settingsProvider,
-                            authProvider,
-                            context,
-                          ),
-                        ).toList(),
+                        SettingsProvider.availablePersonas
+                            .map(
+                              (persona) => _buildPersonaTile(
+                                _getPersonaIcon(persona['id']),
+                                persona['name'],
+                                settingsProvider.getPersonaDescription(
+                                  persona['id'],
+                                ),
+                                persona['id'],
+                                persona['isPremium'] ?? false,
+                                settingsProvider.persona,
+                                settingsProvider,
+                                authProvider,
+                                context,
+                              ),
+                            )
+                            .toList(),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Premium Banner (only for free users)
                       if (!isPremium) ...[
                         Container(
@@ -175,7 +189,9 @@ class PersonaScreen extends StatelessWidget {
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.2),
+                            ),
                           ),
                           child: Column(
                             children: [
@@ -196,7 +212,8 @@ class PersonaScreen extends StatelessWidget {
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         AppText.bodyMedium(
                                           'Unlock More Personas',
@@ -220,7 +237,8 @@ class PersonaScreen extends StatelessWidget {
                                   onPressed: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const SubscriptionScreen(),
+                                      builder: (context) =>
+                                          const SubscriptionScreen(),
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
@@ -228,7 +246,9 @@ class PersonaScreen extends StatelessWidget {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
                                   child: AppText.bodyMedium(
                                     'Upgrade to Premium',
@@ -242,14 +262,16 @@ class PersonaScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
                       ],
-                      
+
                       // Info Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.1),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -286,7 +308,7 @@ class PersonaScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -336,9 +358,7 @@ class PersonaScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.primary.withOpacity(0.1)),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -358,7 +378,7 @@ class PersonaScreen extends StatelessWidget {
     final bool isSelected = currentPersona == value;
     final bool isPremiumUser = authProvider.isPremium;
     final bool canAccess = !isPremiumPersona || isPremiumUser;
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -369,7 +389,41 @@ class PersonaScreen extends StatelessWidget {
             _showPremiumDialog(context);
           } else {
             try {
-              await settingsProvider.setPersona(value, isPremium: isPremiumUser);
+              await settingsProvider.setPersona(
+                value,
+                isPremium: isPremiumUser,
+              );
+
+              // 🔥 ADD THIS: Update ChatProvider with new persona
+              try {
+                final chatProvider = Provider.of<ChatProvider>(
+                  context,
+                  listen: false,
+                );
+                chatProvider.updatePersona();
+                print(
+                  '🎭 PersonaScreen: Updated ChatProvider with new persona: $value',
+                );
+              } catch (e) {
+                print('⚠️ PersonaScreen: Could not update ChatProvider: $e');
+                // This is not critical - the persona will still work on next chat
+              }
+
+              // Show success feedback
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Persona changed to $title',
+                    style: const TextStyle(fontFamily: 'Poppins'),
+                  ),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -388,7 +442,9 @@ class PersonaScreen extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+              color: isSelected
+                  ? AppColors.primary.withOpacity(0.05)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -398,14 +454,14 @@ class PersonaScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected 
+                        color: isSelected
                             ? AppColors.primary.withOpacity(0.2)
                             : AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         icon,
-                        color: isSelected 
+                        color: isSelected
                             ? AppColors.primary
                             : AppColors.primary.withOpacity(0.7),
                         size: 20,
@@ -440,15 +496,20 @@ class PersonaScreen extends StatelessWidget {
                           Expanded(
                             child: AppText.bodyLarge(
                               title,
-                              color: isSelected 
+                              color: isSelected
                                   ? AppColors.primary
-                                  : (canAccess ? AppColors.textPrimary : AppColors.textSecondary),
+                                  : (canAccess
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           if (isPremiumPersona && !isPremiumUser)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
@@ -477,12 +538,12 @@ class PersonaScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected 
+                        color: isSelected
                             ? AppColors.primary
                             : AppColors.textTertiary,
                         width: 2,
                       ),
-                      color: isSelected 
+                      color: isSelected
                           ? AppColors.primary
                           : Colors.transparent,
                     ),
@@ -561,10 +622,7 @@ class PersonaScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: AppText.bodyMedium(
-              'Later',
-              color: AppColors.textSecondary,
-            ),
+            child: AppText.bodyMedium('Later', color: AppColors.textSecondary),
           ),
           ElevatedButton(
             onPressed: () {
@@ -578,7 +636,9 @@ class PersonaScreen extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: AppText.bodyMedium(
               'Upgrade',

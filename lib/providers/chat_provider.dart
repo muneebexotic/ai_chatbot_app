@@ -31,6 +31,12 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePersona() {
+    _geminiService = GeminiService(context);
+    print('🎭 ChatProvider: GeminiService updated with new persona');
+    notifyListeners();
+  }
+
   String _generateFallbackTitle(String text) {
     text = text.trim();
     if (text.length <= 30) return text;
@@ -63,8 +69,10 @@ class ChatProvider with ChangeNotifier {
         conversationMessages.add('${message.sender}: ${message.text}');
       }
 
-      String? aiTitle = await _geminiService.generateConversationTitle(conversationMessages);
-      
+      String? aiTitle = await _geminiService.generateConversationTitle(
+        conversationMessages,
+      );
+
       final generatedTitle = (aiTitle != null && aiTitle.trim().isNotEmpty)
           ? aiTitle.trim()
           : _generateFallbackTitle(_messages.first.text);
@@ -111,7 +119,9 @@ class ChatProvider with ChangeNotifier {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               Icon(
@@ -137,7 +147,9 @@ class ChatProvider with ChangeNotifier {
               Text(
                 'You\'ve reached your daily $limitType limit for free users.',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.7),
                   fontSize: 14,
                 ),
               ),
@@ -163,7 +175,9 @@ class ChatProvider with ChangeNotifier {
                     Text(
                       '• Unlimited messages\n• All personas\n• Unlimited images & voice\n• Priority support',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.8),
                         fontSize: 13,
                       ),
                     ),
@@ -178,7 +192,9 @@ class ChatProvider with ChangeNotifier {
               child: Text(
                 'Later',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ),
@@ -194,7 +210,9 @@ class ChatProvider with ChangeNotifier {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text(
                 'Upgrade',
@@ -265,13 +283,14 @@ class ChatProvider with ChangeNotifier {
       }
     } catch (e) {
       print('❌ Error in sendMessage: $e');
-      
+
       // If Gemini fails, still show an error message
       final errorMessage = ChatMessage(
-        text: "Sorry, I'm having trouble responding right now. Please try again.",
+        text:
+            "Sorry, I'm having trouble responding right now. Please try again.",
         sender: 'bot',
       );
-      
+
       _messages.add(errorMessage);
       notifyListeners();
     } finally {
@@ -331,7 +350,7 @@ class ChatProvider with ChangeNotifier {
 
     // Proceed with image upload logic
     await incrementImageUsage();
-    
+
     // Your existing image upload logic here...
   }
 
@@ -345,7 +364,7 @@ class ChatProvider with ChangeNotifier {
 
     // Proceed with voice message logic
     await incrementVoiceUsage();
-    
+
     // Your existing voice message logic here...
   }
 
