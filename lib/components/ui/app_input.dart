@@ -19,23 +19,6 @@ class AppInput extends StatelessWidget {
   final TextInputType? keyboardType;
   final AppInputType _type;
 
-  const AppInput._({
-    super.key,
-    required this.controller,
-    required AppInputType type,
-    this.label,
-    this.hintText,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.obscureText = false,
-    this.onToggleVisibility,
-    this.validator,
-    this.onTap,
-    this.readOnly = false,
-    this.maxLines = 1,
-    this.keyboardType,
-  }) : _type = type;
-
   // Factory constructors for different input types
   const AppInput.text({
     super.key,

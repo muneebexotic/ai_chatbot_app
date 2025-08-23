@@ -16,7 +16,6 @@ import '../services/voice_service.dart';
 import '../services/clipboard_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
-import '../models/conversation.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
 

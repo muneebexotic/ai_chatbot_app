@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/payment_service.dart';
 
 class SettingsProvider with ChangeNotifier {
-  // Default is 'Default' for default persona (matching your original)
+
   String _persona = 'Default';
-  
-  // Available personas with premium restrictions (matching your original names)
+
   static const List<Map<String, dynamic>> availablePersonas = [
     {'id': 'Default', 'name': 'Default', 'isPremium': false},
     {'id': 'Friendly Assistant', 'name': 'Friendly Assistant', 'isPremium': false},

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/firestore_service.dart';
-import '../models/chat_message.dart';
 
 class ConversationSummary {
   final String id;
@@ -222,7 +221,6 @@ class ConversationsProvider with ChangeNotifier {
   }
 
   String _generateSnippet(String messageText, String query) {
-    const snippetLength = 100;
     const contextWords = 20;
 
     final lowerText = messageText.toLowerCase();

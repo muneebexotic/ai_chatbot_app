@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -23,7 +22,6 @@ class AuthProvider with ChangeNotifier {
   // State variables
   User? _firebaseUser;
   AppUser? _currentUser;
-  GoogleSignInAccount? _googleSignInAccount;
   
   // Status flags
   bool _isGoogleSignIn = false;
@@ -306,7 +304,6 @@ class AuthProvider with ChangeNotifier {
       // Clear local state
       _currentUser = null;
       _isGoogleSignIn = false;
-      _googleSignInAccount = null;
       _lastUserDataRefresh = null;
       
       print('✅ User sign-out completed');
@@ -474,7 +471,6 @@ class AuthProvider with ChangeNotifier {
         scopeHint: ['email'],
       );
 
-      _googleSignInAccount = googleUser;
 
       // Get authorization
       final authClient = _googleSignIn.authorizationClient;
@@ -502,12 +498,10 @@ class AuthProvider with ChangeNotifier {
       
     } on GoogleSignInException catch (e) {
       _isGoogleSignIn = false;
-      _googleSignInAccount = null;
       print('❌ Google Sign-In error: $e');
       throw AuthException(_getGoogleSignInErrorMessage(e));
     } catch (e) {
       _isGoogleSignIn = false;
-      _googleSignInAccount = null;
       print('❌ Google Sign-In error: $e');
       throw AuthException('Google Sign-In failed: $e');
     }
