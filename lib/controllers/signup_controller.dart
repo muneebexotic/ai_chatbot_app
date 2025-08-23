@@ -227,7 +227,7 @@ class SignUpController extends ChangeNotifier {
       await completer.future;
     } finally {
       checkTimer.cancel();
-      timeoutTimer?.cancel();
+      timeoutTimer.cancel();
     }
   }
 

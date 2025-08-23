@@ -3,20 +3,10 @@ import 'package:flutter/material.dart';
 
 class SocialButton extends StatelessWidget {
   final VoidCallback onPressed;
-  final String _provider;
   final String _iconPath;
 
-  const SocialButton._({
-    super.key,
-    required this.onPressed,
-    required String provider,
-    required String iconPath,
-  }) : _provider = provider,
-       _iconPath = iconPath;
-
   const SocialButton.google({super.key, required this.onPressed})
-    : _provider = 'Google',
-      _iconPath = 'assets/google_logo.png';
+    : _iconPath = 'assets/google_logo.png';
 
   @override
   Widget build(BuildContext context) {

@@ -583,7 +583,7 @@ class AppUser {
       subscriptionType: subscriptionType ?? this.subscriptionType,
       subscriptionExpiryDate: subscriptionExpiryDate ?? this.subscriptionExpiryDate,
       subscriptionStartDate: subscriptionStartDate ?? this.subscriptionStartDate,
-      dailyUsage: _validateUsageMap(dailyUsage) ?? this.dailyUsage,
+      dailyUsage: _validateUsageMap(dailyUsage),
       lastUsageReset: lastUsageReset ?? this.lastUsageReset,
       lastUpdated: lastUpdated ?? DateTime.now(),
       deviceInfo: deviceInfo ?? this.deviceInfo,

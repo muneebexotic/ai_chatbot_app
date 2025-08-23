@@ -7,7 +7,6 @@ import '../services/firestore_service.dart';
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
 
-/// Enhanced PaymentService with improved error handling, performance, and reliability
 class PaymentService {
   static final PaymentService _instance = PaymentService._internal();
   factory PaymentService() => _instance;
@@ -692,7 +691,7 @@ class PaymentService {
       case 'network_error':
         return 'Network error. Please check your connection.';
       default:
-        return error.message ?? 'An unexpected error occurred';
+        return error.message;
     }
   }
 

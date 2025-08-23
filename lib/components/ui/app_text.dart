@@ -10,18 +10,6 @@ class AppText extends StatelessWidget {
   final double? height;
   final TextStyle _style;
 
-  const AppText._(
-    this.text,
-    this._style, {
-    super.key,
-    this.color,
-    this.textAlign,
-    this.maxLines,
-    this.overflow,
-    this.fontWeight,
-    this.height,
-  });
-
   // Display styles
   const AppText.displayLarge(
     this.text, {
