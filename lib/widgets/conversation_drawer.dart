@@ -1,11 +1,8 @@
 import 'package:ai_chatbot_app/widgets/user_drawer_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/conversation.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
 
 class ConversationDrawer extends StatefulWidget {
@@ -36,33 +33,26 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    
+
     // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     // Listen to search focus changes
     _searchFocusNode.addListener(() {
@@ -116,8 +106,6 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
     final convoProvider = Provider.of<ConversationsProvider>(context);
-    final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
-    final username = Provider.of<AuthProvider>(context).displayName;
 
     return Drawer(
       backgroundColor: AppColors.background,
@@ -127,10 +115,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.surface,
-              AppColors.background,
-            ],
+            colors: [AppColors.surface, AppColors.background],
           ),
         ),
         child: Column(
@@ -205,10 +190,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.surface,
-                        AppColors.surfaceVariant,
-                      ],
+                      colors: [AppColors.surface, AppColors.surfaceVariant],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
@@ -300,10 +282,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary,
-                        AppColors.secondary,
-                      ],
+                      colors: [AppColors.primary, AppColors.secondary],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
@@ -372,7 +351,8 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: convoProvider.filteredConversations.length,
                       itemBuilder: (context, index) {
-                        final convo = convoProvider.filteredConversations[index];
+                        final convo =
+                            convoProvider.filteredConversations[index];
                         final searchResult = convoProvider
                             .getSearchResultForConversation(convo.id);
                         final isSelected =
@@ -403,7 +383,9 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.1),
+                                        color: AppColors.primary.withOpacity(
+                                          0.1,
+                                        ),
                                         blurRadius: 12,
                                         spreadRadius: 0,
                                         offset: const Offset(0, 2),
@@ -415,13 +397,20 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                hoverColor: AppColors.textPrimary.withOpacity(0.05),
+                                hoverColor: AppColors.textPrimary.withOpacity(
+                                  0.05,
+                                ),
                                 onTap: () async {
                                   Navigator.pop(context);
                                   _onDrawerClosed();
                                   await chatProvider.loadConversation(convo.id);
                                 },
-                                onLongPress: () => _showConversationOptions(context, convo, convoProvider, chatProvider),
+                                onLongPress: () => _showConversationOptions(
+                                  context,
+                                  convo,
+                                  convoProvider,
+                                  chatProvider,
+                                ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
                                   child: Row(
@@ -435,13 +424,20 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
                                             colors: [
-                                              AppColors.textPrimary.withOpacity(0.1),
-                                              AppColors.textPrimary.withOpacity(0.05),
+                                              AppColors.textPrimary.withOpacity(
+                                                0.1,
+                                              ),
+                                              AppColors.textPrimary.withOpacity(
+                                                0.05,
+                                              ),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                           border: Border.all(
-                                            color: AppColors.textPrimary.withOpacity(0.1),
+                                            color: AppColors.textPrimary
+                                                .withOpacity(0.1),
                                             width: 1,
                                           ),
                                         ),
@@ -467,7 +463,10 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                           height: 6,
                                           decoration: const BoxDecoration(
                                             gradient: LinearGradient(
-                                              colors: [AppColors.primary, AppColors.secondary],
+                                              colors: [
+                                                AppColors.primary,
+                                                AppColors.secondary,
+                                              ],
                                             ),
                                             shape: BoxShape.circle,
                                           ),
@@ -482,7 +481,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                       },
                     ),
             ),
-            
+
             // Modern Footer
             const UserDrawerTile(),
           ],
@@ -506,10 +505,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                AppColors.surface,
-                AppColors.surfaceVariant,
-              ],
+              colors: [AppColors.surface, AppColors.surfaceVariant],
             ),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -591,7 +587,9 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                   ),
                   child: Icon(
                     icon,
-                    color: isDestructive ? AppColors.error : AppColors.textPrimary,
+                    color: isDestructive
+                        ? AppColors.error
+                        : AppColors.textPrimary,
                     size: 20,
                   ),
                 ),
@@ -599,7 +597,9 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                 Text(
                   title,
                   style: TextStyle(
-                    color: isDestructive ? AppColors.error : AppColors.textPrimary,
+                    color: isDestructive
+                        ? AppColors.error
+                        : AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -623,41 +623,15 @@ class _ConversationDrawerState extends State<ConversationDrawer>
         // Conversation title
         _buildHighlightedTitle(conversation.title, searchQuery),
         const SizedBox(height: 2),
-        
+
         // Message snippet or timestamp
         if (searchResult?.isMessageMatch == true &&
             searchResult?.messageSnippet != null)
-          _buildHighlightedSnippet(
-            searchResult!.messageSnippet!,
-            searchQuery,
-          )
-        // else
-        //   Text(
-        //     _formatTimestamp(conversation.lastMessageTime),
-        //     style: TextStyle(
-        //       color: AppColors.textTertiary,
-        //       fontSize: 12,
-        //       fontWeight: FontWeight.w400,
-        //     ),
-        //   ),
+          _buildHighlightedSnippet(searchResult!.messageSnippet!, searchQuery),
       ],
     );
   }
 
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
 
   Widget _buildHighlightedTitle(String title, String searchQuery) {
     if (searchQuery.isEmpty) {
@@ -777,7 +751,9 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                   ),
                 ),
                 child: Icon(
-                  isSearching ? Icons.search_off_rounded : Icons.chat_bubble_outline_rounded,
+                  isSearching
+                      ? Icons.search_off_rounded
+                      : Icons.chat_bubble_outline_rounded,
                   size: 48,
                   color: AppColors.textTertiary,
                 ),

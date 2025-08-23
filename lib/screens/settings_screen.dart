@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
-import 'chat_screen.dart';
 import 'personas_screen.dart';
 import 'welcome_screen.dart';
 
@@ -14,8 +13,8 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final userName = authProvider.displayName ?? 'User';
-    final userEmail = authProvider.email ?? 'user@example.com';
+    final userName = authProvider.displayName;
+    final userEmail = authProvider.email;
     final photoUrl = authProvider.userPhotoUrl;
 
     return Scaffold(

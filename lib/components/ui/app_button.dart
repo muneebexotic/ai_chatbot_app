@@ -14,17 +14,6 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final AppButtonType _type;
 
-  const AppButton._({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    required AppButtonType type,
-    this.size = AppButtonSize.medium,
-    this.isFullWidth = false,
-    this.isLoading = false,
-    this.icon,
-  }) : _type = type;
-
   // Factory constructors for different button types
   const AppButton.primary({
     super.key,

@@ -1,7 +1,6 @@
 // All app routes
 
 import 'package:flutter/material.dart';
-import '../screens/splash_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../screens/signup_screen.dart';
 import '../screens/login_screen.dart';
