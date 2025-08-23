@@ -9,13 +9,13 @@ import '../providers/themes_provider.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
-import '../controllers/forgot_password_controller.dart';
+import '../controllers/forgot_password_controller.dart'; // Add this import
 
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => AuthProvider()),
-    ChangeNotifierProvider(create: (_) => ForgotPasswordController()), 
+    ChangeNotifierProvider(create: (_) => ForgotPasswordController()), // Add this line
     ChangeNotifierProvider(
       create: (_) {
         final settingsProvider = SettingsProvider();
