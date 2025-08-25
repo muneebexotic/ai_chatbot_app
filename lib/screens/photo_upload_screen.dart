@@ -26,153 +26,162 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.background,
-              AppColors.surface,
-              AppColors.background,
-            ],
-            stops: const [0.0, 0.5, 1.0],
+    return PopScope(
+      canPop: false, // Prevent default back behavior
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          // Handle swipe back - same as skip button
+          _skipPhotoUpload();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.background,
+                AppColors.surface,
+                AppColors.background,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            // Custom App Bar
-            SafeArea(
-              bottom: false,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.9),
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.primary.withOpacity(0.1),
+          child: Column(
+            children: [
+              // Custom App Bar
+              SafeArea(
+                bottom: false,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.background.withOpacity(0.9),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.primary.withOpacity(0.1),
+                      ),
                     ),
                   ),
-                ),
-                child: AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  leading: const SizedBox(), // No back button for onboarding
-                  title: AppText.bodyLarge(
-                    'Profile Photo',
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  centerTitle: true,
-                  actions: [
-                    Padding(
-                      padding: EdgeInsets.only(right: _getResponsivePadding(context)),
-                      child: TextButton(
-                        onPressed: _isUploading ? null : _skipPhotoUpload,
-                        child: AppText.bodyMedium(
-                          'Skip',
-                          color: _isUploading 
-                              ? AppColors.textTertiary 
-                              : AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                  child: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: const SizedBox(), // No back button for onboarding
+                    title: AppText.bodyLarge(
+                      'Profile Photo',
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    centerTitle: true,
+                    actions: [
+                      Padding(
+                        padding: EdgeInsets.only(right: _getResponsivePadding(context)),
+                        child: TextButton(
+                          onPressed: _isUploading ? null : _skipPhotoUpload,
+                          child: AppText.bodyMedium(
+                            'Skip',
+                            color: _isUploading 
+                                ? AppColors.textTertiary 
+                                : AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.all(_getResponsivePadding(context)),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - _getResponsivePadding(context) * 2,
-                        maxWidth: _getMaxContentWidth(context),
-                      ),
-                      child: Center(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: _getResponsiveSpacing(context, 20)),
-                            
-                            // Header Section
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(_getResponsivePadding(context) * 1.3),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
-                                    decoration: BoxDecoration(
+              
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.all(_getResponsivePadding(context)),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight - _getResponsivePadding(context) * 2,
+                          maxWidth: _getMaxContentWidth(context),
+                        ),
+                        child: Center(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(height: _getResponsiveSpacing(context, 20)),
+                              
+                              // Header Section
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(_getResponsivePadding(context) * 1.3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
+                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                                  boxShadow: [
+                                    BoxShadow(
                                       color: AppColors.primary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 4),
                                     ),
-                                    child: Icon(
-                                      Icons.person_add,
-                                      size: _getResponsiveIconSize(context, 32),
-                                      color: AppColors.primary,
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
+                                      ),
+                                      child: Icon(
+                                        Icons.person_add,
+                                        size: _getResponsiveIconSize(context, 32),
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: _getResponsiveSpacing(context, 20)),
-                                  AppText.displayMedium(
-                                    'Add a Profile Photo',
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: _getResponsiveSpacing(context, 12)),
-                                  AppText.bodyMedium(
-                                    'Help others recognize you by adding a profile photo or generating a unique avatar',
-                                    color: AppColors.textSecondary,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                    SizedBox(height: _getResponsiveSpacing(context, 20)),
+                                    AppText.displayMedium(
+                                      'Add a Profile Photo',
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: _getResponsiveSpacing(context, 12)),
+                                    AppText.bodyMedium(
+                                      'Help others recognize you by adding a profile photo or generating a unique avatar',
+                                      color: AppColors.textSecondary,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            
-                            SizedBox(height: _getResponsiveSpacing(context, 40)),
-                            
-                            // Photo Preview
-                            _buildPhotoPreview(),
-                            
-                            SizedBox(height: _getResponsiveSpacing(context, 40)),
-                            
-                            // Photo Options
-                            _buildPhotoOptions(),
-                            
-                            SizedBox(height: _getResponsiveSpacing(context, 40)),
-                            
-                            // Continue Button
-                            _buildContinueButton(),
-                            
-                            SizedBox(height: _getResponsiveSpacing(context, 24)),
-                          ],
+                              
+                              SizedBox(height: _getResponsiveSpacing(context, 40)),
+                              
+                              // Photo Preview
+                              _buildPhotoPreview(),
+                              
+                              SizedBox(height: _getResponsiveSpacing(context, 40)),
+                              
+                              // Photo Options
+                              _buildPhotoOptions(),
+                              
+                              SizedBox(height: _getResponsiveSpacing(context, 40)),
+                              
+                              // Continue Button
+                              _buildContinueButton(),
+                              
+                              SizedBox(height: _getResponsiveSpacing(context, 24)),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
