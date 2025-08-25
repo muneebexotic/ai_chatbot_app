@@ -55,7 +55,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     }
   }
 
-  /// Handle sign up with email and password
+  /// Handle sign up with email and password - UPDATED with fixed navigation
   void _handleSignUp() {
     if (!_controller.validateForm()) return;
     
@@ -65,7 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Handle Google sign up
+  /// Handle Google sign up - UPDATED with fixed navigation
   void _handleGoogleSignUp() {
     _controller.signUpWithGoogle(
       onSuccess: (_) => _navigateAfterAuth(false), // Google users go to chat
@@ -73,12 +73,17 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Navigate user based on their status
+  /// Navigate user based on their status - UPDATED to use controller methods
   void _navigateAfterAuth(bool isNewUser) {
     if (!mounted) return;
     
-    final route = isNewUser ? '/photo-upload' : '/chat';
-    Navigator.pushReplacementNamed(context, route);
+    if (isNewUser) {
+      // New users go to photo upload, then to chat
+      _controller.navigateToPhotoUpload();
+    } else {
+      // Existing users go directly to chat
+      _controller.navigateToChat();
+    }
   }
 
   /// Show error message to user

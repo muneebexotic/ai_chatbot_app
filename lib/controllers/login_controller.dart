@@ -132,10 +132,16 @@ class LoginController extends ChangeNotifier {
     );
   }
 
-  /// Navigates to chat screen
+  /// Navigates to chat screen - FIXED
   void navigateToChat() {
     if (!_contextMounted) return;
-    Navigator.pushReplacementNamed(_context, LoginConstants.chatRoute);
+    
+    // Clear entire navigation stack and navigate to chat
+    Navigator.pushNamedAndRemoveUntil(
+      _context, 
+      LoginConstants.chatRoute,
+      (route) => false, // Remove ALL previous routes
+    );
   }
 
   /// Navigates to signup screen

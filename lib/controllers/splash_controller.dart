@@ -11,7 +11,7 @@ class SplashController extends ChangeNotifier {
     required AuthProvider authProvider,
     required VoidCallback onNavigationComplete,
   }) : _authProvider = authProvider,
-       _onNavigationComplete = onNavigationComplete;
+        _onNavigationComplete = onNavigationComplete;
 
   final AuthProvider _authProvider;
   final VoidCallback _onNavigationComplete;
@@ -38,7 +38,7 @@ class SplashController extends ChangeNotifier {
       // Start initialization with timeout safety
       _startInitializationTimer(context);
 
-      // Initialize app and get navigation route
+      // Initialize app and get navigation route from the service
       final route = await SplashService.initializeApp(_authProvider);
       
       // Navigate to determined route

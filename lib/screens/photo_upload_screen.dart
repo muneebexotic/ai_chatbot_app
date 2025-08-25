@@ -549,6 +549,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     }
   }
 
+  // FIXED - Navigate to chat after photo upload completion
   Future<void> _continueToChat() async {
     setState(() => _isUploading = true);
     try {
@@ -572,9 +573,9 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       }
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ChatScreen()),
-        );
+        // Use named route instead of direct MaterialPageRoute
+        Navigator.pushReplacementNamed(context, '/chat');
+        // No need to clear stack here since it's already cleared from signup
       }
     } catch (e) {
       _showErrorSnackBar('Error: ${e.toString()}');
@@ -585,6 +586,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     }
   }
 
+  // FIXED - Skip photo upload and navigate to chat
   Future<void> _skipPhotoUpload() async {
     setState(() => _isUploading = true);
     try {
@@ -592,9 +594,9 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.setUserAvatar(avatarUrl);
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ChatScreen()),
-        );
+        // Use named route instead of direct MaterialPageRoute
+        Navigator.pushReplacementNamed(context, '/chat');
+        // No need to clear stack here since it's already cleared from signup
       }
     } catch (e) {
       _showErrorSnackBar('Error creating avatar: ${e.toString()}');

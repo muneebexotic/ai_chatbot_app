@@ -87,7 +87,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       onGoogleSignIn: () => _controller.handleGoogleSignIn(
                         onLoadingChanged: _onLoadingChanged,
                       ),
-                      isLoading: _isGoogleSignInLoading,
+                      isLoading: _isGoogleSignInLoading,  
                     ),
 
                     const Spacer(flex: WelcomeScreenConstants.finalSpacerFlex),
