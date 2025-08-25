@@ -53,7 +53,132 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // CRITICAL FIX: Check if user can send voice messages
+  // FIXED: Handle back button/swipe gesture with proper async handling
+  Future<bool> _onWillPop() async {
+    try {
+      // Check if there's any ongoing operation that should prevent exit
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      if (chatProvider.isTyping) {
+        // If AI is typing, don't show dialog, just prevent exit
+        return false;
+      }
+
+      // Show the exit confirmation dialog
+      final shouldExit = await _showExitDialog();
+      return shouldExit ?? false;
+    } catch (e) {
+      // If any error occurs, allow exit to prevent app from being stuck
+      debugPrint('Error in _onWillPop: $e');
+      return true;
+    }
+  }
+
+  // FIXED: Show exit confirmation dialog with better error handling
+  Future<bool?> _showExitDialog() async {
+    try {
+      return await showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // Prevent dismissing by tapping outside
+        builder: (BuildContext dialogContext) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.exit_to_app,
+                  color: AppColors.error,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppText.displayMedium(
+                  'Exit App?',
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyMedium(
+                'Are you sure you want to exit the app?',
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.primary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AppText.bodySmall(
+                        'Your conversations will be saved and available when you return.',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: AppText.bodyMedium(
+                'Cancel',
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: AppText.bodyMedium(
+                'Exit',
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error showing exit dialog: $e');
+      // If dialog fails to show, return false to prevent exit
+      return false;
+    }
+  }
+
+  // Check if user can send voice messages
   Future<void> _startListening() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
@@ -114,14 +239,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // CRITICAL FIX: Add usage restrictions to message sending
+  // Add usage restrictions to message sending
   void _handleSend() async {
     final message = _controller.text.trim();
     if (message.isEmpty) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
-    // CRITICAL: Check if user can send messages
+    // Check if user can send messages
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
         'Message Limit Reached',
@@ -148,7 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // CRITICAL FIX: Add upgrade dialog for premium features
+  // Add upgrade dialog for premium features
   void _showUpgradeDialog(String title, String description, String benefits) {
     showDialog(
       context: context,
@@ -548,7 +673,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
-          // ADDITION: Show usage indicator for free users
+          // Show usage indicator for free users
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               if (authProvider.isPremium) {
@@ -599,7 +724,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ADDITION: Usage dialog for free users
+  // Usage dialog for free users
   void _showUsageDialog(AuthProvider authProvider) {
     showDialog(
       context: context,
@@ -719,7 +844,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _handleRename(ConversationsProvider convoProvider, ChatProvider chatProvider) async {
     final convo = convoProvider.conversations.firstWhere(
       (c) => c.id == chatProvider.conversationId,
-      orElse: () => ConversationSummary(id: '', title: '', createdAt:  DateTime.now()),
+      orElse: () => ConversationSummary(id: '', title: '', createdAt: DateTime.now()),
     );
     
     final newTitle = await showDialog<String>(
@@ -783,111 +908,114 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentTitle = convoProvider.conversations
         .firstWhere(
           (c) => c.id == chatProvider.conversationId,
-          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt:  DateTime.now()),
+          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: DateTime.now()),
         )
         .title;
 
-    return GestureDetector(
-      onTap: () => _focusNode.unfocus(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        drawer: ConversationDrawer(
-          onRenameDialog: _showRenameDialog,
-          onDrawerClosed: () {
-            Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
-          },
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.background,
-                AppColors.surface,
-                AppColors.background,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
+    return WillPopScope(
+      onWillPop: _onWillPop, // Handle back button/swipe with proper async
+      child: GestureDetector(
+        onTap: () => _focusNode.unfocus(),
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          drawer: ConversationDrawer(
+            onRenameDialog: _showRenameDialog,
+            onDrawerClosed: () {
+              Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
+            },
           ),
-          child: Column(
-            children: [
-              SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
-              
-              Expanded(
-                child: chatProvider.messages.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: chatProvider.messages.length,
-                        itemBuilder: (context, index) {
-                          final reverseIndex = chatProvider.messages.length - 1 - index;
-                          final msg = chatProvider.messages[reverseIndex];
-                          final isUser = msg.sender == 'user';
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.background,
+                  AppColors.surface,
+                  AppColors.background,
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+            child: Column(
+              children: [
+                SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
+                
+                Expanded(
+                  child: chatProvider.messages.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          padding: const EdgeInsets.all(16),
+                          itemCount: chatProvider.messages.length,
+                          itemBuilder: (context, index) {
+                            final reverseIndex = chatProvider.messages.length - 1 - index;
+                            final msg = chatProvider.messages[reverseIndex];
+                            final isUser = msg.sender == 'user';
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: isUser
-                                ? UserMessageBubble(message: msg.text)
-                                : BotMessageBubble(
-                                    message: msg.text,
-                                    onSpeak: () => _voiceService.speak(msg.text),
-                                    onCopy: () {
-                                      ClipboardService.copyText(msg.text);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            'Copied to clipboard',
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontWeight: FontWeight.w500,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: isUser
+                                  ? UserMessageBubble(message: msg.text)
+                                  : BotMessageBubble(
+                                      message: msg.text,
+                                      onSpeak: () => _voiceService.speak(msg.text),
+                                      onCopy: () {
+                                        ClipboardService.copyText(msg.text);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                              'Copied to clipboard',
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            backgroundColor: AppColors.success,
+                                            duration: const Duration(seconds: 2),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
                                           ),
-                                          backgroundColor: AppColors.success,
-                                          duration: const Duration(seconds: 2),
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          );
-                        },
-                      ),
-              ),
-              
-              if (chatProvider.isTyping)
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 8),
-                      const Expanded(child: ModernTypingIndicator()),
-                    ],
-                  ),
+                                        );
+                                      },
+                                    ),
+                            );
+                          },
+                        ),
                 ),
                 
-              Container(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom + 8,
-                  top: 8,
-                  left: 8,
-                  right: 8,
+                if (chatProvider.isTyping)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
+                        const SizedBox(width: 8),
+                        const Expanded(child: ModernTypingIndicator()),
+                      ],
+                    ),
+                  ),
+                  
+                Container(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom + 8,
+                    top: 8,
+                    left: 8,
+                    right: 8,
+                  ),
+                  child: MessageInputField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    isListening: _isListening,
+                    onMicTap: _startListening,
+                    onSend: _handleSend,
+                  ),
                 ),
-                child: MessageInputField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  isListening: _isListening,
-                  onMicTap: _startListening,
-                  onSend: _handleSend,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
