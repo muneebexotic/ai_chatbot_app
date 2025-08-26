@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../services/photo_service.dart';
 import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
+import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
+import '../components/ui/app_button.dart';
+import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
 import 'chat_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
@@ -26,168 +29,187 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false, // Prevent default back behavior
-      onPopInvoked: (didPop) {
-        if (!didPop) {
-          // Handle swipe back - same as skip button
-          _skipPhotoUpload();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.background,
-                AppColors.surface,
-                AppColors.background,
-              ],
-              stops: const [0.0, 0.5, 1.0],
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final isDark = themeProvider.isDark;
+        
+        return PopScope(
+          canPop: false, // Prevent default back behavior
+          onPopInvoked: (didPop) {
+            if (!didPop) {
+              // Handle swipe back - same as skip button
+              _skipPhotoUpload();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.getBackground(isDark),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.getBackground(isDark),
+                    AppColors.getSurface(isDark),
+                    AppColors.getBackground(isDark),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Custom App Bar
+                  _buildAppBar(isDark),
+                  
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          padding: EdgeInsets.all(_getResponsivePadding(context)),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight - _getResponsivePadding(context) * 2,
+                              maxWidth: _getMaxContentWidth(context),
+                            ),
+                            child: Center(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(height: _getResponsiveSpacing(context, 20)),
+                                  
+                                  // Header Section
+                                  _buildHeaderSection(isDark),
+                                  
+                                  SizedBox(height: _getResponsiveSpacing(context, 40)),
+                                  
+                                  // Photo Preview
+                                  _buildPhotoPreview(isDark),
+                                  
+                                  SizedBox(height: _getResponsiveSpacing(context, 40)),
+                                  
+                                  // Photo Options
+                                  _buildPhotoOptions(isDark),
+                                  
+                                  SizedBox(height: _getResponsiveSpacing(context, 40)),
+                                  
+                                  // Continue Button
+                                  _buildContinueButton(isDark),
+                                  
+                                  SizedBox(height: _getResponsiveSpacing(context, 24)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Column(
-            children: [
-              // Custom App Bar
-              SafeArea(
-                bottom: false,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.background.withOpacity(0.9),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.primary.withOpacity(0.1),
-                      ),
-                    ),
-                  ),
-                  child: AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: const SizedBox(), // No back button for onboarding
-                    title: AppText.bodyLarge(
-                      'Profile Photo',
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    centerTitle: true,
-                    actions: [
-                      Padding(
-                        padding: EdgeInsets.only(right: _getResponsivePadding(context)),
-                        child: TextButton(
-                          onPressed: _isUploading ? null : _skipPhotoUpload,
-                          child: AppText.bodyMedium(
-                            'Skip',
-                            color: _isUploading 
-                                ? AppColors.textTertiary 
-                                : AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.all(_getResponsivePadding(context)),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight - _getResponsivePadding(context) * 2,
-                          maxWidth: _getMaxContentWidth(context),
-                        ),
-                        child: Center(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(height: _getResponsiveSpacing(context, 20)),
-                              
-                              // Header Section
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(_getResponsivePadding(context) * 1.3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
-                                      ),
-                                      child: Icon(
-                                        Icons.person_add,
-                                        size: _getResponsiveIconSize(context, 32),
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    SizedBox(height: _getResponsiveSpacing(context, 20)),
-                                    AppText.displayMedium(
-                                      'Add a Profile Photo',
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    SizedBox(height: _getResponsiveSpacing(context, 12)),
-                                    AppText.bodyMedium(
-                                      'Help others recognize you by adding a profile photo or generating a unique avatar',
-                                      color: AppColors.textSecondary,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              SizedBox(height: _getResponsiveSpacing(context, 40)),
-                              
-                              // Photo Preview
-                              _buildPhotoPreview(),
-                              
-                              SizedBox(height: _getResponsiveSpacing(context, 40)),
-                              
-                              // Photo Options
-                              _buildPhotoOptions(),
-                              
-                              SizedBox(height: _getResponsiveSpacing(context, 40)),
-                              
-                              // Continue Button
-                              _buildContinueButton(),
-                              
-                              SizedBox(height: _getResponsiveSpacing(context, 24)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAppBar(bool isDark) {
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getBackground(isDark).withOpacity(0.9),
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.primary.withOpacity(0.1),
+            ),
           ),
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const SizedBox(), // No back button for onboarding
+          title: AppText.bodyLarge(
+            'Profile Photo',
+            color: AppColors.getTextPrimary(isDark),
+            fontWeight: FontWeight.w600,
+          ),
+          centerTitle: true,
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: _getResponsivePadding(context)),
+              child: TextButton(
+                onPressed: _isUploading ? null : _skipPhotoUpload,
+                style: TextButton.styleFrom(
+                  foregroundColor: _isUploading 
+                      ? AppColors.getTextTertiary(isDark) 
+                      : AppColors.primary,
+                ),
+                child: AppText.bodyMedium(
+                  'Skip',
+                  color: _isUploading 
+                      ? AppColors.getTextTertiary(isDark) 
+                      : AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPhotoPreview() {
+  Widget _buildHeaderSection(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(_getResponsivePadding(context) * 1.3),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
+            ),
+            child: Icon(
+              Icons.person_add,
+              size: _getResponsiveIconSize(context, 32),
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(height: _getResponsiveSpacing(context, 20)),
+          AppText.displayMedium(
+            'Add a Profile Photo',
+            color: AppColors.getTextPrimary(isDark),
+            fontWeight: FontWeight.bold,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: _getResponsiveSpacing(context, 12)),
+          AppText.bodyMedium(
+            'Help others recognize you by adding a profile photo or generating a unique avatar',
+            color: AppColors.getTextSecondary(isDark),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoPreview(bool isDark) {
     final photoSize = _getResponsivePhotoSize(context);
     return Container(
       width: photoSize,
@@ -215,20 +237,20 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
                 fit: BoxFit.cover,
               )
             : _avatarUrl != null
-                ? _buildAvatarWidget(photoSize)
+                ? _buildAvatarWidget(photoSize, isDark)
                 : Container(
-                    color: AppColors.surface,
+                    color: AppColors.getSurface(isDark),
                     child: Icon(
                       Icons.person,
                       size: photoSize * 0.5,
-                      color: AppColors.textTertiary,
+                      color: AppColors.getTextTertiary(isDark),
                     ),
                   ),
       ),
     );
   }
 
-  Widget _buildAvatarWidget(double size) {
+  Widget _buildAvatarWidget(double size, bool isDark) {
     // Check if the URL is an SVG (DiceBear returns SVG)
     if (_avatarUrl!.contains('.svg') || _avatarUrl!.contains('dicebear')) {
       return SvgPicture.network(
@@ -237,9 +259,9 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         height: size,
         fit: BoxFit.cover,
         placeholderBuilder: (context) => Container(
-          color: AppColors.surface,
-          child: const Center(
-            child: CircularProgressIndicator(),
+          color: AppColors.getSurface(isDark),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
       );
@@ -253,19 +275,19 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
-            color: AppColors.surface,
-            child: const Center(
-              child: CircularProgressIndicator(),
+            color: AppColors.getSurface(isDark),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           );
         },
         errorBuilder: (context, error, stackTrace) {
           return Container(
-            color: AppColors.surface,
+            color: AppColors.getSurface(isDark),
             child: Icon(
               Icons.error,
               size: size * 0.25,
-              color: AppColors.textTertiary,
+              color: AppColors.getTextTertiary(isDark),
             ),
           );
         },
@@ -273,10 +295,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     }
   }
 
-  Widget _buildPhotoOptions() {
+  Widget _buildPhotoOptions(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
         border: Border.all(color: AppColors.primary.withOpacity(0.1)),
         boxShadow: [
@@ -295,28 +317,31 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
             subtitle: 'Use camera to take a new photo',
             onTap: _isLoading ? null : _pickImageFromCamera,
             isFirst: true,
+            isDark: isDark,
           ),
-          _buildDivider(),
+          _buildDivider(isDark),
           _buildOptionButton(
             icon: Icons.photo_library_outlined,
             title: 'Choose from Gallery',
             subtitle: 'Select from your photo library',
             onTap: _isLoading ? null : _pickImageFromGallery,
+            isDark: isDark,
           ),
-          _buildDivider(),
+          _buildDivider(isDark),
           _buildOptionButton(
             icon: Icons.shuffle_outlined,
             title: 'Generate Avatar',
             subtitle: 'Get a unique AI-generated avatar',
             onTap: _isLoading ? null : _generateRandomAvatar,
             isLast: true,
+            isDark: isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(bool isDark) {
     return Container(
       height: 1,
       margin: EdgeInsets.symmetric(horizontal: _getResponsivePadding(context) * 0.83),
@@ -329,6 +354,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     required String title,
     required String subtitle,
     required VoidCallback? onTap,
+    required bool isDark,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -340,6 +366,8 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           top: isFirst ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
           bottom: isLast ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
         ),
+        splashColor: AppColors.primary.withOpacity(0.1),
+        highlightColor: AppColors.primary.withOpacity(0.05),
         child: Container(
           padding: EdgeInsets.all(_getResponsivePadding(context) * 0.83),
           child: Row(
@@ -363,13 +391,13 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
                   children: [
                     AppText.bodyLarge(
                       title,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(isDark),
                       fontWeight: FontWeight.w600,
                     ),
                     SizedBox(height: _getResponsiveSpacing(context, 4)),
                     AppText.bodySmall(
                       subtitle,
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondary(isDark),
                     ),
                   ],
                 ),
@@ -386,7 +414,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
               else
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: AppColors.textTertiary,
+                  color: AppColors.getTextTertiary(isDark),
                   size: _getResponsiveIconSize(context, 16),
                 ),
             ],
@@ -396,38 +424,15 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     );
   }
 
-  Widget _buildContinueButton() {
+  Widget _buildContinueButton(bool isDark) {
     final hasPhoto = _selectedImage != null || _avatarUrl != null;
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: hasPhoto && !_isUploading ? _continueToChat : null,
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: _getResponsiveButtonPadding(context)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
-          ),
-          backgroundColor: hasPhoto 
-              ? AppColors.primary 
-              : AppColors.textTertiary,
-          elevation: hasPhoto ? 2 : 0,
-          shadowColor: AppColors.primary.withOpacity(0.3),
-        ),
-        child: _isUploading
-            ? SizedBox(
-                height: _getResponsiveIconSize(context, 20),
-                width: _getResponsiveIconSize(context, 20),
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.background),
-                ),
-              )
-            : AppText.bodyLarge(
-                'Continue',
-                color: hasPhoto ? AppColors.background : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-      ),
+    
+    return AppButton.primary(
+      text: 'Continue',
+      onPressed: hasPhoto && !_isUploading ? _continueToChat : null,
+      isLoading: _isUploading,
+      isFullWidth: true,
+      size: AppButtonSize.large,
     );
   }
 
@@ -484,13 +489,6 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
   double _getResponsiveBorderWidth(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     return screenWidth >= 600 ? 4.0 : 3.0;
-  }
-
-  double _getResponsiveButtonPadding(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth >= 1200) return 22.0;
-    if (screenWidth >= 600) return 20.0;
-    return 18.0;
   }
 
   double _getMaxContentWidth(BuildContext context) {
@@ -611,10 +609,16 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: AppText.bodyMedium(
+            message,
+            color: Colors.white,
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.5),
+          ),
+          margin: EdgeInsets.all(_getResponsivePadding(context)),
         ),
       );
     }
