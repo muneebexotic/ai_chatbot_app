@@ -1,4 +1,4 @@
-import 'package:ai_chatbot_app/utils/app_theme.dart';
+// social_button.dart - Theme-aware version
 import 'package:flutter/material.dart';
 
 class SocialButton extends StatelessWidget {
@@ -10,24 +10,32 @@ class SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         width: 64,
         height: 64,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.surfaceVariant, width: 1),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.3), 
+            width: 1
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: colorScheme.shadow.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Center(child: Image.asset(_iconPath, width: 28, height: 28)),
+        child: Center(
+          child: Image.asset(_iconPath, width: 28, height: 28)
+        ),
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../ui/app_logo.dart';
 import '../ui/app_text.dart';
 import '../../constants/welcome_screen_constants.dart';
-import '../../utils/app_theme.dart';
 
 class WelcomeHeader extends StatelessWidget {
   final Animation<double> fadeAnimation;
@@ -20,6 +19,9 @@ class WelcomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       children: [
         // Logo with animation
@@ -36,14 +38,14 @@ class WelcomeHeader extends StatelessWidget {
 
         const SizedBox(height: WelcomeScreenConstants.logoTitleSpacing),
 
-        // Welcome Title
+        // Welcome Title - now theme-aware
         FadeTransition(
           opacity: fadeAnimation,
           child: SlideTransition(
             position: titleSlideAnimation,
-            child: const AppText.displayMedium(
+            child: AppText.displayMedium(
               WelcomeScreenConstants.welcomeTitle,
-              color: Colors.white,
+              color: colorScheme.onBackground, // Use theme-aware color
               textAlign: TextAlign.center,
             ),
           ),
@@ -51,12 +53,12 @@ class WelcomeHeader extends StatelessWidget {
 
         const SizedBox(height: WelcomeScreenConstants.titleSubtitleSpacing),
 
-        // Subtitle
+        // Subtitle - now theme-aware
         FadeTransition(
           opacity: subtitleFadeAnimation,
-          child: const AppText.bodyLarge(
+          child: AppText.bodyLarge(
             WelcomeScreenConstants.welcomeSubtitle,
-            color: AppColors.textSecondary,
+            color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware secondary color
             textAlign: TextAlign.center,
           ),
         ),

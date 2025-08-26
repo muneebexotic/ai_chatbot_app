@@ -1,4 +1,3 @@
-import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 
 enum AppLogoSize { small, medium, large, extraLarge }
@@ -30,16 +29,21 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final screenWidth = MediaQuery.of(context).size.width;
-    final responsiveSize = screenWidth * 0.25; // Responsive sizing
+    final responsiveSize = screenWidth * 0.25;
     final finalSize = _logoSize > responsiveSize ? responsiveSize : _logoSize;
+
+    // Use theme-aware color if no color is provided
+    final effectiveColor = color ?? colorScheme.onBackground;
 
     Widget logo = Image.asset(
       'assets/logo.png',
       width: finalSize,
       height: finalSize,
       fit: BoxFit.contain,
-      color: color,
+      color: effectiveColor,
     );
 
     if (showGlow) {
@@ -47,7 +51,7 @@ class AppLogo extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: theme.primaryColor.withOpacity(0.3),
               blurRadius: 30,
               spreadRadius: 5,
             ),

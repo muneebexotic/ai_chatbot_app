@@ -42,14 +42,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: WelcomeScreenConstants.backgroundGradient,
-            stops: WelcomeScreenConstants.gradientStops,
+            colors: [
+              colorScheme.background,
+              colorScheme.surface,
+              colorScheme.background,
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
