@@ -23,17 +23,20 @@ class WelcomeController {
     onLoadingChanged();
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     try {
       await authProvider.signInWithGoogle();
-      
+
       // Wait for auth state to update with timeout
       await _waitForAuthState(authProvider);
-      
+
       if (authProvider.isLoggedIn && authProvider.currentUser != null && context.mounted) {
-        Navigator.pushReplacementNamed(
+        // Apply the change from the first file:
+        // Use pushNamedAndRemoveUntil to clear the navigation stack.
+        Navigator.pushNamedAndRemoveUntil(
           context,
           WelcomeScreenConstants.chatRoute,
+          (route) => false,
         );
       }
     } catch (e) {
@@ -50,9 +53,9 @@ class WelcomeController {
   Future<void> _waitForAuthState(AuthProvider authProvider) async {
     const maxWaitTime = Duration(seconds: 5); // Increased timeout for user data
     const checkInterval = Duration(milliseconds: 150);
-    
+
     final stopwatch = Stopwatch()..start();
-    
+
     while (stopwatch.elapsed < maxWaitTime) {
       if (authProvider.isLoggedIn && authProvider.currentUser != null) {
         // Extra small delay to ensure everything is settled
@@ -61,7 +64,7 @@ class WelcomeController {
       }
       await Future.delayed(checkInterval);
     }
-    
+
     print('⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}');
   }
 

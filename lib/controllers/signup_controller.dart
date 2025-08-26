@@ -116,6 +116,32 @@ class SignUpController extends ChangeNotifier {
     return ValidationUtils.validatePasswordComplex(value);
   }
 
+  /// Navigate to chat screen - FIXED
+  void navigateToChat() {
+    final context = _formKey.currentContext;
+    if (context == null || !context.mounted) return;
+    
+    // Clear entire navigation stack and navigate to chat
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/chat', // or use a constant
+      (route) => false, // Remove ALL previous routes
+    );
+  }
+
+  /// Navigate to photo upload for new users - FIXED
+  void navigateToPhotoUpload() {
+    final context = _formKey.currentContext;
+    if (context == null || !context.mounted) return;
+    
+    // Clear stack and go to photo upload
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/photo-upload',
+      (route) => false,
+    );
+  }
+
   /// Sign up with email and password
   Future<void> signUpWithEmail({
     required Function(bool isNewUser) onSuccess,

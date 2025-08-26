@@ -4,7 +4,10 @@ import 'config/bootstrap.dart';
 import 'config/app_providers.dart';
 import 'config/app_router.dart';
 import 'providers/themes_provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
+import 'screens/chat_screen.dart';
+import 'screens/welcome_screen.dart';
 
 Future<void> main() async {
   await AppBootstrap.initialize();
@@ -18,8 +21,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: buildAppProviders(),
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, AuthProvider>(
+        builder: (context, themeProvider, authProvider, _) {
           return MaterialApp(
             title: 'AI Chatbot',
             debugShowCheckedModeBanner: false,
@@ -36,11 +39,35 @@ class MyApp extends StatelessWidget {
               ),
             ),
             themeMode: themeProvider.themeMode,
-            home: const SplashScreen(),
+            home: _buildInitialScreen(authProvider),
             routes: buildAppRoutes(),
+            // CRITICAL: Handle unknown routes
+            onUnknownRoute: (settings) {
+              return MaterialPageRoute(
+                builder: (context) => authProvider.isLoggedIn 
+                  ? const ChatScreen() 
+                  : const WelcomeScreen(),
+              );
+            },
           );
         },
       ),
     );
+  }
+
+  // CRITICAL FIX: Determine initial screen based on auth state
+  Widget _buildInitialScreen(AuthProvider authProvider) {
+    // If auth provider is not initialized yet, show splash
+    if (!authProvider.isInitialized) {
+      return const SplashScreen();
+    }
+    
+    // If user is logged in, go directly to chat
+    if (authProvider.isLoggedIn) {
+      return const ChatScreen();
+    }
+    
+    // Otherwise, show splash which will handle navigation
+    return const SplashScreen();
   }
 }
