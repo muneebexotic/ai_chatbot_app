@@ -11,7 +11,7 @@ import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
 
 /// Enhanced SignUp Screen with improved architecture and performance
-/// 
+///
 /// Features:
 /// - Clean separation of concerns using controller pattern
 /// - Optimized animations with mixin pattern
@@ -26,10 +26,12 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen>
-    with TickerProviderStateMixin, SignUpAnimationsMixin, WidgetsBindingObserver {
-  
+    with
+        TickerProviderStateMixin,
+        SignUpAnimationsMixin,
+        WidgetsBindingObserver {
   late final SignUpController _controller;
-  
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +60,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   /// Handle sign up with email and password - UPDATED with fixed navigation
   void _handleSignUp() {
     if (!_controller.validateForm()) return;
-    
+
     _controller.signUpWithEmail(
       onSuccess: (isNewUser) => _navigateAfterAuth(isNewUser),
       onError: _showErrorSnackBar,
@@ -76,7 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   /// Navigate user based on their status - UPDATED to use controller methods
   void _navigateAfterAuth(bool isNewUser) {
     if (!mounted) return;
-    
+
     if (isNewUser) {
       // New users go to photo upload, then to chat
       _controller.navigateToPhotoUpload();
@@ -160,10 +162,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   /// Optimized back button with fade animation
   Widget _buildBackButton() {
-    return FadeTransition(
-      opacity: fadeAnimation,
-      child: const AppBackButton(),
-    );
+    return FadeTransition(opacity: fadeAnimation, child: const AppBackButton());
   }
 
   /// Animated header with slide transition
@@ -200,7 +199,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             controller: controller.fullNameController,
             label: SignUpConstants.fullNameLabel,
             hintText: SignUpConstants.fullNameHint,
-            prefixIcon: Icons.person_outline,
+            prefixIcon: Icon(Icons.person_outline),
             validator: controller.validateFullName,
           ),
         ),
@@ -244,10 +243,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   }) {
     return FadeTransition(
       opacity: fadeAnimation,
-      child: SlideTransition(
-        position: animation,
-        child: inputWidget,
-      ),
+      child: SlideTransition(position: animation, child: inputWidget),
     );
   }
 

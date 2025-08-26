@@ -1,61 +1,214 @@
-import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
+import '../ui/app_text.dart';
 
+enum AppButtonStyle {
+  primary,
+  secondary,
+  outline,
+  ghost,
+  destructive,
+}
+
+// Keep the old enum for backward compatibility
 enum AppButtonSize { small, medium, large }
-
 enum AppButtonType { primary, secondary, outline, text }
 
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
-  final AppButtonSize size;
-  final bool isFullWidth;
+  final AppButtonStyle style;
   final bool isLoading;
+  final bool isExpanded;
+  final bool isFullWidth; // Added for backward compatibility
   final IconData? icon;
-  final AppButtonType _type;
+  final double? width;
+  final double? height;
+  final EdgeInsets? padding;
+  final double? borderRadius;
+  final AppButtonSize size; // Added for backward compatibility
 
-  // Factory constructors for different button types
-  const AppButton.primary({
+  const AppButton({
     super.key,
     required this.text,
-    required this.onPressed,
-    this.size = AppButtonSize.medium,
-    this.isFullWidth = false,
+    this.onPressed,
+    this.style = AppButtonStyle.primary,
     this.isLoading = false,
+    this.isExpanded = false,
+    this.isFullWidth = false, // Added for backward compatibility
     this.icon,
-  }) : _type = AppButtonType.primary;
+    this.width,
+    this.height,
+    this.padding,
+    this.borderRadius,
+    this.size = AppButtonSize.medium, // Added for backward compatibility
+  });
 
-  const AppButton.secondary({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    this.size = AppButtonSize.medium,
-    this.isFullWidth = false,
-    this.isLoading = false,
-    this.icon,
-  }) : _type = AppButtonType.secondary;
+  // Primary button factory
+  factory AppButton.primary({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false, // Added for backward compatibility
+    AppButtonSize size = AppButtonSize.medium, // Added for backward compatibility
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.primary,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
 
-  const AppButton.outline({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    this.size = AppButtonSize.medium,
-    this.isFullWidth = false,
-    this.isLoading = false,
-    this.icon,
-  }) : _type = AppButtonType.outline;
+  // Secondary button factory
+  factory AppButton.secondary({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false, // Added for backward compatibility
+    AppButtonSize size = AppButtonSize.medium, // Added for backward compatibility
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.secondary,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
 
-  const AppButton.text({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    this.size = AppButtonSize.medium,
-    this.isFullWidth = false,
-    this.isLoading = false,
-    this.icon,
-  }) : _type = AppButtonType.text;
+  // Outline button factory
+  factory AppButton.outline({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false, // Added for backward compatibility
+    AppButtonSize size = AppButtonSize.medium, // Added for backward compatibility
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.outline,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
 
+  // Ghost button factory
+  factory AppButton.ghost({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false, // Added for backward compatibility
+    AppButtonSize size = AppButtonSize.medium, // Added for backward compatibility
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.ghost,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
+
+  // Destructive button factory
+  factory AppButton.destructive({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false, // Added for backward compatibility
+    AppButtonSize size = AppButtonSize.medium, // Added for backward compatibility
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.destructive,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
+
+  // Text button factory (for backward compatibility)
+  factory AppButton.text({
+    required String text,
+    VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isExpanded = false,
+    bool isFullWidth = false,
+    AppButtonSize size = AppButtonSize.medium,
+    IconData? icon,
+    double? width,
+    double? height,
+    Key? key,
+  }) =>
+      AppButton(
+        key: key,
+        text: text,
+        onPressed: onPressed,
+        style: AppButtonStyle.ghost,
+        isLoading: isLoading,
+        isExpanded: isExpanded || isFullWidth,
+        isFullWidth: isFullWidth,
+        icon: icon,
+        width: width,
+        height: height,
+        size: size,
+      );
+
+  // Size-based height calculation for backward compatibility
   double get _height {
+    if (height != null) return height!;
+    
     switch (size) {
       case AppButtonSize.small:
         return 40;
@@ -66,111 +219,142 @@ class AppButton extends StatelessWidget {
     }
   }
 
-  double get _fontSize {
-    switch (size) {
-      case AppButtonSize.small:
-        return 14;
-      case AppButtonSize.medium:
-        return 16;
-      case AppButtonSize.large:
-        return 18;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Get button style properties based on theme
+    final buttonStyle = _getButtonStyle(context);
+    
+    final effectiveWidth = (isExpanded || isFullWidth) ? double.infinity : width;
+    final effectiveHeight = _height;
+    final effectivePadding = padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16);
+    final effectiveBorderRadius = borderRadius ?? 16.0;
+
+    Widget buttonContent = Row(
+      mainAxisSize: (isExpanded || isFullWidth) ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (isLoading) ...[
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(buttonStyle.textColor),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ] else if (icon != null) ...[
+          Icon(icon, size: 20, color: buttonStyle.textColor),
+          const SizedBox(width: 12),
+        ],
+        AppText.labelLarge(
+          text,
+          color: buttonStyle.textColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ],
+    );
+
     return SizedBox(
-      width: isFullWidth ? double.infinity : null,
-      height: _height,
+      width: effectiveWidth,
+      height: effectiveHeight,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: _getButtonStyle(),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(_getTextColor()),
-                ),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: _fontSize + 2),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: _fontSize,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
-              ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonStyle.backgroundColor,
+          foregroundColor: buttonStyle.textColor,
+          disabledBackgroundColor: buttonStyle.disabledBackgroundColor,
+          disabledForegroundColor: buttonStyle.disabledTextColor,
+          elevation: buttonStyle.elevation,
+          shadowColor: buttonStyle.shadowColor,
+          side: buttonStyle.borderSide,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(effectiveBorderRadius),
+          ),
+          padding: effectivePadding,
+        ),
+        child: buttonContent,
       ),
     );
   }
 
-  ButtonStyle _getButtonStyle() {
-    switch (_type) {
-      case AppButtonType.primary:
-        return ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+  _ButtonStyleData _getButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = theme.primaryColor;
+    
+    switch (style) {
+      case AppButtonStyle.primary:
+        return _ButtonStyleData(
+          backgroundColor: primaryColor,
+          textColor: Colors.white,
+          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
+          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
           elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shadowColor: primaryColor.withOpacity(0.3),
         );
-      case AppButtonType.secondary:
-        return ElevatedButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        );
-      case AppButtonType.outline:
-        return ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.primary,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          side: BorderSide(color: AppColors.primary, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        );
-      case AppButtonType.text:
-        return ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.primary,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        );
-    }
-  }
 
-  Color _getTextColor() {
-    switch (_type) {
-      case AppButtonType.primary:
-        return Colors.white;
-      case AppButtonType.secondary:
-        return Colors.white;
-      case AppButtonType.outline:
-        return AppColors.primary;
-      case AppButtonType.text:
-        return AppColors.primary;
+      case AppButtonStyle.secondary:
+        return _ButtonStyleData(
+          backgroundColor: colorScheme.surface,
+          textColor: colorScheme.onSurface,
+          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
+          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          elevation: 0,
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+        );
+
+      case AppButtonStyle.outline:
+        return _ButtonStyleData(
+          backgroundColor: Colors.transparent,
+          textColor: primaryColor,
+          disabledBackgroundColor: Colors.transparent,
+          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          elevation: 0,
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
+        );
+
+      case AppButtonStyle.ghost:
+        return _ButtonStyleData(
+          backgroundColor: Colors.transparent,
+          textColor: primaryColor,
+          disabledBackgroundColor: Colors.transparent,
+          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          elevation: 0,
+        );
+
+      case AppButtonStyle.destructive:
+        return _ButtonStyleData(
+          backgroundColor: colorScheme.error,
+          textColor: Colors.white,
+          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
+          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          elevation: 0,
+          shadowColor: colorScheme.error.withOpacity(0.3),
+        );
     }
   }
+}
+
+class _ButtonStyleData {
+  final Color backgroundColor;
+  final Color textColor;
+  final Color disabledBackgroundColor;
+  final Color disabledTextColor;
+  final double elevation;
+  final Color? shadowColor;
+  final BorderSide? borderSide;
+
+  const _ButtonStyleData({
+    required this.backgroundColor,
+    required this.textColor,
+    required this.disabledBackgroundColor,
+    required this.disabledTextColor,
+    required this.elevation,
+    this.shadowColor,
+    this.borderSide,
+  });
 }
