@@ -9,8 +9,9 @@ import '../components/ui/app_input.dart';
 import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
+import '../providers/themes_provider.dart';
 
-/// Enhanced SignUp Screen with improved architecture and performance
+/// Enhanced SignUp Screen with improved architecture, performance, and theming
 ///
 /// Features:
 /// - Clean separation of concerns using controller pattern
@@ -18,6 +19,7 @@ import '../utils/app_theme.dart';
 /// - Robust error handling and logging
 /// - Accessibility improvements
 /// - Performance optimizations
+/// - Theme-aware design supporting light/dark modes
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -57,7 +59,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     }
   }
 
-  /// Handle sign up with email and password - UPDATED with fixed navigation
+  /// Handle sign up with email and password
   void _handleSignUp() {
     if (!_controller.validateForm()) return;
 
@@ -67,35 +69,36 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Handle Google sign up - UPDATED with fixed navigation
+  /// Handle Google sign up
   void _handleGoogleSignUp() {
     _controller.signUpWithGoogle(
-      onSuccess: (_) => _navigateAfterAuth(false), // Google users go to chat
+      onSuccess: (_) => _navigateAfterAuth(false),
       onError: _showErrorSnackBar,
     );
   }
 
-  /// Navigate user based on their status - UPDATED to use controller methods
+  /// Navigate user based on their status
   void _navigateAfterAuth(bool isNewUser) {
     if (!mounted) return;
 
     if (isNewUser) {
-      // New users go to photo upload, then to chat
       _controller.navigateToPhotoUpload();
     } else {
-      // Existing users go directly to chat
       _controller.navigateToChat();
     }
   }
 
-  /// Show error message to user
+  /// Show error message to user with theme-aware styling
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(SignUpConstants.borderRadius),
@@ -107,80 +110,94 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: SignUpConstants.backgroundGradient,
-            stops: SignUpConstants.gradientStops,
-          ),
-        ),
-        child: SafeArea(
-          child: ChangeNotifierProvider.value(
-            value: _controller,
-            child: Consumer<SignUpController>(
-              builder: (context, controller, _) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(SignUpConstants.screenPadding),
-                  child: _buildForm(controller),
-                );
-              },
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final isDark = themeProvider.isDark;
+
+        return Scaffold(
+          backgroundColor: colorScheme.background,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: SignUpConstants.getBackgroundGradient(isDark),
+                stops: SignUpConstants.gradientStops,
+              ),
+            ),
+            child: SafeArea(
+              child: ChangeNotifierProvider.value(
+                value: _controller,
+                child: Consumer<SignUpController>(
+                  builder: (context, controller, _) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(SignUpConstants.screenPadding),
+                      child: _buildForm(controller, theme, isDark),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  /// Build the main form with optimized animations
-  Widget _buildForm(SignUpController controller) {
+  /// Build the main form with optimized animations and theme support
+  Widget _buildForm(SignUpController controller, ThemeData theme, bool isDark) {
     return Form(
       key: controller.formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildBackButton(),
+          _buildBackButton(theme),
           const SizedBox(height: SignUpConstants.sectionSpacing),
-          _buildHeader(),
+          _buildHeader(theme, isDark),
           const SizedBox(height: SignUpConstants.largeSpacing),
-          _buildInputFields(controller),
+          _buildInputFields(controller, theme),
           const SizedBox(height: SignUpConstants.buttonSpacing),
-          _buildSignUpButton(controller),
+          _buildSignUpButton(controller, theme),
           const SizedBox(height: SignUpConstants.sectionSpacing),
-          _buildLoginLink(),
+          _buildLoginLink(theme),
           const SizedBox(height: SignUpConstants.largeSpacing),
-          _buildDivider(),
+          _buildDivider(theme),
           const SizedBox(height: SignUpConstants.buttonSpacing),
-          _buildGoogleButton(controller),
+          _buildGoogleButton(controller, theme),
           const SizedBox(height: SignUpConstants.bottomSpacing),
         ],
       ),
     );
   }
 
-  /// Optimized back button with fade animation
-  Widget _buildBackButton() {
-    return FadeTransition(opacity: fadeAnimation, child: const AppBackButton());
+  /// Theme-aware back button with fade animation
+  Widget _buildBackButton(ThemeData theme) {
+    return FadeTransition(
+      opacity: fadeAnimation, 
+      child: const AppBackButton()
+    );
   }
 
-  /// Animated header with slide transition
-  Widget _buildHeader() {
+  /// Animated header with slide transition and theme-aware colors
+  Widget _buildHeader(ThemeData theme, bool isDark) {
+    final headerColor = AppColors.getTextPrimary(isDark);
+    
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
         position: slideAnimation,
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.displayLarge(
               SignUpConstants.headerLine1,
-              color: Colors.white,
+              color: headerColor,
             ),
             AppText.displayLarge(
               SignUpConstants.headerLine2,
-              color: Colors.white,
+              color: headerColor,
             ),
           ],
         ),
@@ -188,8 +205,8 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Input fields with staggered animations
-  Widget _buildInputFields(SignUpController controller) {
+  /// Input fields with staggered animations and theme support
+  Widget _buildInputFields(SignUpController controller, ThemeData theme) {
     return Column(
       children: [
         _buildAnimatedInput(
@@ -199,7 +216,10 @@ class _SignUpScreenState extends State<SignUpScreen>
             controller: controller.fullNameController,
             label: SignUpConstants.fullNameLabel,
             hintText: SignUpConstants.fullNameHint,
-            prefixIcon: Icon(Icons.person_outline),
+            prefixIcon: Icon(
+              Icons.person_outline,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             validator: controller.validateFullName,
           ),
         ),
@@ -235,7 +255,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Helper method for animated inputs
+  /// Helper method for animated inputs with theme awareness
   Widget _buildAnimatedInput({
     required TextEditingController controller,
     required Animation<Offset> animation,
@@ -247,15 +267,15 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Sign up button with loading state
-  Widget _buildSignUpButton(SignUpController controller) {
+  /// Theme-aware sign up button with loading state
+  Widget _buildSignUpButton(SignUpController controller, ThemeData theme) {
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
         position: buttonAnimation,
         child: AppButton.primary(
           text: SignUpConstants.signUpButtonText,
-          onPressed: controller.isLoading ? () {} : _handleSignUp,
+          onPressed: controller.isLoading ? null : _handleSignUp,
           isFullWidth: true,
           isLoading: controller.isLoading,
           size: AppButtonSize.large,
@@ -264,17 +284,19 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Login link
-  Widget _buildLoginLink() {
+  /// Theme-aware login link
+  Widget _buildLoginLink(ThemeData theme) {
+    final secondaryTextColor = theme.colorScheme.onSurfaceVariant;
+    
     return FadeTransition(
       opacity: fadeAnimation,
       child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const AppText.bodyMedium(
+            AppText.bodyMedium(
               SignUpConstants.loginPrompt,
-              color: AppColors.textSecondary,
+              color: secondaryTextColor,
             ),
             AppButton.text(
               text: SignUpConstants.loginButtonText,
@@ -286,8 +308,11 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Divider with text
-  Widget _buildDivider() {
+  /// Theme-aware divider with text
+  Widget _buildDivider(ThemeData theme) {
+    final dividerColor = theme.colorScheme.outlineVariant;
+    final textColor = theme.colorScheme.onSurfaceVariant;
+    
     return FadeTransition(
       opacity: fadeAnimation,
       child: Row(
@@ -295,20 +320,20 @@ class _SignUpScreenState extends State<SignUpScreen>
           Expanded(
             child: Container(
               height: 1,
-              color: AppColors.textTertiary.withOpacity(0.3),
+              color: dividerColor,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
               SignUpConstants.dividerText,
-              color: AppColors.textTertiary,
+              color: textColor,
             ),
           ),
           Expanded(
             child: Container(
               height: 1,
-              color: AppColors.textTertiary.withOpacity(0.3),
+              color: dividerColor,
             ),
           ),
         ],
@@ -316,8 +341,8 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  /// Google sign up button
-  Widget _buildGoogleButton(SignUpController controller) {
+  /// Theme-aware Google sign up button
+  Widget _buildGoogleButton(SignUpController controller, ThemeData theme) {
     return FadeTransition(
       opacity: fadeAnimation,
       child: Center(
@@ -328,3 +353,4 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 }
+
