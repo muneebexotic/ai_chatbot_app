@@ -1,7 +1,6 @@
-// State management for splash screen
-
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import '../providers/auth_provider.dart';
 import '../services/splash_service.dart';
 
@@ -51,7 +50,7 @@ class SplashController extends ChangeNotifier {
   /// Start a safety timer to prevent infinite initialization
   void _startInitializationTimer(BuildContext context) {
     _initializationTimer?.cancel();
-    _initializationTimer = Timer(const Duration(seconds: 15), () {
+    _initializationTimer = Timer(const Duration(seconds: 8), () {
       if (!_hasNavigated && context.mounted) {
         _handleError('Initialization timeout - navigating to welcome');
         _navigateToRoute(context, '/welcome');
@@ -66,8 +65,8 @@ class SplashController extends ChangeNotifier {
     _hasNavigated = true;
     _initializationTimer?.cancel();
     
-    // Small delay to ensure animations complete
-    await Future.delayed(const Duration(milliseconds: 100));
+    // Minimal delay to ensure animations complete
+    await Future.delayed(const Duration(milliseconds: 50));
     
     if (context.mounted) {
       Navigator.pushReplacementNamed(context, route);

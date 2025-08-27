@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'config/bootstrap.dart';
 import 'config/app_providers.dart';
 import 'config/app_router.dart';
@@ -11,7 +13,13 @@ import 'screens/chat_screen.dart';
 import 'screens/welcome_screen.dart';
 
 Future<void> main() async {
+  // Ensure Flutter is initialized and preserve native splash
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  
+  // Initialize app
   await AppBootstrap.initialize();
+  
   runApp(const MyApp());
 }
 
@@ -27,11 +35,10 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'AI Chatbot',
             debugShowCheckedModeBanner: false,
-            // Use your custom themes instead of default ones
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: _buildInitialScreen(authProvider),
+            home: _buildInitialScreen(authProvider, themeProvider),
             routes: buildAppRoutes(),
             onUnknownRoute: (settings) {
               return MaterialPageRoute(
@@ -46,14 +53,11 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialScreen(AuthProvider authProvider) {
-    if (!authProvider.isInitialized) {
-      return const SplashScreen();
-    }
-    
-    if (authProvider.isLoggedIn) {
-      return const ChatScreen();
-    }
+  Widget _buildInitialScreen(AuthProvider authProvider, ThemeProvider themeProvider) {
+    // Remove native splash after the first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove();
+    });
     
     return const SplashScreen();
   }
