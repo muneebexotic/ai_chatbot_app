@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/themes_provider.dart';
 import '../screens/subscription_screen.dart';
+import '../components/ui/app_text.dart';
 
 class MessageInputField extends StatefulWidget {
   final TextEditingController controller;
@@ -128,9 +130,7 @@ class _MessageInputFieldState extends State<MessageInputField>
     super.dispose();
   }
 
-  // CRITICAL FIX: Add usage limit check for sending messages
   Future<void> _handleSendTap() async {
-    // Check if user can send message
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final canSend = await authProvider.canSendMessage();
     
@@ -145,7 +145,6 @@ class _MessageInputFieldState extends State<MessageInputField>
     });
   }
 
-  // CRITICAL FIX: Add usage limit check for voice messages
   Future<void> _handleMicTap() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final canSendVoice = await authProvider.canSendVoice();
@@ -158,7 +157,6 @@ class _MessageInputFieldState extends State<MessageInputField>
     widget.onMicTap();
   }
 
-  // CRITICAL FIX: Add usage limit check for image uploads
   Future<void> _handleImageUpload() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final canUpload = await authProvider.canUploadImage();
@@ -168,7 +166,9 @@ class _MessageInputFieldState extends State<MessageInputField>
       return;
     }
 
-    // Show "Coming soon" for now
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDark;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text(
@@ -178,7 +178,7 @@ class _MessageInputFieldState extends State<MessageInputField>
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.getSurface(isDark),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -188,16 +188,17 @@ class _MessageInputFieldState extends State<MessageInputField>
     );
   }
 
-  // CRITICAL FIX: Usage limit dialog
   void _showUsageLimitDialog(String limitType) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDark;
     
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.getSurface(isDark),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
@@ -207,11 +208,10 @@ class _MessageInputFieldState extends State<MessageInputField>
                 size: 24,
               ),
               const SizedBox(width: 12),
-              Text(
-                'Daily Limit Reached',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
+              Expanded(
+                child: AppText.titleLarge(
+                  'Daily Limit Reached',
+                  color: AppColors.getTextPrimary(isDark),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -221,20 +221,14 @@ class _MessageInputFieldState extends State<MessageInputField>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText.bodyMedium(
                 'You\'ve reached your daily $limitType limit for free users.',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                color: AppColors.getTextSecondary(isDark),
               ),
               const SizedBox(height: 8),
-              Text(
+              AppText.bodySmall(
                 authProvider.usageText,
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: 12,
-                ),
+                color: AppColors.getTextTertiary(isDark),
               ),
               const SizedBox(height: 16),
               Container(
@@ -246,21 +240,15 @@ class _MessageInputFieldState extends State<MessageInputField>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AppText.bodyMedium(
                       'Upgrade to Premium for:',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      color: AppColors.getTextPrimary(isDark),
+                      fontWeight: FontWeight.w600,
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    AppText.bodySmall(
                       '• Unlimited messages\n• All personas\n• Unlimited images & voice\n• Priority support',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
+                      color: AppColors.getTextSecondary(isDark),
                     ),
                   ],
                 ),
@@ -270,11 +258,9 @@ class _MessageInputFieldState extends State<MessageInputField>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
+              child: AppText.bodyMedium(
                 'Later',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                ),
+                color: AppColors.getTextSecondary(isDark),
               ),
             ),
             ElevatedButton(
@@ -291,12 +277,10 @@ class _MessageInputFieldState extends State<MessageInputField>
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: Text(
+              child: AppText.bodyMedium(
                 'Upgrade',
-                style: TextStyle(
-                  color: AppColors.background,
-                  fontWeight: FontWeight.w600,
-                ),
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -307,8 +291,10 @@ class _MessageInputFieldState extends State<MessageInputField>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
+    return Consumer2<AuthProvider, ThemeProvider>(
+      builder: (context, authProvider, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        
         return Padding(
           padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
           child: Row(
@@ -320,7 +306,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                   curve: Curves.easeOutCubic,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.getSurface(isDark),
                     borderRadius: BorderRadius.circular(28),
                     border: _isFocused
                         ? Border.all(
@@ -328,7 +314,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                             width: 2,
                           )
                         : Border.all(
-                            color: AppColors.surfaceVariant.withOpacity(0.3),
+                            color: AppColors.getSurfaceVariant(isDark).withOpacity(0.3),
                             width: 1,
                           ),
                     boxShadow: _isFocused
@@ -342,7 +328,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                           ]
                         : [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
                               blurRadius: 8,
                               spreadRadius: 0,
                               offset: const Offset(0, 2),
@@ -362,7 +348,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimary(isDark),
                           ),
                           decoration: InputDecoration(
                             hintText: authProvider.isPremium || authProvider.paymentService.remainingMessages > 0 
@@ -373,7 +359,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w400,
                               fontSize: 16,
-                              color: AppColors.textTertiary,
+                              color: AppColors.getTextTertiary(isDark),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(28),
@@ -412,7 +398,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 IconButton(
                                   onPressed: _handleImageUpload,
                                   icon: const Icon(Icons.attach_file),
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondary(isDark),
                                   tooltip: 'Attach file',
                                 ),
                                 
@@ -420,7 +406,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 IconButton(
                                   onPressed: _handleImageUpload,
                                   icon: const Icon(Icons.camera_alt),
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondary(isDark),
                                   tooltip: 'Take photo',
                                 ),
                               ],
@@ -434,7 +420,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                     child: IconButton(
                                       onPressed: _handleImageUpload,
                                       icon: const Icon(Icons.attach_file),
-                                      color: AppColors.textSecondary,
+                                      color: AppColors.getTextSecondary(isDark),
                                       tooltip: 'Attach file',
                                     ),
                                   ),
@@ -480,13 +466,13 @@ class _MessageInputFieldState extends State<MessageInputField>
                           colors: _hasText || widget.isListening
                               ? (isEnabled 
                                   ? [AppColors.primary, AppColors.secondary]
-                                  : [AppColors.textTertiary.withOpacity(0.5), AppColors.textTertiary.withOpacity(0.3)])
-                              : [AppColors.surface, AppColors.surfaceVariant],
+                                  : [AppColors.getTextTertiary(isDark).withOpacity(0.5), AppColors.getTextTertiary(isDark).withOpacity(0.3)])
+                              : [AppColors.getSurface(isDark), AppColors.getSurfaceVariant(isDark)],
                         ),
                         shape: BoxShape.circle,
                         border: !_hasText && !widget.isListening
                             ? Border.all(
-                                color: AppColors.textTertiary.withOpacity(0.3),
+                                color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
                                 width: 1,
                               )
                             : null,
@@ -501,7 +487,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                               ]
                             : [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
                                   blurRadius: 8,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 2),
@@ -518,9 +504,9 @@ class _MessageInputFieldState extends State<MessageInputField>
                               : (widget.isListening ? Icons.mic : Icons.mic_none),
                           color: isEnabled
                               ? (_hasText || widget.isListening
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary)
-                              : AppColors.textTertiary.withOpacity(0.5),
+                                  ? Colors.white
+                                  : AppColors.getTextSecondary(isDark))
+                              : AppColors.getTextTertiary(isDark).withOpacity(0.5),
                           size: 22,
                         ),
                         tooltip: _hasText 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
 
 class SuggestionChip extends StatefulWidget {
@@ -69,78 +71,84 @@ class _SuggestionChipState extends State<SuggestionChip>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: GestureDetector(
-            onTapDown: _handleTapDown,
-            onTapUp: _handleTapUp,
-            onTapCancel: _handleTapCancel,
-            child: Container(
-              margin: const EdgeInsets.all(4),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: _isPressed
-                      ? [
-                          AppColors.primary.withOpacity(0.8),
-                          AppColors.secondary.withOpacity(0.9),
-                        ]
-                      : [
-                          AppColors.primary,
-                          AppColors.secondary,
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: _isPressed
-                      ? AppColors.primary.withOpacity(0.6)
-                      : AppColors.primary.withOpacity(0.3),
-                  width: 1,
-                ),
-                boxShadow: _isPressed
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    widget.icon,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.label,
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: Colors.white,
-                      letterSpacing: 0.1,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        
+        return AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: GestureDetector(
+                onTapDown: _handleTapDown,
+                onTapUp: _handleTapUp,
+                onTapCancel: _handleTapCancel,
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: _isPressed
+                          ? [
+                              AppColors.primary.withOpacity(0.8),
+                              AppColors.secondary.withOpacity(0.9),
+                            ]
+                          : [
+                              AppColors.primary,
+                              AppColors.secondary,
+                            ],
                     ),
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(
+                      color: _isPressed
+                          ? AppColors.primary.withOpacity(0.6)
+                          : AppColors.primary.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: _isPressed
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: 18,
+                        color: AppColors.getTextPrimary(isDark),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: AppColors.getTextPrimary(isDark),
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
+import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
 
 class ConversationDrawer extends StatefulWidget {
@@ -104,389 +105,389 @@ class _ConversationDrawerState extends State<ConversationDrawer>
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
-    final convoProvider = Provider.of<ConversationsProvider>(context);
-
-    return Drawer(
-      backgroundColor: AppColors.background,
-      width: MediaQuery.of(context).size.width * 0.75,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.surface, AppColors.background],
-          ),
-        ),
-        child: Column(
-          children: [
-            // Modern Header with glassmorphism effect
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.textPrimary.withOpacity(0.05),
-                    Colors.transparent,
-                  ],
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.textPrimary.withOpacity(0.06),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(1.5),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.secondary],
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(4.5),
-                        ),
-                        child: const Icon(
-                          Icons.chat_bubble_rounded,
-                          color: AppColors.textPrimary,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Conversations',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
+    return Consumer3<ChatProvider, ConversationsProvider, ThemeProvider>(
+      builder: (context, chatProvider, convoProvider, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        
+        return Drawer(
+          backgroundColor: AppColors.getBackground(isDark),
+          width: MediaQuery.of(context).size.width * 0.75,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.getSurface(isDark), 
+                  AppColors.getBackground(isDark)
+                ],
               ),
             ),
-
-            // Enhanced Search Bar with modern styling
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+            child: Column(
+              children: [
+                // Modern Header with glassmorphism effect
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.surface, AppColors.surfaceVariant],
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                        Colors.transparent,
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isSearchFocused
-                          ? AppColors.primary.withOpacity(0.5)
-                          : AppColors.textPrimary.withOpacity(0.08),
-                      width: _isSearchFocused ? 2 : 1,
-                    ),
-                    boxShadow: _isSearchFocused
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.1),
-                              blurRadius: 20,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search conversations...',
-                      hintStyle: const TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: AppColors.textSecondary,
-                          size: 20,
-                        ),
-                      ),
-                      suffixIcon: convoProvider.isSearching
-                          ? Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.textPrimary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: IconButton(
-                                  onPressed: _clearSearch,
-                                  icon: const Icon(
-                                    Icons.close_rounded,
-                                    color: AppColors.textSecondary,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.getTextPrimary(isDark).withOpacity(0.06),
+                        width: 1,
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Modern New Chat Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primary, AppColors.secondary],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.2),
-                        blurRadius: 16,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        _onDrawerClosed();
-                        await chatProvider.startNewConversation();
-                        await convoProvider.loadConversations();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppColors.textPrimary.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: AppColors.textPrimary,
-                                size: 16,
-                              ),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primary, AppColors.secondary],
                             ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'New Chat',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            // Conversations List with enhanced styling
-            Expanded(
-              child: convoProvider.filteredConversations.isEmpty
-                  ? _buildEmptyState(convoProvider.isSearching)
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: convoProvider.filteredConversations.length,
-                      itemBuilder: (context, index) {
-                        final convo =
-                            convoProvider.filteredConversations[index];
-                        final searchResult = convoProvider
-                            .getSearchResultForConversation(convo.id);
-                        final isSelected =
-                            convo.id == chatProvider.conversationId;
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              gradient: isSelected
-                                  ? const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.surface,
-                                        AppColors.surfaceVariant,
-                                      ],
-                                    )
-                                  : null,
-                              borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppColors.primary.withOpacity(0.3),
-                                      width: 1,
-                                    )
-                                  : null,
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.primary.withOpacity(
-                                          0.1,
-                                        ),
-                                        blurRadius: 12,
-                                        spreadRadius: 0,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
+                              color: AppColors.getSurface(isDark),
+                              borderRadius: BorderRadius.circular(4.5),
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                hoverColor: AppColors.textPrimary.withOpacity(
-                                  0.05,
-                                ),
-                                onTap: () async {
-                                  Navigator.pop(context);
-                                  _onDrawerClosed();
-                                  await chatProvider.loadConversation(convo.id);
-                                },
-                                onLongPress: () => _showConversationOptions(
-                                  context,
-                                  convo,
-                                  convoProvider,
-                                  chatProvider,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(
-                                    children: [
-                                      // Conversation icon
-                                      Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              AppColors.textPrimary.withOpacity(
-                                                0.1,
-                                              ),
-                                              AppColors.textPrimary.withOpacity(
-                                                0.05,
-                                              ),
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.textPrimary
-                                                .withOpacity(0.1),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.chat_bubble_outline_rounded,
-                                          color: AppColors.textSecondary,
-                                          size: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // Conversation content
-                                      Expanded(
-                                        child: _buildConversationContent(
-                                          convo,
-                                          searchResult,
-                                          convoProvider.searchQuery,
-                                        ),
-                                      ),
-                                      // Selection indicator
-                                      if (isSelected)
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                AppColors.primary,
-                                                AppColors.secondary,
-                                              ],
-                                            ),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                            child: Icon(
+                              Icons.chat_bubble_rounded,
+                              color: AppColors.getTextPrimary(isDark),
+                              size: 16,
                             ),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Conversations',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.getTextPrimary(isDark),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
                     ),
-            ),
+                  ),
+                ),
 
-            // Modern Footer
-            const UserDrawerTile(),
-          ],
-        ),
-      ),
+                // Enhanced Search Bar with modern styling
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.getSurface(isDark), 
+                            AppColors.getSurfaceVariant(isDark)
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isSearchFocused
+                              ? AppColors.primary.withOpacity(0.5)
+                              : AppColors.getTextPrimary(isDark).withOpacity(0.08),
+                          width: _isSearchFocused ? 2 : 1,
+                        ),
+                        boxShadow: _isSearchFocused
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  blurRadius: 20,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(isDark),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search conversations...',
+                          hintStyle: TextStyle(
+                            color: AppColors.getTextTertiary(isDark),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: AppColors.getTextSecondary(isDark),
+                              size: 20,
+                            ),
+                          ),
+                          suffixIcon: convoProvider.isSearching
+                              ? Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: _clearSearch,
+                                      icon: Icon(
+                                        Icons.close_rounded,
+                                        color: AppColors.getTextSecondary(isDark),
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Modern New Chat Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.primary, AppColors.secondary],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.2),
+                            blurRadius: 16,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            _onDrawerClosed();
+                            await chatProvider.startNewConversation();
+                            await convoProvider.loadConversations();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.getTextPrimary(isDark).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.add_rounded,
+                                    color: AppColors.getTextPrimary(isDark),
+                                    size: 16,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'New Chat',
+                                  style: TextStyle(
+                                    color: AppColors.getTextPrimary(isDark),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Conversations List with enhanced styling
+                Expanded(
+                  child: convoProvider.filteredConversations.isEmpty
+                      ? _buildEmptyState(convoProvider.isSearching, isDark)
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: convoProvider.filteredConversations.length,
+                          itemBuilder: (context, index) {
+                            final convo =
+                                convoProvider.filteredConversations[index];
+                            final searchResult = convoProvider
+                                .getSearchResultForConversation(convo.id);
+                            final isSelected =
+                                convo.id == chatProvider.conversationId;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: BoxDecoration(
+                                  gradient: isSelected
+                                      ? LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            AppColors.getSurface(isDark),
+                                            AppColors.getSurfaceVariant(isDark),
+                                          ],
+                                        )
+                                      : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: AppColors.primary.withOpacity(0.3),
+                                          width: 1,
+                                        )
+                                      : null,
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary.withOpacity(0.1),
+                                            blurRadius: 12,
+                                            spreadRadius: 0,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    hoverColor: AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                      _onDrawerClosed();
+                                      await chatProvider.loadConversation(convo.id);
+                                    },
+                                    onLongPress: () => _showConversationOptions(
+                                      context,
+                                      convo,
+                                      convoProvider,
+                                      chatProvider,
+                                      isDark,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          // Conversation icon
+                                          Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                                                  AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.chat_bubble_outline_rounded,
+                                              color: AppColors.getTextSecondary(isDark),
+                                              size: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // Conversation content
+                                          Expanded(
+                                            child: _buildConversationContent(
+                                              convo,
+                                              searchResult,
+                                              convoProvider.searchQuery,
+                                              isDark,
+                                            ),
+                                          ),
+                                          // Selection indicator
+                                          if (isSelected)
+                                            Container(
+                                              width: 6,
+                                              height: 6,
+                                              decoration: const BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    AppColors.primary,
+                                                    AppColors.secondary,
+                                                  ],
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+
+                // Modern Footer
+                const UserDrawerTile(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -495,19 +496,23 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     ConversationSummary convo,
     ConversationsProvider convoProvider,
     ChatProvider chatProvider,
+    bool isDark,
   ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.surface, AppColors.surfaceVariant],
+              colors: [
+                AppColors.getSurface(isDark), 
+                AppColors.getSurfaceVariant(isDark)
+              ],
             ),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -518,7 +523,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textTertiary,
+                  color: AppColors.getTextTertiary(isDark),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -526,6 +531,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
               _buildBottomSheetOption(
                 icon: Icons.edit_rounded,
                 title: 'Rename',
+                isDark: isDark,
                 onTap: () async {
                   Navigator.pop(context);
                   final newTitle = await widget.onRenameDialog(
@@ -543,6 +549,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
               _buildBottomSheetOption(
                 icon: Icons.delete_rounded,
                 title: 'Delete',
+                isDark: isDark,
                 isDestructive: true,
                 onTap: () async {
                   Navigator.pop(context);
@@ -563,6 +570,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   Widget _buildBottomSheetOption({
     required IconData icon,
     required String title,
+    required bool isDark,
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
@@ -582,14 +590,14 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                   decoration: BoxDecoration(
                     color: isDestructive
                         ? AppColors.error.withOpacity(0.1)
-                        : AppColors.textPrimary.withOpacity(0.1),
+                        : AppColors.getTextPrimary(isDark).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
                     color: isDestructive
                         ? AppColors.error
-                        : AppColors.textPrimary,
+                        : AppColors.getTextPrimary(isDark),
                     size: 20,
                   ),
                 ),
@@ -599,7 +607,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                   style: TextStyle(
                     color: isDestructive
                         ? AppColors.error
-                        : AppColors.textPrimary,
+                        : AppColors.getTextPrimary(isDark),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -616,31 +624,31 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     ConversationSummary conversation,
     SearchResult? searchResult,
     String searchQuery,
+    bool isDark,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Conversation title
-        _buildHighlightedTitle(conversation.title, searchQuery),
+        _buildHighlightedTitle(conversation.title, searchQuery, isDark),
         const SizedBox(height: 2),
 
         // Message snippet or timestamp
         if (searchResult?.isMessageMatch == true &&
             searchResult?.messageSnippet != null)
-          _buildHighlightedSnippet(searchResult!.messageSnippet!, searchQuery),
+          _buildHighlightedSnippet(searchResult!.messageSnippet!, searchQuery, isDark),
       ],
     );
   }
 
-
-  Widget _buildHighlightedTitle(String title, String searchQuery) {
+  Widget _buildHighlightedTitle(String title, String searchQuery, bool isDark) {
     if (searchQuery.isEmpty) {
       return Text(
         title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          color: AppColors.getTextPrimary(isDark),
           fontSize: 14,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
@@ -651,8 +659,8 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     return _buildHighlightedText(
       title,
       searchQuery,
-      const TextStyle(
-        color: AppColors.textPrimary,
+      TextStyle(
+        color: AppColors.getTextPrimary(isDark),
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
@@ -661,12 +669,12 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     );
   }
 
-  Widget _buildHighlightedSnippet(String snippet, String searchQuery) {
+  Widget _buildHighlightedSnippet(String snippet, String searchQuery, bool isDark) {
     return _buildHighlightedText(
       snippet,
       searchQuery,
-      const TextStyle(
-        color: AppColors.textSecondary,
+      TextStyle(
+        color: AppColors.getTextSecondary(isDark),
         fontSize: 13,
         fontWeight: FontWeight.w400,
         fontStyle: FontStyle.italic,
@@ -724,7 +732,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     );
   }
 
-  Widget _buildEmptyState(bool isSearching) {
+  Widget _buildEmptyState(bool isSearching, bool isDark) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -740,13 +748,13 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.textPrimary.withOpacity(0.05),
-                      AppColors.textPrimary.withOpacity(0.02),
+                      AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                      AppColors.getTextPrimary(isDark).withOpacity(0.02),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppColors.textPrimary.withOpacity(0.1),
+                    color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -755,15 +763,15 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                       ? Icons.search_off_rounded
                       : Icons.chat_bubble_outline_rounded,
                   size: 48,
-                  color: AppColors.textTertiary,
+                  color: AppColors.getTextTertiary(isDark),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
                 isSearching ? 'No conversations found' : 'No conversations yet',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondary(isDark),
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.3,
                 ),
@@ -773,9 +781,9 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                 isSearching
                     ? 'Try adjusting your search terms'
                     : 'Start a new chat to begin your journey',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textTertiary,
+                  color: AppColors.getTextTertiary(isDark),
                   fontWeight: FontWeight.w400,
                 ),
               ),
