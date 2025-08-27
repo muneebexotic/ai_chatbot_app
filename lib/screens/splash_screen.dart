@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/themes_provider.dart';
 import '../controllers/splash_controller.dart';
 import '../components/ui/app_logo.dart';
 import '../components/ui/app_text.dart';
@@ -65,24 +66,56 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A), Color(0xFF0A0A0A)],
-            stops: [0.0, 0.5, 1.0],
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final isDark = themeProvider.isDark;
+        
+        return Scaffold(
+          backgroundColor: AppColors.getBackground(isDark),
+          body: Container(
+            decoration: _buildGradientDecoration(isDark),
+            child: SafeArea(
+              child: _buildAnimatedContent(isDark),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: _buildAnimatedContent(),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildAnimatedContent() {
+  BoxDecoration _buildGradientDecoration(bool isDark) {
+    if (isDark) {
+      // Dark theme gradient
+      return const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0A0A0A), 
+            Color(0xFF1A1A1A), 
+            Color(0xFF0A0A0A)
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+      );
+    } else {
+      // Light theme gradient
+      return const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFAFAFA), 
+            Color(0xFFFFFFFF), 
+            Color(0xFFF5F5F5)
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+      );
+    }
+  }
+
+  Widget _buildAnimatedContent(bool isDark) {
     return AnimatedBuilder(
       animation: animationController,
       builder: (context, child) {
@@ -91,13 +124,13 @@ class _SplashScreenState extends State<SplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildAnimatedLogo(),
+              _buildAnimatedLogo(isDark),
               const SizedBox(height: SplashConstants.logoSpacing),
-              _buildAnimatedTitle(),
+              _buildAnimatedTitle(isDark),
               const SizedBox(height: SplashConstants.subtitleSpacing),
-              _buildAnimatedSubtitle(),
+              _buildAnimatedSubtitle(isDark),
               const SizedBox(height: SplashConstants.loadingSpacing),
-              _buildLoadingIndicator(),
+              _buildLoadingIndicator(isDark),
             ],
           ),
         );
@@ -105,63 +138,67 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildAnimatedLogo() {
+  Widget _buildAnimatedLogo(bool isDark) {
     return FadeTransition(
       opacity: fadeAnimation,
       child: ScaleTransition(
         scale: scaleAnimation,
-        child: const AppLogo(
+        child: AppLogo(
           size: AppLogoSize.large,
           showGlow: true,
+          color: AppColors.getTextPrimary(isDark),
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedTitle() {
+  Widget _buildAnimatedTitle(bool isDark) {
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
         position: slideAnimation,
-        child: const AppText.displayLarge(
+        child: AppText.displayLarge(
           'ChadGPT',
-          color: Colors.white,
+          color: AppColors.getTextPrimary(isDark),
           textAlign: TextAlign.center,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedSubtitle() {
+  Widget _buildAnimatedSubtitle(bool isDark) {
     return FadeTransition(
       opacity: subtitleAnimation,
-      child: const AppText.bodyMedium(
+      child: AppText.bodyMedium(
         'AI-Powered Conversations',
-        color: AppColors.textSecondary,
+        color: AppColors.getTextSecondary(isDark),
         textAlign: TextAlign.center,
+        fontWeight: FontWeight.w400,
       ),
     );
   }
 
-  Widget _buildLoadingIndicator() {
+  Widget _buildLoadingIndicator(bool isDark) {
     return ChangeNotifierProvider.value(
       value: _controller,
       child: Consumer<SplashController>(
         builder: (context, controller, child) {
           if (controller.hasError) {
-            return _buildErrorIndicator(controller.error!);
+            return _buildErrorIndicator(controller.error!, isDark);
           }
           
           return FadeTransition(
             opacity: loadingAnimation,
-            child: const SizedBox(
+            child: SizedBox(
               width: SplashConstants.loadingIndicatorSize,
               height: SplashConstants.loadingIndicatorSize,
               child: CircularProgressIndicator(
                 strokeWidth: SplashConstants.loadingStrokeWidth,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.textTertiary,
+                  AppColors.primary,
                 ),
+                backgroundColor: AppColors.getTextTertiary(isDark).withOpacity(0.2),
               ),
             ),
           );
@@ -170,21 +207,33 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildErrorIndicator(String error) {
+  Widget _buildErrorIndicator(String error, bool isDark) {
     return FadeTransition(
       opacity: loadingAnimation,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
-            color: AppColors.textTertiary,
+            color: AppColors.error,
             size: SplashConstants.loadingIndicatorSize,
           ),
           const SizedBox(height: 8),
           AppText.bodySmall(
             'Initialization Error',
-            color: AppColors.textTertiary,
+            color: AppColors.getTextTertiary(isDark),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: AppText.caption(
+              error,
+              color: AppColors.getTextTertiary(isDark).withOpacity(0.8),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
