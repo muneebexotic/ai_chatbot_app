@@ -1,4 +1,3 @@
-import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class AppBackButton extends StatelessWidget {
@@ -15,19 +14,22 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? colorScheme.surface,
         border: Border.all(
-          color: AppColors.surfaceVariant.withOpacity(0.3),
+          color: colorScheme.outline.withOpacity(0.3),
           width: 1,
         ),
       ),
       child: IconButton(
         icon: Icon(
           Icons.arrow_back_ios_new,
-          color: iconColor ?? Colors.white,
+          color: iconColor ?? colorScheme.onSurface,
           size: 20,
         ),
         onPressed: onPressed ?? () => Navigator.of(context).pop(),

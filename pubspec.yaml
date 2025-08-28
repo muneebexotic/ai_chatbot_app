@@ -3,11 +3,10 @@ description: "A new Flutter project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+55
+version: 1.0.0+60
 
 environment:
   sdk: ^3.8.1
-
 
 dependencies:
   flutter:
@@ -40,14 +39,11 @@ dependencies:
   in_app_purchase: ^3.2.3
   in_app_purchase_android: ^0.4.0+1
 
-  
-
-
   cupertino_icons: ^1.0.8
   markdown_widget: ^2.3.2+8
   flutter_highlight: ^0.7.0
   change_app_package_name: ^1.5.0
-
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -59,14 +55,38 @@ flutter_icons:
   ios: true
   image_path: "assets/png_icons/app_icon.png" # update path accordingly
 
+flutter_lints: ^6.0.0
 
-  flutter_lints: ^6.0.0
-
-
+# Flutter Native Splash Configuration
+flutter_native_splash:
+  # Background color for light theme (matches your custom splash)
+  color: "#FAFAFA"
+  # Background color for dark theme
+  color_dark: "#0A0A0A"
+  
+  # Optional: Add your logo image here if you have one
+  # image: assets/logo.png
+  # image_dark: assets/logo.png
+  
+  # Android 12+ specific settings
+  android_12:
+    # Background colors for Android 12+
+    color: "#FAFAFA"
+    color_dark: "#0A0A0A"
+    # Optional: Add logo for Android 12+
+    # image: assets/logo.png
+    # image_dark: assets/logo.png
+    
+  # iOS settings
+  ios: true
+  
+  # Remove the background when Flutter is ready (important for seamless transition)
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: true
 
 # The following section is specific to Flutter packages.
 flutter:
-
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
@@ -78,16 +98,11 @@ flutter:
     - assets/png_icons/copy.png
     - assets/png_icons/three_dot_icon.png
 
-
-   
-
   fonts:
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins/Poppins-Medium.ttf
           weight: 500
-
-      
 
     - family: Urbanist
       fonts: 
@@ -95,4 +110,3 @@ flutter:
         weight: 500
       - asset: assets/fonts/Urbanist/Urbanist-Regular.ttf
         weight: 400
-

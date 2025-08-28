@@ -7,7 +7,6 @@ import '../controllers/login_controller.dart';
 import '../mixins/login_animations_mixin.dart';
 import '../constants/login_constants.dart';
 import '../utils/validation_utils.dart';
-import '../utils/app_theme.dart';
 
 // UI Components
 import '../components/ui/app_text.dart';
@@ -16,7 +15,7 @@ import '../components/ui/app_input.dart';
 import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
 
-/// Login screen with form validation and authentication
+/// Theme-aware login screen with form validation and authentication
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -102,17 +101,31 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(LoginConstants.primaryBackgroundColor),
+      // Remove hardcoded background color - let theme handle it
       resizeToAvoidBottomInset: true,
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: _buildGradientDecoration(),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colorScheme.background,
+            colorScheme.surface,
+            colorScheme.background,
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+      ),
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -123,21 +136,6 @@ class _LoginScreenState extends State<LoginScreen>
             _buildBottomPadding(),
           ],
         ),
-      ),
-    );
-  }
-
-  BoxDecoration _buildGradientDecoration() {
-    return const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(LoginConstants.primaryBackgroundColor),
-          Color(LoginConstants.secondaryBackgroundColor),
-          Color(LoginConstants.primaryBackgroundColor),
-        ],
-        stops: [0.0, 0.5, 1.0],
       ),
     );
   }
@@ -190,20 +188,23 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildTitle() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
         position: slideAnimation,
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.displayLarge(
               LoginConstants.titleLine1,
-              color: Colors.white,
+              color: colorScheme.onBackground, // Theme-aware
             ),
             AppText.displayLarge(
               LoginConstants.titleLine2,
-              color: Colors.white,
+              color: colorScheme.onBackground, // Theme-aware
             ),
           ],
         ),
@@ -287,15 +288,18 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildSignUpLink() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return FadeTransition(
       opacity: fadeAnimation,
       child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const AppText.bodyMedium(
+            AppText.bodyMedium(
               LoginConstants.signUpPrompt,
-              color: AppColors.textSecondary,
+              color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware
             ),
             AppButton.text(
               text: LoginConstants.signUpText,
@@ -308,6 +312,9 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildDivider() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return FadeTransition(
       opacity: fadeAnimation,
       child: Row(
@@ -315,20 +322,20 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: Container(
               height: 1,
-              color: AppColors.textTertiary.withOpacity(0.3),
+              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
               LoginConstants.dividerText,
-              color: AppColors.textTertiary,
+              color: colorScheme.onBackground.withOpacity(0.5), // Theme-aware
             ),
           ),
           Expanded(
             child: Container(
               height: 1,
-              color: AppColors.textTertiary.withOpacity(0.3),
+              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
             ),
           ),
         ],
@@ -348,9 +355,12 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildBottomPadding() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       height: MediaQuery.of(context).padding.bottom,
-      color: const Color(LoginConstants.primaryBackgroundColor),
+      color: colorScheme.background, // Theme-aware
     );
   }
 }

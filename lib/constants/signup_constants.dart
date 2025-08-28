@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../utils/app_theme.dart';
 
-/// Constants for SignUp screen
+/// Constants for SignUp screen with theme support
 /// 
 /// Centralizes all configuration values, strings, and design tokens
 /// for better maintainability and consistency
@@ -25,12 +26,22 @@ class SignUpConstants {
   // Design Tokens
   static const double borderRadius = 12.0;
 
-  // Colors
-  static const List<Color> backgroundGradient = [
-    Color(0xFF0A0A0A),
-    Color(0xFF1A1A1A),
-    Color(0xFF0A0A0A),
-  ];
+  // Theme-aware gradient colors
+  static List<Color> getBackgroundGradient(bool isDark) {
+    if (isDark) {
+      return [
+        AppColors.background,
+        AppColors.surface,
+        AppColors.background,
+      ];
+    } else {
+      return [
+        AppColors.backgroundLight,
+        AppColors.surfaceVariantLight,
+        AppColors.backgroundLight,
+      ];
+    }
+  }
   
   static const List<double> gradientStops = [0.0, 0.5, 1.0];
 
@@ -66,13 +77,8 @@ class SignUpConstants {
   static const int minNameLength = 2;
   static const int minPasswordLength = 6;
 
-  // Regular Expressions - FIXED
-  // Option 1: More comprehensive email regex
+  // Regular Expressions
   static const String emailRegex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
-  
-  // Option 2: If you prefer the original pattern style, use this:
-  // static const String emailRegex = r'^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$';
-  
   static const String passwordRegex = r'^(?=.*[a-zA-Z])(?=.*\d)';
 
   // Semantic Labels (Accessibility)

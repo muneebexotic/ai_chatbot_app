@@ -3,12 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/agate.dart';
+import 'package:flutter_highlight/themes/github.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../utils/app_theme.dart';
-
 
 class UserMessageBubble extends StatelessWidget {
   final String message;
@@ -18,7 +17,10 @@ class UserMessageBubble extends StatelessWidget {
     required this.message,
   });
 
-  Widget _buildAvatar(String? avatarUrl) {
+  Widget _buildAvatar(BuildContext context, String? avatarUrl) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     if (avatarUrl != null &&
         (avatarUrl.contains('dicebear.com') || avatarUrl.contains('/svg'))) {
       return SvgPicture.network(
@@ -29,18 +31,18 @@ class UserMessageBubble extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
+            gradient: LinearGradient(
+              colors: [theme.primaryColor, colorScheme.secondary],
             ),
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.textPrimary.withOpacity(0.2),
+              color: colorScheme.onSurface.withOpacity(0.2),
               width: 1.5,
             ),
           ),
           child: Icon(
             Icons.person,
-            color: AppColors.textPrimary,
+            color: colorScheme.onPrimary,
             size: 16,
           ),
         ),
@@ -53,7 +55,7 @@ class UserMessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.textPrimary.withOpacity(0.2),
+            color: colorScheme.onSurface.withOpacity(0.2),
             width: 1.5,
           ),
         ),
@@ -67,18 +69,18 @@ class UserMessageBubble extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.secondary],
+          gradient: LinearGradient(
+            colors: [theme.primaryColor, colorScheme.secondary],
           ),
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.textPrimary.withOpacity(0.2),
+            color: colorScheme.onSurface.withOpacity(0.2),
             width: 1.5,
           ),
         ),
         child: Icon(
           Icons.person,
-          color: AppColors.textPrimary,
+          color: colorScheme.onPrimary,
           size: 16,
         ),
       );
@@ -88,6 +90,8 @@ class UserMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(left: 48, bottom: 8),
@@ -99,12 +103,12 @@ class UserMessageBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary,
-                    AppColors.secondary,
+                    theme.primaryColor,
+                    colorScheme.secondary,
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -115,7 +119,7 @@ class UserMessageBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: theme.primaryColor.withOpacity(0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -124,7 +128,7 @@ class UserMessageBubble extends StatelessWidget {
               child: Text(
                 message,
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   height: 1.4,
@@ -134,8 +138,7 @@ class UserMessageBubble extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // User avatar positioned at bottom edge
-          _buildAvatar(avatarUrl),
+          _buildAvatar(context, avatarUrl),
         ],
       ),
     );
@@ -217,7 +220,10 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     }
   }
 
-  Widget _buildBotAvatar() {
+  Widget _buildBotAvatar(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       width: 28,
       height: 28,
@@ -226,13 +232,13 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.surface,
-            AppColors.surfaceVariant,
+            colorScheme.surface,
+            colorScheme.surfaceVariant ?? colorScheme.surface,
           ],
         ),
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: theme.primaryColor.withOpacity(0.3),
           width: 1.5,
         ),
       ),
@@ -244,7 +250,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           errorBuilder: (context, error, stackTrace) {
             return Icon(
               Icons.auto_awesome,
-              color: AppColors.primary,
+              color: theme.primaryColor,
               size: 14,
             );
           },
@@ -255,6 +261,9 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Padding(
@@ -262,22 +271,20 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bot avatar positioned at top edge
             Container(
               margin: const EdgeInsets.only(top: 2),
-              child: _buildBotAvatar(),
+              child: _buildBotAvatar(context),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Message content
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: colorScheme.surface,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(6),
                         topRight: Radius.circular(20),
@@ -285,12 +292,12 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                         bottomRight: Radius.circular(20),
                       ),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: theme.primaryColor.withOpacity(0.1),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: colorScheme.shadow.withOpacity(0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -299,20 +306,20 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                     child: MarkdownBody(
                       data: widget.message,
                       selectable: true,
-                      styleSheet: _buildMarkdownStyleSheet(),
+                      styleSheet: _buildMarkdownStyleSheet(context),
                       builders: {
                         'code': CodeBlockBuilder(),
                       },
                     ),
                   ),
                   
-                  // Action buttons - always visible
                   Container(
                     margin: const EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
                         const SizedBox(width: 4),
                         _buildActionButton(
+                          context: context,
                           icon: Icons.volume_up_rounded,
                           onPressed: _handleSpeak,
                           isPressed: _speakPressed,
@@ -320,6 +327,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                         ),
                         const SizedBox(width: 8),
                         _buildActionButton(
+                          context: context,
                           icon: Icons.copy_rounded,
                           onPressed: _handleCopy,
                           isPressed: _copyPressed,
@@ -338,21 +346,25 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
   }
 
   Widget _buildActionButton({
+    required BuildContext context,
     required IconData icon,
     required VoidCallback onPressed,
     required String tooltip,
     bool isPressed = false,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Transform.scale(
       scale: isPressed ? 0.9 : 1.0,
       child: Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: theme.primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: AppColors.primary.withOpacity(0.2),
+            color: theme.primaryColor.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -364,7 +376,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
             child: Icon(
               icon,
               size: 16,
-              color: AppColors.primary,
+              color: theme.primaryColor,
             ),
           ),
         ),
@@ -372,98 +384,95 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     );
   }
 
-  MarkdownStyleSheet _buildMarkdownStyleSheet() {
+  MarkdownStyleSheet _buildMarkdownStyleSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return MarkdownStyleSheet(
-      // Base text style
       p: TextStyle(
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w400,
         fontSize: 15,
-        color: AppColors.textSecondary,
+        color: colorScheme.onSurface.withOpacity(0.8),
         height: 1.5,
       ),
       
-      // Headings
       h1: TextStyle(
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w600,
         fontSize: 22,
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
         height: 1.3,
       ),
       h2: TextStyle(
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w600,
         fontSize: 19,
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
         height: 1.3,
       ),
       h3: TextStyle(
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w500,
         fontSize: 17,
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
         height: 1.3,
       ),
       
-      // Code styling
       code: TextStyle(
         fontFamily: 'JetBrains Mono',
         fontSize: 13,
-        color: AppColors.primary,
-        backgroundColor: AppColors.surfaceVariant.withOpacity(0.5),
+        color: theme.primaryColor,
+        backgroundColor: (colorScheme.surfaceVariant ?? colorScheme.surface).withOpacity(0.5),
       ),
       codeblockDecoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: colorScheme.surfaceVariant ?? colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.textTertiary.withOpacity(0.1),
+          color: colorScheme.outline.withOpacity(0.1),
         ),
       ),
       codeblockPadding: const EdgeInsets.all(16),
       
-      // Text formatting
       strong: TextStyle(
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w600,
         fontSize: 15,
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
       ),
       em: TextStyle(
         fontFamily: 'Poppins',
         fontStyle: FontStyle.italic,
         fontWeight: FontWeight.w400,
         fontSize: 15,
-        color: AppColors.textSecondary,
+        color: colorScheme.onSurface.withOpacity(0.8),
       ),
       
-      // Links
       a: TextStyle(
-        color: AppColors.primary,
+        color: theme.primaryColor,
         decoration: TextDecoration.underline,
-        decorationColor: AppColors.primary.withOpacity(0.6),
+        decorationColor: theme.primaryColor.withOpacity(0.6),
         fontSize: 15,
       ),
       
-      // Lists
       listBullet: TextStyle(
-        color: AppColors.textSecondary,
+        color: colorScheme.onSurface.withOpacity(0.8),
         fontSize: 15,
       ),
       listIndent: 20.0,
       
-      // Blockquotes
       blockquote: TextStyle(
-        color: AppColors.textTertiary,
+        color: colorScheme.onSurface.withOpacity(0.6),
         fontStyle: FontStyle.italic,
         fontSize: 15,
         height: 1.5,
       ),
       blockquoteDecoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.3),
+        color: (colorScheme.surfaceVariant ?? colorScheme.surface).withOpacity(0.3),
         border: Border(
           left: BorderSide(
-            color: AppColors.primary,
+            color: theme.primaryColor,
             width: 3.0,
           ),
         ),
@@ -474,28 +483,26 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
       ),
       blockquotePadding: const EdgeInsets.all(12),
       
-      // Tables
       tableHead: TextStyle(
-        color: AppColors.textPrimary,
+        color: colorScheme.onSurface,
         fontWeight: FontWeight.w600,
         fontSize: 13,
       ),
       tableBody: TextStyle(
-        color: AppColors.textSecondary,
+        color: colorScheme.onSurface.withOpacity(0.8),
         fontSize: 13,
       ),
       tableBorder: TableBorder.all(
-        color: AppColors.textTertiary.withOpacity(0.1),
+        color: colorScheme.outline.withOpacity(0.1),
         width: 1.0,
         borderRadius: BorderRadius.circular(6),
       ),
       tableCellsPadding: const EdgeInsets.all(10),
       
-      // Horizontal rule
       horizontalRuleDecoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: AppColors.textTertiary.withOpacity(0.1),
+            color: colorScheme.outline.withOpacity(0.1),
             width: 1.0,
           ),
         ),
@@ -504,7 +511,6 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
   }
 }
 
-// Enhanced code block builder
 class CodeBlockBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
@@ -512,69 +518,75 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     String code = element.textContent;
 
     if (language.isNotEmpty) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(vertical: 12.0),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.textTertiary.withOpacity(0.1),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Language tag
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
+      return Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
+          
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 12.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceVariant ?? colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colorScheme.outline.withOpacity(0.1),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.code_rounded,
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    language.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
                   ),
-                ],
-              ),
-            ),
-            // Code content
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              ),
-              child: HighlightView(
-                code,
-                language: language,
-                theme: agateTheme,
-                padding: const EdgeInsets.all(16),
-                textStyle: const TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 13,
-                  height: 1.5,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.code_rounded,
+                        size: 16,
+                        color: theme.primaryColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        language.toUpperCase(),
+                        style: TextStyle(
+                          fontFamily: 'JetBrains Mono',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: theme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                  child: HighlightView(
+                    code,
+                    language: language,
+                    theme: isDark ? agateTheme : githubTheme,
+                    padding: const EdgeInsets.all(16),
+                    textStyle: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        }
       );
     }
     

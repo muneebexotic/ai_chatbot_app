@@ -1,5 +1,7 @@
-import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/themes_provider.dart';
+import '../utils/app_theme.dart';
 import 'dart:math' as math;
 
 // Main modern typing indicator with sophisticated animations
@@ -80,7 +82,7 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
     super.dispose();
   }
 
-  Widget _buildBotAvatar() {
+  Widget _buildBotAvatar(bool isDark) {
     if (widget.customAvatar != null) {
       return widget.customAvatar!;
     }
@@ -93,8 +95,8 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.surface,
-            AppColors.surfaceVariant,
+            AppColors.getSurface(isDark),
+            AppColors.getSurfaceVariant(isDark),
           ],
         ),
         shape: BoxShape.circle,
@@ -173,7 +175,7 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
     );
   }
 
-  Widget _buildShimmeredText() {
+  Widget _buildShimmeredText(bool isDark) {
     final text = widget.customText ?? 'AI is thinking...';
     
     return AnimatedBuilder(
@@ -185,11 +187,11 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                AppColors.textTertiary,
-                AppColors.textSecondary,
-                AppColors.textPrimary,
-                AppColors.textSecondary,
-                AppColors.textTertiary,
+                AppColors.getTextTertiary(isDark),
+                AppColors.getTextSecondary(isDark),
+                AppColors.getTextPrimary(isDark),
+                AppColors.getTextSecondary(isDark),
+                AppColors.getTextTertiary(isDark),
               ],
               stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
               transform: GradientRotation(_shimmerAnimation.value * 3.14159),
@@ -197,11 +199,11 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
           },
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w400,
               fontSize: 14,
-              color: Colors.white,
+              color: AppColors.getTextPrimary(isDark),
               letterSpacing: 0.2,
             ),
           ),
@@ -212,68 +214,74 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Container(
-        margin: const EdgeInsets.only(right: 48, bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.showAvatar) ...[
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                child: _buildBotAvatar(),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.surface,
-                      AppColors.surfaceVariant.withOpacity(0.8),
-                    ],
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: Container(
+            margin: const EdgeInsets.only(right: 48, bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.showAvatar) ...[
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    child: _buildBotAvatar(isDark),
                   ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
-                    topRight: const Radius.circular(20),
-                    bottomLeft: const Radius.circular(20),
-                    bottomRight: const Radius.circular(20),
-                  ),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.1),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.getSurface(isDark),
+                          AppColors.getSurfaceVariant(isDark).withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft: const Radius.circular(20),
+                        bottomRight: const Radius.circular(20),
+                      ),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.1),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildAnimatedDots(),
+                        const SizedBox(width: 12),
+                        _buildShimmeredText(isDark),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildAnimatedDots(),
-                    const SizedBox(width: 12),
-                    _buildShimmeredText(),
-                  ],
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -350,120 +358,125 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = widget.primaryColor ?? AppColors.primary;
-    
-    return FadeTransition(
-      opacity: _containerAnimation,
-      child: Container(
-        margin: const EdgeInsets.only(right: 48, bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.showAvatar) ...[
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.surface,
-                      AppColors.surfaceVariant,
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: primaryColor.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  Icons.auto_awesome,
-                  color: primaryColor,
-                  size: 14,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.only(
-                    topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
-                    topRight: const Radius.circular(20),
-                    bottomLeft: const Radius.circular(20),
-                    bottomRight: const Radius.circular(20),
-                  ),
-                  border: Border.all(
-                    color: primaryColor.withOpacity(0.15),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryColor.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Wave bars
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: List.generate(5, (index) {
-                        return AnimatedBuilder(
-                          animation: _animations[index],
-                          builder: (context, child) {
-                            return Container(
-                              margin: EdgeInsets.only(right: index < 4 ? 3 : 0),
-                              width: 3,
-                              height: 4 + (_animations[index].value * 12),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    primaryColor,
-                                    primaryColor.withOpacity(0.6),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: primaryColor.withOpacity(0.3),
-                                    blurRadius: 2,
-                                    spreadRadius: 0.5,
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      }),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      widget.customText ?? 'Processing...',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.2,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        final primaryColor = widget.primaryColor ?? AppColors.primary;
+        
+        return FadeTransition(
+          opacity: _containerAnimation,
+          child: Container(
+            margin: const EdgeInsets.only(right: 48, bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.showAvatar) ...[
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.getSurface(isDark),
+                          AppColors.getSurfaceVariant(isDark),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.3),
+                        width: 1.5,
                       ),
                     ),
-                  ],
+                    child: Icon(
+                      Icons.auto_awesome,
+                      color: primaryColor,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    decoration: BoxDecoration(
+                      color: AppColors.getSurface(isDark),
+                      borderRadius: BorderRadius.only(
+                        topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft: const Radius.circular(20),
+                        bottomRight: const Radius.circular(20),
+                      ),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.15),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Wave bars
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: List.generate(5, (index) {
+                            return AnimatedBuilder(
+                              animation: _animations[index],
+                              builder: (context, child) {
+                                return Container(
+                                  margin: EdgeInsets.only(right: index < 4 ? 3 : 0),
+                                  width: 3,
+                                  height: 4 + (_animations[index].value * 12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        primaryColor,
+                                        primaryColor.withOpacity(0.6),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: primaryColor.withOpacity(0.3),
+                                        blurRadius: 2,
+                                        spreadRadius: 0.5,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          }),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          widget.customText ?? 'Processing...',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: AppColors.getTextSecondary(isDark),
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -533,107 +546,111 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 48, bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.showAvatar) ...[
-            AnimatedBuilder(
-              animation: Listenable.merge([_pulseAnimation, _glowAnimation]),
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.surface,
-                          AppColors.surfaceVariant,
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3 + (_glowAnimation.value * 0.4)),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(_glowAnimation.value * 0.4),
-                          blurRadius: 8 + (_glowAnimation.value * 8),
-                          spreadRadius: _glowAnimation.value * 2,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.auto_awesome,
-                      color: AppColors.primary,
-                      size: 14,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.only(
-                        topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
-                        topRight: const Radius.circular(20),
-                        bottomLeft: const Radius.circular(20),
-                        bottomRight: const Radius.circular(20),
-                      ),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.1),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: AnimatedBuilder(
-                      animation: _glowAnimation,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: 0.7 + (_glowAnimation.value * 0.3),
-                          child: Text(
-                            widget.customText ?? 'AI is generating response...',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              letterSpacing: 0.2,
-                            ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        
+        return Container(
+          margin: const EdgeInsets.only(right: 48, bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.showAvatar) ...[
+                AnimatedBuilder(
+                  animation: Listenable.merge([_pulseAnimation, _glowAnimation]),
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _pulseAnimation.value,
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.getSurface(isDark),
+                              AppColors.getSurfaceVariant(isDark),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.3 + (_glowAnimation.value * 0.4)),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(_glowAnimation.value * 0.4),
+                              blurRadius: 8 + (_glowAnimation.value * 8),
+                              spreadRadius: _glowAnimation.value * 2,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _pulseAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _pulseAnimation.value,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurface(isDark),
+                          borderRadius: BorderRadius.only(
+                            topLeft: widget.showAvatar ? const Radius.circular(6) : const Radius.circular(20),
+                            topRight: const Radius.circular(20),
+                            bottomLeft: const Radius.circular(20),
+                            bottomRight: const Radius.circular(20),
+                          ),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.1),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _glowAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: 0.7 + (_glowAnimation.value * 0.3),
+                              child: Text(
+                                widget.customText ?? 'AI is generating response...',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: AppColors.getTextSecondary(isDark),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
-
-

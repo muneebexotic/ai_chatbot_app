@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../ui/app_text.dart';
 import '../ui/social_button.dart';
 import '../../constants/welcome_screen_constants.dart';
-import '../../utils/app_theme.dart';
 
 class WelcomeSocialLogin extends StatelessWidget {
   final Animation<double> fadeAnimation;
@@ -20,6 +19,9 @@ class WelcomeSocialLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return FadeTransition(
       opacity: fadeAnimation,
       child: SlideTransition(
@@ -28,24 +30,22 @@ class WelcomeSocialLogin extends StatelessWidget {
           children: [
             const SizedBox(height: WelcomeScreenConstants.socialSectionSpacing),
 
-            // Divider with text
-            _buildDivider(),
+            _buildDivider(context),
 
             const SizedBox(height: WelcomeScreenConstants.dividerSpacing),
 
-            // Google Sign-In Button
             SocialButton.google(
               onPressed: isLoading ? () {} : onGoogleSignIn,
             ),
 
             if (isLoading) ...[
               const SizedBox(height: 16),
-              const SizedBox(
+              SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
                 ),
               ),
             ],
@@ -55,30 +55,33 @@ class WelcomeSocialLogin extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Row(
       children: [
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: AppColors.textTertiary.withOpacity(
+            color: colorScheme.outline.withOpacity(
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(
+        Padding(
+          padding: const EdgeInsets.symmetric(
             horizontal: WelcomeScreenConstants.dividerHorizontalSpacing,
           ),
           child: AppText.bodyMedium(
             WelcomeScreenConstants.dividerText,
-            color: AppColors.textTertiary,
+            color: colorScheme.onBackground.withOpacity(0.6),
           ),
         ),
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: AppColors.textTertiary.withOpacity(
+            color: colorScheme.outline.withOpacity(
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),

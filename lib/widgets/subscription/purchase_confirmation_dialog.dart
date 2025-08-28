@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../../components/ui/app_text.dart';
 import '../../models/subscription_models.dart';
 import '../../utils/app_theme.dart';
+import '../../providers/themes_provider.dart';
 
 /// Purchase confirmation dialog widget
 class PurchaseConfirmationDialog extends StatelessWidget {
@@ -17,12 +18,14 @@ class PurchaseConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDark;
+    
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.getSurface(isDark),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: AppText.displayMedium(
         'Confirm Purchase',
-        color: AppColors.textPrimary,
+        color: AppColors.getTextPrimary(isDark),
         fontWeight: FontWeight.w600,
       ),
       content: SingleChildScrollView(
@@ -32,32 +35,38 @@ class PurchaseConfirmationDialog extends StatelessWidget {
           children: [
             AppText.bodyMedium(
               'You are about to purchase:',
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondary(isDark),
             ),
             const SizedBox(height: 12),
-            _buildPurchaseDetails(),
+            _buildPurchaseDetails(isDark),
             const SizedBox(height: 16),
-            _buildBenefitsList(),
+            _buildBenefitsList(isDark),
           ],
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.getTextSecondary(isDark),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
           child: AppText.bodyMedium(
             'Cancel',
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondary(isDark),
           ),
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            elevation: 0,
           ),
           child: AppText.bodyMedium(
             'Purchase',
-            color: AppColors.background,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -65,19 +74,23 @@ class PurchaseConfirmationDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildPurchaseDetails() {
+  Widget _buildPurchaseDetails(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppText.bodyLarge(
             product.plan.displayName,
-            color: AppColors.textPrimary,
+            color: AppColors.getTextPrimary(isDark),
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 4),
@@ -98,7 +111,7 @@ class PurchaseConfirmationDialog extends StatelessWidget {
               ),
               child: AppText.bodySmall(
                 yearlySavingsText!,
-                color: AppColors.background,
+                color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -108,15 +121,22 @@ class PurchaseConfirmationDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildBenefitsList() {
-    return AppText.bodySmall(
-      'This will give you access to:\n'
-      '• Unlimited messages and conversations\n'
-      '• All AI personas and personalities\n'
-      '• Unlimited image generation\n'
-      '• Unlimited voice interactions\n'
-      '• Priority customer support',
-      color: AppColors.textSecondary,
+  Widget _buildBenefitsList(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceVariant(isDark),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: AppText.bodySmall(
+        'This will give you access to:\n'
+        '• Unlimited messages and conversations\n'
+        '• All AI personas and personalities\n'
+        '• Unlimited image generation\n'
+        '• Unlimited voice interactions\n'
+        '• Priority customer support',
+        color: AppColors.getTextSecondary(isDark),
+      ),
     );
   }
 
