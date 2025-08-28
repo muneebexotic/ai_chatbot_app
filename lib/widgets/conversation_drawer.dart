@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:ai_chatbot_app/widgets/user_drawer_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,9 +27,18 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   final FocusNode _searchFocusNode = FocusNode();
   late AnimationController _fadeController;
   late AnimationController _slideController;
+  late AnimationController _searchLoadingController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _searchLoadingAnimation;
+  
   bool _isSearchFocused = false;
+  bool _isSearching = false;
+  
+  // Search debouncing
+  Timer? _searchDebounceTimer;
+  static const Duration _searchDebounceDelay = Duration(milliseconds: 400);
+  static const int _minSearchLength = 2;
 
   @override
   void initState() {
@@ -46,6 +56,11 @@ class _ConversationDrawerState extends State<ConversationDrawer>
       vsync: this,
     );
 
+    _searchLoadingController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
     );
@@ -54,6 +69,10 @@ class _ConversationDrawerState extends State<ConversationDrawer>
         Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
         );
+
+    _searchLoadingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _searchLoadingController, curve: Curves.easeInOut),
+    );
 
     // Listen to search focus changes
     _searchFocusNode.addListener(() {
@@ -74,25 +93,79 @@ class _ConversationDrawerState extends State<ConversationDrawer>
     _searchFocusNode.dispose();
     _fadeController.dispose();
     _slideController.dispose();
+    _searchLoadingController.dispose();
+    _searchDebounceTimer?.cancel();
     super.dispose();
   }
 
   void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    
+    // Cancel previous debounce timer
+    _searchDebounceTimer?.cancel();
+    
+    // Handle immediate UI updates
+    if (query.isEmpty) {
+      // Clear search immediately when text is empty
+      _clearSearchImmediate();
+      return;
+    }
+    
+    // Show loading state immediately for better UX
+    if (query.length >= _minSearchLength && !_isSearching) {
+      setState(() {
+        _isSearching = true;
+      });
+      _searchLoadingController.repeat();
+    }
+    
+    // Debounce the actual search operation
+    _searchDebounceTimer = Timer(_searchDebounceDelay, () {
+      _performSearch(query);
+    });
+  }
+
+  void _performSearch(String query) {
+    if (query.length < _minSearchLength) {
+      _clearSearchImmediate();
+      return;
+    }
+
     final convoProvider = Provider.of<ConversationsProvider>(
       context,
       listen: false,
     );
-    convoProvider.searchConversations(_searchController.text);
+    
+    // Simulate network delay for better UX (remove in production if not needed)
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        convoProvider.searchConversations(query);
+        setState(() {
+          _isSearching = false;
+        });
+        _searchLoadingController.stop();
+        _searchLoadingController.reset();
+      }
+    });
   }
 
   void _clearSearch() {
     _searchController.clear();
+    _clearSearchImmediate();
+    _searchFocusNode.unfocus();
+  }
+
+  void _clearSearchImmediate() {
     final convoProvider = Provider.of<ConversationsProvider>(
       context,
       listen: false,
     );
     convoProvider.clearSearch();
-    _searchFocusNode.unfocus();
+    setState(() {
+      _isSearching = false;
+    });
+    _searchLoadingController.stop();
+    _searchLoadingController.reset();
   }
 
   // Clear search when drawer closes
@@ -179,18 +252,37 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                             letterSpacing: -0.3,
                           ),
                         ),
+                        const Spacer(),
+                        // Search result count
+                        if (convoProvider.isSearching && convoProvider.searchQuery.length >= _minSearchLength)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${convoProvider.filteredConversations.length}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 ),
 
-                // Enhanced Search Bar with modern styling
+                // Enhanced Search Bar with loading indicator
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: SlideTransition(
                     position: _slideAnimation,
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -215,10 +307,16 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                   spreadRadius: 0,
                                   offset: const Offset(0, 4),
                                 ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 2),
+                                ),
                               ]
                             : [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                                   blurRadius: 8,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 2),
@@ -242,13 +340,28 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                           ),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Icon(
-                              Icons.search_rounded,
-                              color: AppColors.getTextSecondary(isDark),
-                              size: 20,
-                            ),
+                            child: _isSearching
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: AnimatedBuilder(
+                                      animation: _searchLoadingAnimation,
+                                      builder: (context, child) {
+                                        return CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primary,
+                                          value: null,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.search_rounded,
+                                    color: AppColors.getTextSecondary(isDark),
+                                    size: 20,
+                                  ),
                           ),
-                          suffixIcon: convoProvider.isSearching
+                          suffixIcon: _searchController.text.isNotEmpty
                               ? Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: Container(
@@ -263,6 +376,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                         color: AppColors.getTextSecondary(isDark),
                                         size: 18,
                                       ),
+                                      tooltip: 'Clear search',
                                     ),
                                   ),
                                 )
@@ -273,10 +387,36 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                             vertical: 12,
                           ),
                         ),
+                        // Enhanced search capabilities
+                        textCapitalization: TextCapitalization.none,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.search,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        onSubmitted: (value) {
+                          if (value.trim().length >= _minSearchLength) {
+                            _searchDebounceTimer?.cancel();
+                            _performSearch(value.trim());
+                          }
+                        },
                       ),
                     ),
                   ),
                 ),
+
+                // Search hint for minimum characters
+                if (_searchController.text.isNotEmpty && _searchController.text.length < _minSearchLength)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Text(
+                      'Type at least $_minSearchLength characters to search',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.getTextTertiary(isDark),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 16),
 

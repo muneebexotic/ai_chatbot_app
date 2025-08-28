@@ -1,5 +1,6 @@
 import 'package:ai_chatbot_app/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/themes_provider.dart'; // Add theme provider import
@@ -101,14 +102,7 @@ class SettingsScreen extends StatelessWidget {
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 32,
-                            backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                            backgroundColor: primaryColor.withOpacity(0.1),
-                            child: photoUrl == null
-                                ? Icon(Icons.person, size: 36, color: primaryColor)
-                                : null,
-                          ),
+                          child: _buildUserAvatar(photoUrl, primaryColor, themeProvider.isDark),
                         ),
                         const SizedBox(width: 20),
                         Expanded(
@@ -297,6 +291,42 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // NEW: Build user avatar with SVG support
+  Widget _buildUserAvatar(String? photoUrl, Color primaryColor, bool isDark) {
+    if (photoUrl != null && (photoUrl.contains('/svg') || photoUrl.endsWith('.svg'))) {
+      // Handle SVG avatars (like DiceBear)
+      return ClipOval(
+        child: SvgPicture.network(
+          photoUrl,
+          width: 64,
+          height: 64,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => CircleAvatar(
+            radius: 32,
+            backgroundColor: primaryColor.withOpacity(0.1),
+            child: Icon(
+              Icons.person,
+              size: 36,
+              color: primaryColor,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Handle regular images and fallback
+      return CircleAvatar(
+        radius: 32,
+        backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+            ? NetworkImage(photoUrl)
+            : const AssetImage('assets/images/user_avatar.png') as ImageProvider,
+        backgroundColor: primaryColor.withOpacity(0.1),
+        child: photoUrl == null || photoUrl.isEmpty
+            ? Icon(Icons.person, size: 36, color: primaryColor)
+            : null,
+      );
+    }
   }
 
   Widget _buildSection(BuildContext context, String title, List<Widget> children) {

@@ -901,131 +901,134 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
-    final convoProvider = Provider.of<ConversationsProvider>(context);
+  // Only showing the modified build method and related spacing fixes
+// The rest of the ChatScreen class remains the same
 
-    final currentTitle = convoProvider.conversations
-        .firstWhere(
-          (c) => c.id == chatProvider.conversationId,
-          orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: DateTime.now()),
-        )
-        .title;
+@override
+Widget build(BuildContext context) {
+  final chatProvider = Provider.of<ChatProvider>(context);
+  final convoProvider = Provider.of<ConversationsProvider>(context);
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final isDark = themeProvider.isDark;
-        
-        return WillPopScope(
-          onWillPop: _onWillPop,
-          child: GestureDetector(
-            onTap: () => _focusNode.unfocus(),
-            child: Scaffold(
-              backgroundColor: AppColors.getBackground(isDark),
-              drawer: ConversationDrawer(
-                onRenameDialog: _showRenameDialog,
-                onDrawerClosed: () {
-                  Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
-                },
-              ),
-              body: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.getBackground(isDark),
-                      AppColors.getSurface(isDark),
-                      AppColors.getBackground(isDark),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
+  final currentTitle = convoProvider.conversations
+      .firstWhere(
+        (c) => c.id == chatProvider.conversationId,
+        orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: DateTime.now()),
+      )
+      .title;
+
+  return Consumer<ThemeProvider>(
+    builder: (context, themeProvider, child) {
+      final isDark = themeProvider.isDark;
+      
+      return WillPopScope(
+        onWillPop: _onWillPop,
+        child: GestureDetector(
+          onTap: () => _focusNode.unfocus(),
+          child: Scaffold(
+            backgroundColor: AppColors.getBackground(isDark),
+            drawer: ConversationDrawer(
+              onRenameDialog: _showRenameDialog,
+              onDrawerClosed: () {
+                Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
+              },
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.getBackground(isDark),
+                    AppColors.getSurface(isDark),
+                    AppColors.getBackground(isDark),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
-                child: Column(
-                  children: [
-                    SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
-                    
-                    Expanded(
-                      child: chatProvider.messages.isEmpty
-                          ? _buildEmptyState()
-                          : ListView.builder(
-                              controller: _scrollController,
-                              reverse: true,
-                              padding: const EdgeInsets.all(16),
-                              itemCount: chatProvider.messages.length,
-                              itemBuilder: (context, index) {
-                                final reverseIndex = chatProvider.messages.length - 1 - index;
-                                final msg = chatProvider.messages[reverseIndex];
-                                final isUser = msg.sender == 'user';
+              ),
+              child: Column(
+                children: [
+                  SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
+                  
+                  Expanded(
+                    child: chatProvider.messages.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // Reduced bottom padding
+                            itemCount: chatProvider.messages.length,
+                            itemBuilder: (context, index) {
+                              final reverseIndex = chatProvider.messages.length - 1 - index;
+                              final msg = chatProvider.messages[reverseIndex];
+                              final isUser = msg.sender == 'user';
 
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: isUser
-                                      ? UserMessageBubble(message: msg.text)
-                                      : BotMessageBubble(
-                                          message: msg.text,
-                                          onSpeak: () => _voiceService.speak(msg.text),
-                                          onCopy: () {
-                                            ClipboardService.copyText(msg.text);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: const Text(
-                                                  'Copied to clipboard',
-                                                  style: TextStyle(
-                                                    fontFamily: 'Poppins',
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                backgroundColor: AppColors.success,
-                                                duration: const Duration(seconds: 2),
-                                                behavior: SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: isUser
+                                    ? UserMessageBubble(message: msg.text)
+                                    : BotMessageBubble(
+                                        message: msg.text,
+                                        onSpeak: () => _voiceService.speak(msg.text),
+                                        onCopy: () {
+                                          ClipboardService.copyText(msg.text);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: const Text(
+                                                'Copied to clipboard',
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
-                                            );
-                                          },
-                                        ),
-                                );
-                              },
-                            ),
+                                              backgroundColor: AppColors.success,
+                                              duration: const Duration(seconds: 2),
+                                              behavior: SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              );
+                            },
+                          ),
+                  ),
+                  
+                  if (chatProvider.isTyping)
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4), // Reduced vertical padding
+                      child: Row(
+                        children: [
+                          Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
+                          const SizedBox(width: 8),
+                          const Expanded(child: ModernTypingIndicator()),
+                        ],
+                      ),
                     ),
                     
-                    if (chatProvider.isTyping)
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
-                            const SizedBox(width: 8),
-                            const Expanded(child: ModernTypingIndicator()),
-                          ],
-                        ),
-                      ),
-                      
-                    Container(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).padding.bottom + 8,
-                        top: 8,
-                        left: 8,
-                        right: 8,
-                      ),
-                      child: MessageInputField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        isListening: _isListening,
-                        onMicTap: _startListening,
-                        onSend: _handleSend,
-                      ),
+                  // Fixed input container padding - this is the key fix
+                  Container(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom + 6, // Reduced bottom padding
+                      top: 0, // Reduced top padding
+                    
                     ),
-                  ],
-                ),
+                    child: MessageInputField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      isListening: _isListening,
+                      onMicTap: _startListening,
+                      onSend: _handleSend,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 }
