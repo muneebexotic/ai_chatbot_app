@@ -1,3 +1,8 @@
+// lib/services/image_generation_service.dart
+// Changes:
+// 1. In _generateWithHuggingFace, build parameters map without including null values to avoid API error on int(None)
+// 2. Added extension method for Map to addIfNotNull for convenience
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -6,13 +11,22 @@ import 'dart:convert';
 import '../models/image_generation_request.dart';
 import '../models/generated_image.dart';
 
+// Extension to add only non-null values
+extension MapExtensions on Map<String, dynamic> {
+  void addIfNotNull(String key, dynamic value) {
+    if (value != null) {
+      this[key] = value;
+    }
+  }
+}
+
 class ImageGenerationService {
   // API configuration - move these to environment variables in production
   static const String _openAIApiUrl = 'https://api.openai.com/v1/images/generations';
   static const String _openAIApiKey = 'your_openai_api_key_here';
   
   static const String _hfApiUrl = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-  static const String _hfApiKey = 'your_huggingface_token_here';
+  static const String _hfApiKey = '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';
   
   static const String _stabilityApiUrl = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
   static const String _stabilityApiKey = 'your_stability_api_key_here';
@@ -141,6 +155,16 @@ class ImageGenerationService {
       onProgress?.call(0.3);
 
       final dimensions = request.size.getDimensions();
+      
+      // Build parameters without null values
+      Map<String, dynamic> parameters = {};
+      parameters.addIfNotNull('width', dimensions.$1);
+      parameters.addIfNotNull('height', dimensions.$2);
+      parameters.addIfNotNull('num_inference_steps', request.steps ?? (request.quality == ImageQuality.hd ? 50 : 25));
+      parameters.addIfNotNull('guidance_scale', request.guidanceScale ?? 7.5);
+      parameters.addIfNotNull('seed', request.seed);
+      parameters.addIfNotNull('negative_prompt', request.negativePrompt);
+
       final response = await http.post(
         Uri.parse(_hfApiUrl),
         headers: {
@@ -149,14 +173,7 @@ class ImageGenerationService {
         },
         body: jsonEncode({
           'inputs': enhancePrompt(request.prompt, request.style),
-          'parameters': {
-            'width': dimensions.$1,
-            'height': dimensions.$2,
-            'num_inference_steps': request.steps ?? (request.quality == ImageQuality.hd ? 50 : 25),
-            'guidance_scale': request.guidanceScale ?? 7.5,
-            'seed': request.seed,
-            'negative_prompt': request.negativePrompt,
-          }
+          if (parameters.isNotEmpty) 'parameters': parameters,
         }),
       );
 

@@ -1,3 +1,5 @@
+// lib/models/image_generation_request.dart
+// No changes needed, provided for completeness
 import 'generated_image.dart'; // Import for AIImageProvider
 
 /// Model representing a request to generate an image

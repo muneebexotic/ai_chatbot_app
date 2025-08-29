@@ -1,3 +1,4 @@
+import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -8,9 +9,11 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/chat_message.dart';
+import '../../widgets/generated_image_viewer.dart';
 
 class UserMessageBubble extends StatelessWidget {
-  final String message;
+  final ChatMessage message; // Changed from String to ChatMessage
 
   const UserMessageBubble({
     super.key,
@@ -126,7 +129,7 @@ class UserMessageBubble extends StatelessWidget {
                 ],
               ),
               child: Text(
-                message,
+                message.displayText, // Use displayText instead of direct text
                 style: TextStyle(
                   color: colorScheme.onPrimary,
                   fontSize: 15,
@@ -146,7 +149,7 @@ class UserMessageBubble extends StatelessWidget {
 }
 
 class BotMessageBubble extends StatefulWidget {
-  final String message;
+  final ChatMessage message; // Changed from String to ChatMessage
   final VoidCallback onSpeak;
   final VoidCallback onCopy;
 
@@ -259,6 +262,227 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     );
   }
 
+  Widget _buildMessageContent(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (widget.message.isImageMessage && widget.message.imageData != null) {
+      // Display generated image preview (tappable to open full viewer)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image prompt
+          if (widget.message.imageData!.prompt.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Generated image: "${widget.message.imageData!.prompt}"',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: colorScheme.onSurface.withOpacity(0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+          
+          // Tappable image preview
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GeneratedImageViewer(
+                    image: widget.message.imageData!,
+                  ),
+                ),
+              );
+            },
+            child: Hero(
+              tag: 'image_${widget.message.imageData!.id}',
+              child: Container(
+                constraints: const BoxConstraints(
+                  maxHeight: 400,  // Bound height to prevent overflow
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: widget.message.imageData!.hasLocalData
+                      ? Image.memory(
+                          widget.message.imageData!.imageData,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildErrorWidget(context),
+                        )
+                      : widget.message.imageData!.hasCloudUrl
+                          ? Image.network(
+                              widget.message.imageData!.imageUrl!,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return _buildLoadingWidget(context, loadingProgress);
+                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildErrorWidget(context),
+                            )
+                          : _buildErrorWidget(context),
+                ),
+              ),
+            ),
+          ),
+          
+          // Image details
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceVariant?.withOpacity(0.5) ?? 
+                     colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.primaryColor.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Image Details',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.message.imageData!.getDescription(),
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Display text message with markdown
+      return MarkdownBody(
+        data: widget.message.text,
+        selectable: true,
+        styleSheet: _buildMarkdownStyleSheet(context),
+        builders: {
+          'code': CodeBlockBuilder(),
+        },
+      );
+    }
+  }
+
+  Widget _buildLoadingWidget(BuildContext context, ImageChunkEvent? loadingProgress) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final progress = loadingProgress != null
+        ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+        : 0.0;
+
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress > 0 ? progress : null,
+            color: AppColors.primary,
+            strokeWidth: 3,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Loading image...',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+          if (progress > 0)
+            Text(
+              '${(progress * 100).toInt()}%',
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.5),
+                fontSize: 12,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(isDark),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.broken_image_outlined,
+            color: AppColors.error,
+            size: 48,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Failed to load image',
+            style: TextStyle(
+              color: AppColors.error,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'The image may have been corrupted or deleted',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -303,14 +527,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                         ),
                       ],
                     ),
-                    child: MarkdownBody(
-                      data: widget.message,
-                      selectable: true,
-                      styleSheet: _buildMarkdownStyleSheet(context),
-                      builders: {
-                        'code': CodeBlockBuilder(),
-                      },
-                    ),
+                    child: _buildMessageContent(context),
                   ),
                   
                   Container(
@@ -318,21 +535,25 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                     child: Row(
                       children: [
                         const SizedBox(width: 4),
-                        _buildActionButton(
-                          context: context,
-                          icon: Icons.volume_up_rounded,
-                          onPressed: _handleSpeak,
-                          isPressed: _speakPressed,
-                          tooltip: 'Read aloud',
-                        ),
-                        const SizedBox(width: 8),
-                        _buildActionButton(
-                          context: context,
-                          icon: Icons.copy_rounded,
-                          onPressed: _handleCopy,
-                          isPressed: _copyPressed,
-                          tooltip: 'Copy text',
-                        ),
+                        if (!widget.message.isImageMessage) // Only show speak button for text
+                          _buildActionButton(
+                            context: context,
+                            icon: Icons.volume_up_rounded,
+                            onPressed: _handleSpeak,
+                            isPressed: _speakPressed,
+                            tooltip: 'Read aloud',
+                          ),
+                        if (!widget.message.isImageMessage) // Only show copy button for text
+                          const SizedBox(width: 8),
+                        if (!widget.message.isImageMessage)
+                          _buildActionButton(
+                            context: context,
+                            icon: Icons.copy_rounded,
+                            onPressed: _handleCopy,
+                            isPressed: _copyPressed,
+                            tooltip: 'Copy text',
+                          ),
+                        // For image messages, the GeneratedImageViewer handles its own action buttons
                       ],
                     ),
                   ),

@@ -1,3 +1,10 @@
+// lib/widgets/image_generation_dialog.dart
+// Changes:
+// 1. Integrate the generating UI into the main dialog structure to avoid drastic widget tree changes that cause _dependents.isEmpty assertion
+// 2. Make _buildContent return either inputs or loading indicator based on isGenerating
+// 3. Make _buildFooter conditional on !isGenerating
+// 4. Adjust padding and constraints to prevent potential overflow
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/image_generation_provider.dart';
@@ -20,24 +27,36 @@ class ImageGenerationDialog extends StatefulWidget {
 
 class _ImageGenerationDialogState extends State<ImageGenerationDialog>
     with TickerProviderStateMixin {
-  final _promptController = TextEditingController();
-  final _negativePromptController = TextEditingController();
-  final _seedController = TextEditingController();
-  late ImageGenerationController _controller;
-  late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
+  // Controllers with proper initialization
+  TextEditingController? _promptController;
+  TextEditingController? _negativePromptController;
+  TextEditingController? _seedController;
+  
+  ImageGenerationController? _controller;
+  AnimationController? _slideController;
+  Animation<Offset>? _slideAnimation;
   
   String? _promptError;
   bool _showAdvancedSettings = false;
   double _guidanceScale = 7.5;
   int _steps = 25;
+  
+  // Disposal flag to prevent use after dispose
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = ImageGenerationController(context);
+    _initializeControllers();
     _setupAnimations();
     _loadSettings();
+  }
+
+  void _initializeControllers() {
+    _promptController = TextEditingController();
+    _negativePromptController = TextEditingController();
+    _seedController = TextEditingController();
+    _controller = ImageGenerationController(context);
   }
 
   void _setupAnimations() {
@@ -49,13 +68,14 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
       begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _slideController,
+      parent: _slideController!,
       curve: Curves.easeOutCubic,
     ));
-    _slideController.forward();
+    _slideController?.forward();
   }
 
   void _loadSettings() {
+    if (!mounted) return;
     final provider = Provider.of<ImageGenerationProvider>(context, listen: false);
     _guidanceScale = 7.5; // Default value
     _steps = provider.selectedQuality == ImageQuality.hd ? 50 : 25;
@@ -63,95 +83,125 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
 
   @override
   void dispose() {
-    _promptController.dispose();
-    _negativePromptController.dispose();
-    _seedController.dispose();
-    _slideController.dispose();
+    _isDisposed = true;
+    
+    // Safely dispose controllers with null checks
+    _promptController?.dispose();
+    _promptController = null;
+    
+    _negativePromptController?.dispose();
+    _negativePromptController = null;
+    
+    _seedController?.dispose();
+    _seedController = null;
+    
+    _slideController?.dispose();
+    _slideController = null;
+    
+    _controller = null;
+    
     super.dispose();
   }
 
   bool _validateInputs() {
-    final prompt = _promptController.text.trim();
+    if (_isDisposed || _promptController == null) return false;
+    
+    final prompt = _promptController!.text.trim();
     
     if (prompt.isEmpty) {
-      setState(() => _promptError = ImageGenerationErrors.invalidPrompt);
+      if (mounted) setState(() => _promptError = ImageGenerationErrors.invalidPrompt);
       return false;
     }
     
     if (prompt.length < ImageGenerationConstants.minPromptLength) {
-      setState(() => _promptError = ImageGenerationErrors.promptTooShort);
+      if (mounted) setState(() => _promptError = ImageGenerationErrors.promptTooShort);
       return false;
     }
     
     if (prompt.length > ImageGenerationConstants.maxPromptLength) {
-      setState(() => _promptError = ImageGenerationErrors.promptTooLong);
+      if (mounted) setState(() => _promptError = ImageGenerationErrors.promptTooLong);
       return false;
     }
 
-    setState(() => _promptError = null);
+    if (mounted) setState(() => _promptError = null);
     return true;
   }
 
   Future<void> _generateImage() async {
+    if (_isDisposed || !mounted || _promptController == null || _controller == null) return;
+    
     if (!_validateInputs()) return;
 
-    final prompt = _promptController.text.trim();
-    final negativePrompt = _negativePromptController.text.trim();
-    final seed = int.tryParse(_seedController.text.trim());
+    final prompt = _promptController!.text.trim();
+    final negativePrompt = _negativePromptController?.text.trim();
+    final seed = int.tryParse(_seedController?.text.trim() ?? '');
 
     try {
-      final result = await _controller.generateImage(
+      final result = await _controller!.generateImage(
         prompt,
-        negativePrompt: negativePrompt.isNotEmpty ? negativePrompt : null,
+        negativePrompt: negativePrompt?.isNotEmpty == true ? negativePrompt : null,
         seed: seed,
         guidanceScale: _guidanceScale,
         steps: _steps,
       );
 
-      if (result != null && mounted) {
+      if (result != null && mounted && !_isDisposed) {
         Navigator.of(context).pop(result);
       }
     } catch (e) {
       // Error handling is done in the controller
+      debugPrint('Generation error: $e');
     }
   }
 
   void _enhancePrompt() {
-    final currentPrompt = _promptController.text.trim();
+    if (_isDisposed || _promptController == null || _controller == null) return;
+    
+    final currentPrompt = _promptController!.text.trim();
     if (currentPrompt.isEmpty) return;
 
-    final enhanced = _controller.enhancePrompt(currentPrompt);
-    if (enhanced != currentPrompt) {
-      _promptController.text = enhanced;
+    final enhanced = _controller!.enhancePrompt(currentPrompt);
+    if (enhanced != currentPrompt && mounted) {
+      _promptController!.text = enhanced;
     }
   }
 
   void _showPromptSuggestions() {
+    if (_isDisposed || !mounted) return;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const ImagePromptSuggestions(),
     ).then((selectedPrompt) {
-      if (selectedPrompt != null && selectedPrompt is String) {
-        _promptController.text = selectedPrompt;
+      if (selectedPrompt != null && 
+          selectedPrompt is String && 
+          !_isDisposed && 
+          mounted &&
+          _promptController != null) {
+        _promptController!.text = selectedPrompt;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Safety check for disposal
+    if (_isDisposed) {
+      return const SizedBox.shrink();
+    }
+
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDark;
 
     return Consumer<ImageGenerationProvider>(
       builder: (context, imageProvider, child) {
-        if (imageProvider.isGenerating) {
-          return _buildGeneratingDialog(isDark, imageProvider);
-        }
-
-        return SlideTransition(
-          position: _slideAnimation,
+        // Another safety check
+        if (_isDisposed) return const SizedBox.shrink();
+        
+        return _slideAnimation != null ? SlideTransition(
+          position: _slideAnimation!,
           child: Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.all(16),
@@ -179,35 +229,19 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildHeader(isDark),
+                  _buildHeader(isDark, imageProvider),  // Modified to pass imageProvider if needed
                   Flexible(child: _buildContent(isDark, imageProvider)),
-                  _buildFooter(isDark, imageProvider),
+                  if (!imageProvider.isGenerating) _buildFooter(isDark, imageProvider),
                 ],
               ),
             ),
           ),
-        );
+        ) : const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildGeneratingDialog(bool isDark, ImageGenerationProvider provider) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(32),
-      child: ImageLoadingIndicator(
-        progress: provider.generationProgress,
-        status: provider.generationStatus,
-        showCancel: true,
-        onCancel: () {
-          _controller.cancelGeneration();
-          Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isDark) {
+  Widget _buildHeader(bool isDark, ImageGenerationProvider provider) {  // Added provider param if you want to conditional
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -255,7 +289,9 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              if (mounted) Navigator.of(context).pop();
+            },
             icon: Icon(
               Icons.close,
               color: AppColors.getTextSecondary(isDark),
@@ -267,6 +303,31 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
   }
 
   Widget _buildContent(bool isDark, ImageGenerationProvider provider) {
+    if (_isDisposed || _promptController == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (provider.isGenerating) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ImageLoadingIndicator(
+            progress: provider.generationProgress,
+            status: provider.generationStatus,
+            showCancel: true,
+            onCancel: () {
+              if (!_isDisposed && _controller != null) {
+                _controller!.cancelGeneration();
+              }
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -283,11 +344,15 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
           ),
           const SizedBox(height: 12),
           ImageGenerationInput(
-            controller: _promptController,
+            controller: _promptController!,
             errorText: _promptError,
             onEnhancePrompt: _enhancePrompt,
             onShowSuggestions: _showPromptSuggestions,
-            onChanged: (_) => setState(() => _promptError = null),
+            onChanged: (_) {
+              if (mounted && !_isDisposed) {
+                setState(() => _promptError = null);
+              }
+            },
           ),
 
           const SizedBox(height: 24),
@@ -341,7 +406,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                 child: Text(size.getDisplayName()),
               )).toList(),
               onChanged: (size) {
-                if (size != null) {
+                if (size != null && !_isDisposed && mounted) {
                   provider.updateSettings(size: size);
                 }
               },
@@ -364,7 +429,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                 child: Text(quality.getDisplayName()),
               )).toList(),
               onChanged: (quality) {
-                if (quality != null) {
+                if (quality != null && !_isDisposed && mounted) {
                   provider.updateSettings(quality: quality);
                   setState(() {
                     _steps = quality == ImageQuality.hd ? 50 : 25;
@@ -390,7 +455,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                 child: Text(style.getDisplayName()),
               )).toList(),
               onChanged: (style) {
-                if (style != null) {
+                if (style != null && !_isDisposed && mounted) {
                   provider.updateSettings(style: style);
                 }
               },
@@ -401,7 +466,11 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
 
           // Advanced settings toggle
           TextButton(
-            onPressed: () => setState(() => _showAdvancedSettings = !_showAdvancedSettings),
+            onPressed: () {
+              if (!_isDisposed && mounted) {
+                setState(() => _showAdvancedSettings = !_showAdvancedSettings);
+              }
+            },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -424,6 +493,10 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
   }
 
   Widget _buildAdvancedSettings(bool isDark) {
+    if (_isDisposed || _negativePromptController == null || _seedController == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -534,7 +607,11 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
             max: ImageGenerationConstants.maxGuidanceScale,
             divisions: 19,
             activeColor: AppColors.primary,
-            onChanged: (value) => setState(() => _guidanceScale = value),
+            onChanged: (value) {
+              if (!_isDisposed && mounted) {
+                setState(() => _guidanceScale = value);
+              }
+            },
           ),
 
           const SizedBox(height: 8),
@@ -554,7 +631,11 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
             max: ImageGenerationConstants.maxSteps.toDouble(),
             divisions: 14,
             activeColor: AppColors.primary,
-            onChanged: (value) => setState(() => _steps = value.round()),
+            onChanged: (value) {
+              if (!_isDisposed && mounted) {
+                setState(() => _steps = value.round());
+              }
+            },
           ),
         ],
       ),
@@ -639,7 +720,9 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    if (mounted) Navigator.of(context).pop();
+                  },
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -662,7 +745,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
-                  onPressed: provider.isGenerating ? null : _generateImage,
+                  onPressed: (provider.isGenerating || _isDisposed) ? null : _generateImage,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
