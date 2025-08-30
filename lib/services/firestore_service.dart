@@ -1,3 +1,4 @@
+// lib\services\firestore_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_message.dart';
 import '../models/app_user.dart';
@@ -282,19 +283,19 @@ class FirestoreService {
       final currentData = conversationDoc.data()!;
       final currentMessageCount = currentData['messageCount'] ?? 0;
 
+      // Prepare message map
+      final messageMap = message.toMap();
+      messageMap['timestamp'] = FieldValue.serverTimestamp();
+      messageMap['messageId'] = messagesRef.id;
+
       // Save message
-      transaction.set(messagesRef, {
-        'text': _sanitizeString(message.text, maxLength: 10000),
-        'sender': message.sender,
-        'timestamp': FieldValue.serverTimestamp(),
-        'messageId': messagesRef.id,
-      });
+      transaction.set(messagesRef, messageMap);
 
       // Update conversation metadata
       transaction.update(conversationRef, {
         'updatedAt': FieldValue.serverTimestamp(),
         'messageCount': currentMessageCount + 1,
-        'lastMessage': _sanitizeString(message.text, maxLength: 200),
+        'lastMessage': _sanitizeString(message.displayText, maxLength: 200),
       });
     });
   }
@@ -691,6 +692,30 @@ class FirestoreService {
         print('✅ Daily usage reset for user: $userId');
       },
       operationName: 'resetUserDailyUsage',
+    );
+  }
+
+  /// Increment daily usage with proper timezone handling
+  Future<void> incrementUserDailyUsage(
+    String userId,
+    String usageType,
+  ) async {
+    if (userId.isEmpty) {
+      throw FirestoreServiceException('User ID cannot be empty');
+    }
+
+    await _performOperationWithRetry(
+      operation: () async {
+        await _db.collection('users').doc(userId).update({
+          'dailyUsage.$usageType': FieldValue.increment(1),
+          'lastUsageUpdate': FieldValue.serverTimestamp(),
+        });
+
+        // Clear cache to force refresh
+        clearUserCache(userId);
+        print('✅ Incremented daily usage for user: $userId - $usageType');
+      },
+      operationName: 'incrementUserDailyUsage',
     );
   }
 

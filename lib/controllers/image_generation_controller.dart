@@ -1,3 +1,4 @@
+// lib\controllers\image_generation_controller.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/image_generation_provider.dart';
@@ -55,6 +56,7 @@ class ImageGenerationController {
 
       // Generate the image
       final result = await imageProvider.generateImage(
+        context,
         prompt,
         negativePrompt: negativePrompt,
         seed: seed,
@@ -119,7 +121,7 @@ class ImageGenerationController {
     try {
       await authProvider.incrementImageUsage();
       
-      final result = await imageProvider.regenerateImage();
+      final result = await imageProvider.regenerateImage(context);
       if (result != null) {
         _showSnackBar(
           'Image regenerated successfully!',

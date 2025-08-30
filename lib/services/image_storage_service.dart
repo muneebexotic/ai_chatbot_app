@@ -1,3 +1,4 @@
+// lib\services\image_storage_service.dart
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -59,10 +60,6 @@ class ImageStorageService {
         imageBytes: image.imageData,
         publicId: publicId,
         folder: 'ai_chatbot/generated_images',
-        transformation: {
-          'quality': 'auto',
-          'format': 'auto',
-        },
       );
 
       if (cloudUrl != null) {

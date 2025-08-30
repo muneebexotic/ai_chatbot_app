@@ -443,7 +443,7 @@ Future<void> sendMessage(String userInput) async {
 
       // Generate image using ImageGenerationProvider
       final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
-      final generatedImage = await imageProvider.generateImage(prompt);
+      final generatedImage = await imageProvider.generateImage(context, prompt);
 
       if (generatedImage != null) {
         // Create image message

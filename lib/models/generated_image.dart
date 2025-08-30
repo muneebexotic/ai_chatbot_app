@@ -1,3 +1,4 @@
+// lib\models\generated_image.dart
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'image_generation_request.dart';
@@ -186,11 +187,11 @@ class GeneratedImage {
   /// Check if image is cached locally
   bool get hasCachedFile => localPath != null && localPath!.isNotEmpty;
 
-  /// Get the best available image source
+  /// Get the best available image source (prefer cloud for persistence)
   ImageSource get bestSource {
+    if (hasCloudUrl) return ImageSource.network;
     if (hasLocalData) return ImageSource.memory;
     if (hasCachedFile) return ImageSource.file;
-    if (hasCloudUrl) return ImageSource.network;
     return ImageSource.none;
   }
 

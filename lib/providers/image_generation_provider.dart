@@ -1,4 +1,9 @@
+// lib\providers\image_generation_provider.dart
+import 'dart:typed_data';
+
+import 'package:ai_chatbot_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/image_generation_request.dart';
 import '../models/generated_image.dart';
 import '../services/image_generation_service.dart';
@@ -82,7 +87,7 @@ class ImageGenerationProvider with ChangeNotifier {
   }
 
   /// Generate image from prompt
-  Future<GeneratedImage?> generateImage(String prompt, {
+  Future<GeneratedImage?> generateImage(BuildContext context, String prompt, {
     String? negativePrompt,
     int? seed,
     double? guidanceScale,
@@ -136,12 +141,32 @@ class ImageGenerationProvider with ChangeNotifier {
       );
 
       if (generatedImage != null) {
-        _currentImage = generatedImage;
-        _generatedImages.insert(0, generatedImage);
+        // Get user ID from AuthProvider
+        final userId = Provider.of<AuthProvider>(context, listen: false).user?.uid ?? 'anonymous';
+        
+        // Upload to cloud
+        final cloudUrl = await _storageService.uploadImageToCloud(generatedImage, userId);
+        GeneratedImage updatedImage = generatedImage;
+        if (cloudUrl != null) {
+          updatedImage = generatedImage.copyWith(imageUrl: cloudUrl);
+          // Optional: Clean up local bytes to save memory, since we have URL
+          updatedImage = updatedImage.copyWith(imageData: Uint8List(0));
+        } else {
+          debugPrint('⚠️ Cloud upload failed, falling back to local only');
+        }
+
+        // Save to local cache as fallback
+        final localPath = await _storageService.saveImageToCache(updatedImage);
+        if (localPath != null) {
+          updatedImage = updatedImage.copyWith(localPath: localPath);
+        }
+
+        _currentImage = updatedImage;
+        _generatedImages.insert(0, updatedImage);
         
         // Save to local storage
         try {
-          await _storageService.saveImageToCache(generatedImage);
+          await _storageService.saveImageToCache(updatedImage);
         } catch (e) {
           debugPrint('⚠️ Failed to save image locally: $e');
           // Don't fail the whole operation if local save fails
@@ -150,8 +175,8 @@ class ImageGenerationProvider with ChangeNotifier {
         _setStatus(ImageGenerationMessages.generationCompleted);
         _setProgress(1.0);
         
-        debugPrint('✅ Image generated successfully: ${generatedImage.id}');
-        return generatedImage;
+        debugPrint('✅ Image generated successfully: ${updatedImage.id}');
+        return updatedImage;
       } else {
         _setError(ImageGenerationErrors.apiError);
         return null;
@@ -166,13 +191,14 @@ class ImageGenerationProvider with ChangeNotifier {
   }
 
   /// Regenerate the last image with same parameters
-  Future<GeneratedImage?> regenerateImage() async {
+  Future<GeneratedImage?> regenerateImage(BuildContext context) async {
     if (_currentRequest == null) {
       _setError('No previous request to regenerate');
       return null;
     }
 
     return generateImage(
+      context,
       _currentRequest!.prompt,
       negativePrompt: _currentRequest!.negativePrompt,
       seed: _currentRequest!.seed,

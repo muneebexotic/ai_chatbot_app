@@ -1,6 +1,10 @@
+// lib\widgets\generated_image_viewer.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/generated_image.dart';
 import '../providers/image_generation_provider.dart';
 import '../providers/themes_provider.dart';
@@ -260,28 +264,43 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: widget.image.hasLocalData
-                    ? Image.memory(
-                        widget.image.imageData,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildErrorWidget(isDark),
-                      )
-                    : widget.image.hasCloudUrl
-                        ? Image.network(
-                            widget.image.imageUrl!,
-                            fit: BoxFit.contain,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return _buildLoadingWidget(isDark, loadingProgress);
-                            },
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildErrorWidget(isDark),
-                          )
-                        : _buildErrorWidget(isDark),
+              child: FutureBuilder<bool>(
+                future: _isOnline(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _buildLoadingWidget(isDark, null);
+                  }
+                  final isOnline = snapshot.data ?? true;
+
+                  if (widget.image.bestSource == ImageSource.network && isOnline) {
+                    return Image.network(
+                      widget.image.imageUrl!,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return _buildLoadingWidget(isDark, loadingProgress);
+                      },
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorWidget(isDark, isConnectivityError: !isOnline),
+                    );
+                  } else if (widget.image.hasLocalData) {
+                    return Image.memory(
+                      widget.image.imageData,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorWidget(isDark, isConnectivityError: false),
+                    );
+                  } else if (widget.image.hasCachedFile) {
+                    return Image.file(
+                      File(widget.image.localPath!),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorWidget(isDark, isConnectivityError: false),
+                    );
+                  } else {
+                    return _buildErrorWidget(isDark, isConnectivityError: !isOnline);
+                  }
+                },
               ),
             ),
           ),
@@ -324,7 +343,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
     );
   }
 
-  Widget _buildErrorWidget(bool isDark) {
+  Widget _buildErrorWidget(bool isDark, {bool isConnectivityError = false}) {
     return Container(
       height: 300,
       decoration: BoxDecoration(
@@ -339,19 +358,21 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.broken_image_outlined,
+            isConnectivityError ? Icons.signal_wifi_off : Icons.broken_image_outlined,
             color: AppColors.error,
             size: 48,
           ),
           const SizedBox(height: 16),
           AppText.bodyMedium(
-            'Failed to load image',
+            isConnectivityError ? 'No internet connection' : 'Failed to load image',
             color: AppColors.error,
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 8),
           AppText.bodySmall(
-            'The image may have been corrupted or deleted',
+            isConnectivityError 
+                ? 'Please check your connection and try again' 
+                : 'The image may have been corrupted or deleted',
             color: AppColors.getTextTertiary(isDark),
             textAlign: TextAlign.center,
           ),
@@ -746,5 +767,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
+  }
+
+  Future<bool> _isOnline() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
   }
 }

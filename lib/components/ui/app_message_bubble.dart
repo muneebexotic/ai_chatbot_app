@@ -1,3 +1,7 @@
+// lib\components\ui\app_message_bubble.dart
+import 'dart:io';
+
+import 'package:ai_chatbot_app/models/generated_image.dart';
 import 'package:ai_chatbot_app/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +12,7 @@ import 'package:flutter_highlight/themes/github.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/chat_message.dart';
 import '../../widgets/generated_image_viewer.dart';
@@ -318,25 +323,44 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: widget.message.imageData!.hasLocalData
-                      ? Image.memory(
+                  child: FutureBuilder<bool>(
+                    future: _isOnline(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildLoadingWidget(context, null);
+                      }
+                      final isOnline = snapshot.data ?? true;
+
+                      if (widget.message.imageData!.bestSource == ImageSource.network && isOnline) {
+                        return Image.network(
+                          widget.message.imageData!.imageUrl!,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return _buildLoadingWidget(context, loadingProgress);
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildErrorWidget(context, isConnectivityError: !isOnline),
+                        );
+                      } else if (widget.message.imageData!.hasLocalData) {
+                        return Image.memory(
                           widget.message.imageData!.imageData,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
-                              _buildErrorWidget(context),
-                        )
-                      : widget.message.imageData!.hasCloudUrl
-                          ? Image.network(
-                              widget.message.imageData!.imageUrl!,
-                              fit: BoxFit.contain,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return _buildLoadingWidget(context, loadingProgress);
-                              },
-                              errorBuilder: (context, error, stackTrace) =>
-                                  _buildErrorWidget(context),
-                            )
-                          : _buildErrorWidget(context),
+                              _buildErrorWidget(context, isConnectivityError: false),
+                        );
+                      } else if (widget.message.imageData!.hasCachedFile) {
+                        return Image.file(
+                          File(widget.message.imageData!.localPath!),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildErrorWidget(context, isConnectivityError: false),
+                        );
+                      } else {
+                        return _buildErrorWidget(context, isConnectivityError: !isOnline);
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
@@ -438,7 +462,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     );
   }
 
-  Widget _buildErrorWidget(BuildContext context) {
+  Widget _buildErrorWidget(BuildContext context, {bool isConnectivityError = false}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -457,13 +481,13 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.broken_image_outlined,
+            isConnectivityError ? Icons.signal_wifi_off : Icons.broken_image_outlined,
             color: AppColors.error,
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
-            'Failed to load image',
+            isConnectivityError ? 'No internet connection' : 'Failed to load image',
             style: TextStyle(
               color: AppColors.error,
               fontSize: 16,
@@ -472,7 +496,9 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           ),
           const SizedBox(height: 8),
           Text(
-            'The image may have been corrupted or deleted',
+            isConnectivityError 
+                ? 'Please check your connection and try again' 
+                : 'The image may have been corrupted or deleted',
             style: TextStyle(
               color: colorScheme.onSurface.withOpacity(0.5),
               fontSize: 14,
@@ -730,87 +756,91 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
       ),
     );
   }
-}
+    }
+  class CodeBlockBuilder extends MarkdownElementBuilder {
+    @override
+    Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+      String language = element.attributes['class']?.replaceFirst('language-', '') ?? '';
+      String code = element.textContent;
 
-class CodeBlockBuilder extends MarkdownElementBuilder {
-  @override
-  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    String language = element.attributes['class']?.replaceFirst('language-', '') ?? '';
-    String code = element.textContent;
-
-    if (language.isNotEmpty) {
-      return Builder(
-        builder: (context) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
-          final isDark = theme.brightness == Brightness.dark;
-          
-          return Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(vertical: 12.0),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant ?? colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
+      if (language.isNotEmpty) {
+        return Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final colorScheme = theme.colorScheme;
+            final isDark = theme.brightness == Brightness.dark;
+            
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 12.0),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant ?? colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.code_rounded,
-                        size: 16,
-                        color: theme.primaryColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        language.toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: 'JetBrains Mono',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.code_rounded,
+                          size: 16,
                           color: theme.primaryColor,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  ),
-                  child: HighlightView(
-                    code,
-                    language: language,
-                    theme: isDark ? agateTheme : githubTheme,
-                    padding: const EdgeInsets.all(16),
-                    textStyle: const TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 13,
-                      height: 1.5,
+                        const SizedBox(width: 8),
+                        Text(
+                          language.toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: theme.primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }
-      );
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
+                    ),
+                    child: HighlightView(
+                      code,
+                      language: language,
+                      theme: isDark ? agateTheme : githubTheme,
+                      padding: const EdgeInsets.all(16),
+                      textStyle: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      }
+      
+      return null;
     }
-    
-    return null;
   }
-}
+
+  Future<bool> _isOnline() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }

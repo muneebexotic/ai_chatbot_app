@@ -1,8 +1,4 @@
-// lib/services/image_generation_service.dart
-// Changes:
-// 1. In _generateWithHuggingFace, build parameters map without including null values to avoid API error on int(None)
-// 2. Added extension method for Map to addIfNotNull for convenience
-
+// lib\services\image_generation_service.dart
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
