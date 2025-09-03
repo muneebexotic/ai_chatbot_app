@@ -8,6 +8,7 @@ import 'config/app_providers.dart';
 import 'config/app_router.dart';
 import 'providers/themes_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/localization_provider.dart';
 import 'utils/app_theme.dart'; 
 import 'screens/splash_screen.dart';
 import 'screens/chat_screen.dart';
@@ -31,38 +32,46 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: buildAppProviders(),
-      child: Consumer2<ThemeProvider, AuthProvider>(
-        builder: (context, themeProvider, authProvider, _) {
-          return MaterialApp(
-            title: 'AI Chatbot',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale('en', 'US'), // English
-              Locale('ur', 'PK'), // Urdu
-              Locale('es', 'ES'), // Spanish
-              Locale('ru', 'RU'), // Russian
-              Locale('zh', 'CN'), // Chinese
-              Locale('fr', 'FR'), // French
-              Locale('ar', 'SA'), // Arabic
-            ],
-            home: _buildInitialScreen(authProvider, themeProvider),
-            routes: buildAppRoutes(),
-            onUnknownRoute: (settings) {
-              return MaterialPageRoute(
-                builder: (context) => authProvider.isLoggedIn 
-                  ? const ChatScreen() 
-                  : const WelcomeScreen(),
-              );
-            },
+      child: Consumer3<ThemeProvider, AuthProvider, LocalizationProvider>(
+        builder: (context, themeProvider, authProvider, localizationProvider, _) {
+          return Directionality(
+            textDirection: localizationProvider.textDirection,
+            child: MaterialApp(
+              title: 'AI Chatbot',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeProvider.themeMode,
+              locale: localizationProvider.currentLocale,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: LocalizationProvider.supportedLocales,
+              localeResolutionCallback: (locale, supportedLocales) {
+                // If the device locale is supported, use it
+                if (locale != null) {
+                  for (var supportedLocale in supportedLocales) {
+                    if (supportedLocale.languageCode == locale.languageCode) {
+                      return supportedLocale;
+                    }
+                  }
+                }
+                // Fallback to English if device locale is not supported
+                return const Locale('en', 'US');
+              },
+              home: _buildInitialScreen(authProvider, themeProvider),
+              routes: buildAppRoutes(),
+              onUnknownRoute: (settings) {
+                return MaterialPageRoute(
+                  builder: (context) => authProvider.isLoggedIn 
+                    ? const ChatScreen() 
+                    : const WelcomeScreen(),
+                );
+              },
+            ),
           );
         },
       ),

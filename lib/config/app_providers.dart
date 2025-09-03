@@ -8,10 +8,12 @@ import '../providers/conversation_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/image_generation_provider.dart'; // NEW: Import image generation provider
+import '../providers/localization_provider.dart';
 import '../controllers/forgot_password_controller.dart';
 
 List<SingleChildWidget> buildAppProviders() {
   return [
+    ChangeNotifierProvider(create: (_) => LocalizationProvider()),
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => AuthProvider()),
     ChangeNotifierProvider(create: (_) => ForgotPasswordController()),
