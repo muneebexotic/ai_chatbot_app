@@ -39,6 +39,7 @@ class ImageGenerationController {
     int? seed,
     double? guidanceScale,
     int? steps,
+    String? hfModel, // Added
   }) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
@@ -62,6 +63,7 @@ class ImageGenerationController {
         seed: seed,
         guidanceScale: guidanceScale,
         steps: steps,
+        hfModel: hfModel, // Pass hfModel
       );
 
       if (result != null) {
@@ -237,6 +239,7 @@ class ImageGenerationController {
     ImageQuality? quality,
     ImageStyle? style,
     AIImageProvider? provider, // Updated to use AIImageProvider
+    String? hfModel, // Added
   }) {
     final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
     
@@ -245,6 +248,7 @@ class ImageGenerationController {
       quality: quality,
       style: style,
       provider: provider,
+      hfModel: hfModel,
     );
 
     _showSnackBar(ImageGenerationMessages.settingsUpdated, isSuccess: true);

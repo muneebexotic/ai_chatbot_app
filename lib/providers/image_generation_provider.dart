@@ -52,12 +52,16 @@ class ImageGenerationProvider with ChangeNotifier {
   AIImageProvider _selectedProvider = AIImageProvider.huggingFace; // Updated to AIImageProvider
   AIImageProvider get selectedProvider => _selectedProvider;
 
+  String? _selectedHfModel = ImageGenerationConstants.huggingFaceModels[0]; // Added default HF model
+  String? get selectedHfModel => _selectedHfModel;
+
   /// Update generation settings
   void updateSettings({
     ImageSize? size,
     ImageQuality? quality,
     ImageStyle? style,
     AIImageProvider? provider, // Updated parameter type
+    String? hfModel,
   }) {
     bool hasChanges = false;
     
@@ -81,6 +85,11 @@ class ImageGenerationProvider with ChangeNotifier {
       hasChanges = true;
     }
     
+    if (hfModel != null && hfModel != _selectedHfModel) {
+      _selectedHfModel = hfModel;
+      hasChanges = true;
+    }
+    
     if (hasChanges) {
       notifyListeners();
     }
@@ -92,6 +101,7 @@ class ImageGenerationProvider with ChangeNotifier {
     int? seed,
     double? guidanceScale,
     int? steps,
+    String? hfModel, // Added optional hfModel param
   }) async {
     if (_isGenerating) {
       debugPrint('⚠️ Image generation already in progress');
@@ -121,6 +131,7 @@ class ImageGenerationProvider with ChangeNotifier {
       quality: _selectedQuality,
       style: _selectedStyle,
       provider: _selectedProvider, // Using updated provider
+      hfModel: hfModel ?? _selectedHfModel, // Use param or selected
       negativePrompt: negativePrompt?.trim(),
       seed: seed,
       guidanceScale: guidanceScale,
@@ -204,6 +215,7 @@ class ImageGenerationProvider with ChangeNotifier {
       seed: _currentRequest!.seed,
       guidanceScale: _currentRequest!.guidanceScale,
       steps: _currentRequest!.steps,
+      hfModel: _currentRequest!.hfModel, // Pass hfModel
     );
   }
 
@@ -368,6 +380,7 @@ class ImageGenerationProvider with ChangeNotifier {
       quality: _selectedQuality,
       style: _selectedStyle,
       provider: _selectedProvider,
+      hfModel: _selectedHfModel,
     );
     return request.getEstimatedCost();
   }

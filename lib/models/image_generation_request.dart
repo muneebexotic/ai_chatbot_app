@@ -1,5 +1,4 @@
 // lib/models/image_generation_request.dart
-// No changes needed, provided for completeness
 import 'generated_image.dart'; // Import for AIImageProvider
 
 /// Model representing a request to generate an image
@@ -9,6 +8,7 @@ class ImageGenerationRequest {
   final ImageQuality quality;
   final ImageStyle style;
   final AIImageProvider provider; // Added provider field
+  final String? hfModel; // Added for Hugging Face specific model
   final String? negativePrompt;
   final int? seed;
   final double? guidanceScale;
@@ -20,6 +20,7 @@ class ImageGenerationRequest {
     this.quality = ImageQuality.standard,
     this.style = ImageStyle.natural,
     this.provider = AIImageProvider.huggingFace, // Default provider
+    this.hfModel,
     this.negativePrompt,
     this.seed,
     this.guidanceScale,
@@ -33,6 +34,7 @@ class ImageGenerationRequest {
     ImageQuality? quality,
     ImageStyle? style,
     AIImageProvider? provider,
+    String? hfModel,
     String? negativePrompt,
     int? seed,
     double? guidanceScale,
@@ -44,6 +46,7 @@ class ImageGenerationRequest {
       quality: quality ?? this.quality,
       style: style ?? this.style,
       provider: provider ?? this.provider,
+      hfModel: hfModel ?? this.hfModel,
       negativePrompt: negativePrompt ?? this.negativePrompt,
       seed: seed ?? this.seed,
       guidanceScale: guidanceScale ?? this.guidanceScale,
@@ -59,6 +62,7 @@ class ImageGenerationRequest {
       'quality': quality.name,
       'style': style.name,
       'provider': provider.name,
+      'hf_model': hfModel,
       'negative_prompt': negativePrompt,
       'seed': seed,
       'guidance_scale': guidanceScale,
@@ -86,6 +90,7 @@ class ImageGenerationRequest {
         (e) => e.name == map['provider'], 
         orElse: () => AIImageProvider.huggingFace,
       ),
+      hfModel: map['hf_model'],
       negativePrompt: map['negative_prompt'],
       seed: map['seed']?.toInt(),
       guidanceScale: map['guidance_scale']?.toDouble(),
@@ -135,13 +140,14 @@ class ImageGenerationRequest {
     final qualityDesc = quality.getDisplayName();
     final styleDesc = style.getDisplayName();
     final providerDesc = provider.getDisplayName();
+    final modelDesc = hfModel != null ? ' ($hfModel)' : '';
     
-    return '$sizeDesc, $qualityDesc quality, $styleDesc style via $providerDesc';
+    return '$sizeDesc, $qualityDesc quality, $styleDesc style via $providerDesc$modelDesc';
   }
 
   @override
   String toString() {
-    return 'ImageGenerationRequest(prompt: "$prompt", size: $size, quality: $quality, style: $style, provider: $provider)';
+    return 'ImageGenerationRequest(prompt: "$prompt", size: $size, quality: $quality, style: $style, provider: $provider, hfModel: $hfModel)';
   }
 
   @override
@@ -153,6 +159,7 @@ class ImageGenerationRequest {
         other.quality == quality &&
         other.style == style &&
         other.provider == provider &&
+        other.hfModel == hfModel &&
         other.negativePrompt == negativePrompt &&
         other.seed == seed &&
         other.guidanceScale == guidanceScale &&
@@ -167,6 +174,7 @@ class ImageGenerationRequest {
       quality,
       style,
       provider,
+      hfModel,
       negativePrompt,
       seed,
       guidanceScale,

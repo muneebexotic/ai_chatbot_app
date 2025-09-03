@@ -4,9 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/image_generation_request.dart';
 import '../models/generated_image.dart';
+import '../constants/image_generation_constants.dart'; // Added for huggingFaceModels
 
 // Extension to add only non-null values
 extension MapExtensions on Map<String, dynamic> {
@@ -18,15 +18,15 @@ extension MapExtensions on Map<String, dynamic> {
 }
 
 class ImageGenerationService {
-  // API configuration - now using environment variables
+  // API configuration - move these to environment variables in production
   static const String _openAIApiUrl = 'https://api.openai.com/v1/images/generations';
-  static String? get _openAIApiKey => dotenv.env['OPENAI_API_KEY'];
+  static const String _openAIApiKey = 'your_openai_api_key_here';
   
-  static const String _hfApiUrl = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-  static String? get _hfApiKey => dotenv.env['HUGGING_FACE_TOKEN'];
+  static const String _hfApiBaseUrl = 'https://api-inference.huggingface.co/models/'; // Made base URL
+  static const String _hfApiKey = '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';
   
   static const String _stabilityApiUrl = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
-  static String? get _stabilityApiKey => dotenv.env['STABILITY_API_KEY'];
+  static const String _stabilityApiKey = 'your_stability_api_key_here';
 
   bool _isCancelled = false;
 
@@ -85,10 +85,6 @@ class ImageGenerationService {
       debugPrint('🎨 Generating with DALL-E: ${request.prompt}');
       onProgress?.call(0.3);
 
-      if (_openAIApiKey == null || _openAIApiKey!.isEmpty) {
-        throw ImageGenerationException('OpenAI API key not found. Please add OPENAI_API_KEY to your .env file.');
-      }
-
       final response = await http.post(
         Uri.parse(_openAIApiUrl),
         headers: {
@@ -146,18 +142,15 @@ class ImageGenerationService {
     return null;
   }
 
-  /// Generate using Hugging Face
+  /// Generate using Hugging Face (now supports multiple models with retry)
   Future<GeneratedImage?> _generateWithHuggingFace(
     ImageGenerationRequest request,
     Function(double)? onProgress,
   ) async {
     try {
-      debugPrint('🎨 Generating with Hugging Face: ${request.prompt}');
+      final model = request.hfModel ?? ImageGenerationConstants.huggingFaceModels[0]; // Default to first if not specified
+      debugPrint('🎨 Generating with Hugging Face model $model: ${request.prompt}');
       onProgress?.call(0.3);
-
-      if (_hfApiKey == null || _hfApiKey!.isEmpty) {
-        throw ImageGenerationException('Hugging Face API key not found. Please check your .env file.');
-      }
 
       final dimensions = request.size.getDimensions();
       
@@ -170,43 +163,59 @@ class ImageGenerationService {
       parameters.addIfNotNull('seed', request.seed);
       parameters.addIfNotNull('negative_prompt', request.negativePrompt);
 
-      final response = await http.post(
-        Uri.parse(_hfApiUrl),
-        headers: {
-          'Authorization': 'Bearer $_hfApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'inputs': enhancePrompt(request.prompt, request.style),
-          if (parameters.isNotEmpty) 'parameters': parameters,
-        }),
-      );
-
-      if (_isCancelled) return null;
-      onProgress?.call(0.8);
-
-      if (response.statusCode == 200) {
-        onProgress?.call(1.0);
-        
-        return GeneratedImage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          prompt: request.prompt,
-          imageUrl: null,
-          imageData: response.bodyBytes,
-          size: request.size,
-          quality: request.quality,
-          style: request.style,
-          provider: AIImageProvider.huggingFace,
-          createdAt: DateTime.now(),
-          negativePrompt: request.negativePrompt,
-          seed: request.seed,
-          guidanceScale: request.guidanceScale,
-          steps: request.steps,
+      int retries = 0;
+      while (retries < ImageGenerationConstants.maxRetries) {
+        final url = Uri.parse('$_hfApiBaseUrl$model');
+        final response = await http.post(
+          url,
+          headers: {
+            'Authorization': 'Bearer $_hfApiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'inputs': enhancePrompt(request.prompt, request.style),
+            if (parameters.isNotEmpty) 'parameters': parameters,
+          }),
         );
-      } else {
+
+        if (_isCancelled) return null;
+
+        if (response.statusCode == 200) {
+          onProgress?.call(0.8);
+          onProgress?.call(1.0);
+          
+          return GeneratedImage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            prompt: request.prompt,
+            imageUrl: null,
+            imageData: response.bodyBytes,
+            size: request.size,
+            quality: request.quality,
+            style: request.style,
+            provider: AIImageProvider.huggingFace,
+            createdAt: DateTime.now(),
+            negativePrompt: request.negativePrompt,
+            seed: request.seed,
+            guidanceScale: request.guidanceScale,
+            steps: request.steps,
+          );
+        } else if (response.statusCode == 503) {
+          // Model loading; retry after wait
+          final jsonResponse = jsonDecode(response.body);
+          if (jsonResponse.containsKey('estimated_time')) {
+            final waitTime = (jsonResponse['estimated_time'] as num).toInt() + 1; // Buffer
+            debugPrint('Model loading, waiting $waitTime seconds...');
+            await Future.delayed(Duration(seconds: waitTime));
+            retries++;
+            continue;
+          }
+        }
+
+        // Other errors
         final errorMessage = response.body.isNotEmpty ? response.body : 'Unknown error';
         throw ImageGenerationException('Hugging Face API Error: ${response.statusCode} - $errorMessage');
       }
+      throw ImageGenerationException('Max retries exceeded while waiting for model to load.');
     } catch (e) {
       debugPrint('❌ Hugging Face generation failed: $e');
       rethrow;
@@ -221,10 +230,6 @@ class ImageGenerationService {
     try {
       debugPrint('🎨 Generating with Stability AI: ${request.prompt}');
       onProgress?.call(0.3);
-
-      if (_stabilityApiKey == null || _stabilityApiKey!.isEmpty) {
-        throw ImageGenerationException('Stability AI API key not found. Please add STABILITY_API_KEY to your .env file.');
-      }
 
       final dimensions = request.size.getDimensions();
       final response = await http.post(
@@ -336,19 +341,20 @@ class ImageGenerationService {
   Map<String, dynamic> getProviderInfo() {
     return {
       'dalle': {
-        'available': _openAIApiKey != null && _openAIApiKey!.isNotEmpty,
+        'available': true,
         'cost_per_image': 0.02,
         'cost_per_hd': 0.04,
         'max_size': '1792x1024',
       },
       'huggingFace': {
-        'available': _hfApiKey != null && _hfApiKey!.isNotEmpty,
+        'available': true,
         'cost_per_image': 0.0,
         'free_tier': true,
         'rate_limit': 'Limited requests per hour',
+        'models': ImageGenerationConstants.huggingFaceModels, // Added
       },
       'stabilityAI': {
-        'available': _stabilityApiKey != null && _stabilityApiKey!.isNotEmpty,
+        'available': true,
         'cost_per_image': 0.01,
         'max_size': '1536x1536',
       },

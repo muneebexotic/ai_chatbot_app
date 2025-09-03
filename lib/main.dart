@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'config/bootstrap.dart';
 import 'config/app_providers.dart';
 import 'config/app_router.dart';
@@ -17,14 +16,6 @@ Future<void> main() async {
   // Ensure Flutter is initialized and preserve native splash
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  
-  // Load environment variables
-  try {
-    await dotenv.load(fileName: ".env");
-    debugPrint('✅ Environment variables loaded successfully');
-  } catch (e) {
-    debugPrint('⚠️ Warning: Could not load .env file: $e');
-  }
   
   // Initialize app
   await AppBootstrap.initialize();

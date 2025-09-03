@@ -39,6 +39,17 @@ class ImageGenerationConstants {
   static const int freeImagesPerHour = 2;
   static const int premiumImagesPerDay = 100;
   static const int premiumImagesPerHour = 20;
+
+  // Hugging Face Models List (added)
+  static const List<String> huggingFaceModels = [
+    'black-forest-labs/FLUX.1-schnell',
+    'black-forest-labs/FLUX.1-dev',
+    'stabilityai/stable-diffusion-3-medium',
+    'stabilityai/stable-diffusion-xl-base-1.0',
+    'CompVis/stable-diffusion-v1-4',
+    'runwayml/stable-diffusion-v1-5',
+    'ByteDance/SDXL-Lightning',
+  ];
 }
 
 // Default Prompts and Suggestions
