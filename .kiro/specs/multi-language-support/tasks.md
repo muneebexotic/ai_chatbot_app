@@ -84,20 +84,31 @@
     - Add Directionality widget for RTL support
     - _Requirements: 3.1, 3.2, 6.1, 6.2_
 
-- [ ] 5. Create language selection UI components
-  - [ ] 5.1 Create Language model and supported languages list
+- [x] 5. Create language selection UI components
+
+
+
+
+  - [x] 5.1 Create Language model and supported languages list
+
+
     - Write Language data model with native names and RTL flags
     - Define static list of all 7 supported languages
     - Include proper locale codes and display names
     - _Requirements: 1.1, 1.2_
 
-  - [ ] 5.2 Implement language selection dialog
+
+
+  - [x] 5.2 Implement language selection dialog
+
     - Create LanguageSelectionDialog widget
     - Display languages with native names and current selection
     - Handle language selection and provider updates
+
     - _Requirements: 1.1, 1.2, 1.3_
 
-  - [ ] 5.3 Add language selection tile to settings screen
+  - [x] 5.3 Add language selection tile to settings screen
+
     - Update lib/screens/settings_screen.dart with language option
     - Integrate with existing settings UI pattern
     - Show current language and trigger selection dialog

@@ -4,8 +4,12 @@ import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/themes_provider.dart'; // Add theme provider import
+import '../providers/localization_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
+import '../widgets/language_selection_dialog.dart';
+import '../models/language.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'personas_screen.dart';
 import 'welcome_screen.dart';
 
@@ -16,6 +20,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context); // Add theme provider
+    final localizationProvider = Provider.of<LocalizationProvider>(context);
     final userName = authProvider.displayName;
     final userEmail = authProvider.email;
     final photoUrl = authProvider.userPhotoUrl;
@@ -64,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                   ),
                   title: AppText.bodyLarge(
-                    'Settings',
+                    AppLocalizations.of(context).settings,
                     color: textPrimaryColor,
                     fontWeight: FontWeight.w600,
                   ),
@@ -131,10 +136,10 @@ class SettingsScreen extends StatelessWidget {
                   // Account Information Section
                   _buildSection(
                     context,
-                    'Account Information',
+                    AppLocalizations.of(context).accountInformation,
                     [
-                      _buildInfoTile(context, 'Email', userEmail, Icons.email_outlined),
-                      _buildInfoTile(context, 'Phone number', '+923103535835', Icons.phone_outlined),
+                      _buildInfoTile(context, AppLocalizations.of(context).email, userEmail, Icons.email_outlined),
+                      _buildInfoTile(context, AppLocalizations.of(context).phoneNumber, '+923103535835', Icons.phone_outlined),
                     ],
                   ),
                   
@@ -143,7 +148,7 @@ class SettingsScreen extends StatelessWidget {
                   // Appearance Section - NEW
                   _buildSection(
                     context,
-                    'Appearance',
+                    AppLocalizations.of(context).appearance,
                     [
                       _buildThemeToggleTile(context, themeProvider),
                     ],
@@ -154,22 +159,23 @@ class SettingsScreen extends StatelessWidget {
                   // Preferences Section
                   _buildSection(
                     context,
-                    'Preferences',
+                    AppLocalizations.of(context).preferences,
                     [
                       _buildOptionTile(
                         context,
                         Icons.workspace_premium_rounded, 
-                        'Upgrade to Plus', 
-                        'Unlock premium features',
+                        AppLocalizations.of(context).upgradeToPlusTitle, 
+                        AppLocalizations.of(context).upgradeToPlusSubtitle,
                         () {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
                         },
                       ),
+                      _buildLanguageSelectionTile(context, localizationProvider),
                       _buildOptionTile(
                         context,
                         Icons.person_pin_circle, 
-                        'Personalization', 
-                        'Customize your experience',
+                        AppLocalizations.of(context).personalizationTitle, 
+                        AppLocalizations.of(context).personalizationSubtitle,
                         () {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonaScreen()));
                         },
@@ -177,15 +183,15 @@ class SettingsScreen extends StatelessWidget {
                       _buildOptionTile(
                         context,
                         Icons.data_usage_rounded, 
-                        'Data Controls', 
-                        'Manage your data',
+                        AppLocalizations.of(context).dataControlsTitle, 
+                        AppLocalizations.of(context).dataControlsSubtitle,
                         () {},
                       ),
                       _buildOptionTile(
                         context,
                         Icons.graphic_eq_rounded, 
-                        'Voice', 
-                        'Voice settings and preferences',
+                        AppLocalizations.of(context).voiceTitle, 
+                        AppLocalizations.of(context).voiceSubtitle,
                         () {},
                       ),
                     ],
@@ -196,20 +202,20 @@ class SettingsScreen extends StatelessWidget {
                   // Security & Support Section
                   _buildSection(
                     context,
-                    'Security & Support',
+                    AppLocalizations.of(context).securitySupport,
                     [
                       _buildOptionTile(
                         context,
                         Icons.lock_outline, 
-                        'Security', 
-                        'Privacy and security settings',
+                        AppLocalizations.of(context).securityTitle, 
+                        AppLocalizations.of(context).securitySubtitle,
                         () {},
                       ),
                       _buildOptionTile(
                         context,
                         Icons.info_outline, 
-                        'About', 
-                        'App information and version',
+                        AppLocalizations.of(context).aboutTitle, 
+                        AppLocalizations.of(context).aboutSubtitle,
                         () {},
                       ),
                     ],
@@ -260,12 +266,12 @@ class SettingsScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   AppText.bodyLarge(
-                                    'Sign out',
+                                    AppLocalizations.of(context).signOut,
                                     color: AppColors.error,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   AppText.bodySmall(
-                                    'Sign out from your account',
+                                    AppLocalizations.of(context).signOutSubtitle,
                                     color: AppColors.error.withOpacity(0.7),
                                   ),
                                 ],
@@ -387,13 +393,13 @@ class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText.bodyLarge(
-                  'Appearance',
+                  AppLocalizations.of(context).appearance,
                   color: textPrimaryColor,
                   fontWeight: FontWeight.w600,
                 ),
                 const SizedBox(height: 2),
                 AppText.bodySmall(
-                  themeProvider.isDark ? 'Dark mode' : 'Light mode',
+                  themeProvider.isDark ? AppLocalizations.of(context).darkMode : AppLocalizations.of(context).lightMode,
                   color: textSecondaryColor,
                 ),
               ],
@@ -406,6 +412,73 @@ class SettingsScreen extends StatelessWidget {
             activeTrackColor: primaryColor.withOpacity(0.3),
           ),
         ],
+      ),
+    );
+  }
+
+  // Language selection tile
+  Widget _buildLanguageSelectionTile(BuildContext context, LocalizationProvider localizationProvider) {
+    final primaryColor = Theme.of(context).primaryColor;
+    final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textTertiaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+
+    // Get current language display name
+    final currentLanguage = Language.getLanguageByLocale(localizationProvider.currentLocale);
+    final currentLanguageName = currentLanguage?.nativeName ?? 'English';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => const LanguageSelectionDialog(),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.language_rounded,
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.bodyLarge(
+                      AppLocalizations.of(context).language,
+                      color: textPrimaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(height: 2),
+                    AppText.bodySmall(
+                      currentLanguageName,
+                      color: textSecondaryColor,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: textTertiaryColor,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -522,15 +595,15 @@ class SettingsScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: surfaceColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: AppText.displayMedium('Sign Out', color: textPrimaryColor),
+        title: AppText.displayMedium(AppLocalizations.of(context).signOutDialogTitle, color: textPrimaryColor),
         content: AppText.bodyMedium(
-          'Are you sure you want to sign out of your account?',
+          AppLocalizations.of(context).signOutDialogMessage,
           color: textSecondaryColor,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: AppText.bodyMedium('Cancel', color: textSecondaryColor),
+            child: AppText.bodyMedium(AppLocalizations.of(context).cancel, color: textSecondaryColor),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -538,7 +611,7 @@ class SettingsScreen extends StatelessWidget {
               backgroundColor: AppColors.error,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: AppText.bodyMedium('Sign Out', color: Colors.white),
+            child: AppText.bodyMedium(AppLocalizations.of(context).signOut, color: Colors.white),
           ),
         ],
       ),
