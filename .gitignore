@@ -80,3 +80,9 @@ app.*.map.json
 
 # Migration/Other tools
 migrate_working_dir/
+
+# Environment Variables - IMPORTANT: Keep API keys secure!
+.env
+.env.*
+*.env
+!.env.example

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/image_generation_request.dart';
 import '../models/generated_image.dart';
 
@@ -17,15 +18,15 @@ extension MapExtensions on Map<String, dynamic> {
 }
 
 class ImageGenerationService {
-  // API configuration - move these to environment variables in production
+  // API configuration - now using environment variables
   static const String _openAIApiUrl = 'https://api.openai.com/v1/images/generations';
-  static const String _openAIApiKey = 'your_openai_api_key_here';
+  static String? get _openAIApiKey => dotenv.env['OPENAI_API_KEY'];
   
   static const String _hfApiUrl = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-  static const String _hfApiKey = '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';
+  static String? get _hfApiKey => dotenv.env['HUGGING_FACE_TOKEN'];
   
   static const String _stabilityApiUrl = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
-  static const String _stabilityApiKey = 'your_stability_api_key_here';
+  static String? get _stabilityApiKey => dotenv.env['STABILITY_API_KEY'];
 
   bool _isCancelled = false;
 
@@ -83,6 +84,10 @@ class ImageGenerationService {
     try {
       debugPrint('🎨 Generating with DALL-E: ${request.prompt}');
       onProgress?.call(0.3);
+
+      if (_openAIApiKey == null || _openAIApiKey!.isEmpty) {
+        throw ImageGenerationException('OpenAI API key not found. Please add OPENAI_API_KEY to your .env file.');
+      }
 
       final response = await http.post(
         Uri.parse(_openAIApiUrl),
@@ -150,6 +155,10 @@ class ImageGenerationService {
       debugPrint('🎨 Generating with Hugging Face: ${request.prompt}');
       onProgress?.call(0.3);
 
+      if (_hfApiKey == null || _hfApiKey!.isEmpty) {
+        throw ImageGenerationException('Hugging Face API key not found. Please check your .env file.');
+      }
+
       final dimensions = request.size.getDimensions();
       
       // Build parameters without null values
@@ -212,6 +221,10 @@ class ImageGenerationService {
     try {
       debugPrint('🎨 Generating with Stability AI: ${request.prompt}');
       onProgress?.call(0.3);
+
+      if (_stabilityApiKey == null || _stabilityApiKey!.isEmpty) {
+        throw ImageGenerationException('Stability AI API key not found. Please add STABILITY_API_KEY to your .env file.');
+      }
 
       final dimensions = request.size.getDimensions();
       final response = await http.post(
@@ -323,19 +336,19 @@ class ImageGenerationService {
   Map<String, dynamic> getProviderInfo() {
     return {
       'dalle': {
-        'available': true,
+        'available': _openAIApiKey != null && _openAIApiKey!.isNotEmpty,
         'cost_per_image': 0.02,
         'cost_per_hd': 0.04,
         'max_size': '1792x1024',
       },
       'huggingFace': {
-        'available': true,
+        'available': _hfApiKey != null && _hfApiKey!.isNotEmpty,
         'cost_per_image': 0.0,
         'free_tier': true,
         'rate_limit': 'Limited requests per hour',
       },
       'stabilityAI': {
-        'available': true,
+        'available': _stabilityApiKey != null && _stabilityApiKey!.isNotEmpty,
         'cost_per_image': 0.01,
         'max_size': '1536x1536',
       },
