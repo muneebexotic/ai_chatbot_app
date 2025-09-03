@@ -1,16 +1,28 @@
-# ai_chatbot_app
+# Product Overview
 
-A new Flutter project.
+## AI Chatbot App
 
-## Getting Started
+A Flutter-based AI chatbot application that provides conversational AI capabilities with advanced features including:
 
-This project is a starting point for a Flutter application.
+- **Chat Interface**: Real-time conversations with AI using Google's Gemini API
+- **Image Generation**: AI-powered image creation using multiple providers (OpenAI DALL-E, Hugging Face, Stability AI)
+- **Voice Integration**: Speech-to-text and text-to-speech functionality
+- **User Authentication**: Firebase Auth with Google Sign-In support
+- **Cloud Storage**: Firebase Firestore for chat history and user data
+- **Subscription System**: In-app purchases for premium features
+- **Multi-Platform**: Supports Android, iOS, Web, Windows, macOS, and Linux
 
-A few resources to get you started if this is your first Flutter project:
+## Key Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Persistent chat conversations with history
+- Multiple AI personas/characters
+- Image upload and analysis capabilities
+- Voice input and audio responses
+- Dark/light theme support
+- Offline capability with sync
+- User settings and preferences
+- Subscription management
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Target Platforms
+
+Cross-platform Flutter application targeting mobile (Android/iOS) as primary platforms with desktop and web support.
