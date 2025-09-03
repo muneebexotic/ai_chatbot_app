@@ -1,5 +1,3 @@
-// MultiProvider setup
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -9,13 +7,20 @@ import '../providers/themes_provider.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
-import '../controllers/forgot_password_controller.dart'; // Add this import
+import '../providers/image_generation_provider.dart'; // NEW: Import image generation provider
+import '../controllers/forgot_password_controller.dart';
 
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => AuthProvider()),
-    ChangeNotifierProvider(create: (_) => ForgotPasswordController()), // Add this line
+    ChangeNotifierProvider(create: (_) => ForgotPasswordController()),
+    
+    // NEW: Add ImageGenerationProvider
+    ChangeNotifierProvider(
+      create: (_) => ImageGenerationProvider(),
+    ),
+    
     ChangeNotifierProvider(
       create: (_) {
         final settingsProvider = SettingsProvider();
@@ -55,6 +60,7 @@ List<SingleChildWidget> buildAppProviders() {
         return previous;
       },
     ),
+    
     ChangeNotifierProxyProvider2<AuthProvider, SettingsProvider, ChatProvider>(
       create: (context) => ChatProvider(userId: '', context: context),
       update: (context, auth, settings, previous) {

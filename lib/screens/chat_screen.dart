@@ -1,3 +1,8 @@
+// lib/screens/chat_screen.dart
+// Changes:
+// 1. In _showImagePromptDialog, dispose promptController after a delay to wait for dialog dismiss animation
+// 2. In _scrollToTop, add hasContentDimensions check to fallback jumpTo to prevent null bang in minScrollExtent
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +24,7 @@ import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
+import '../providers/image_generation_provider.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -33,7 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _focusNode = FocusNode();
   final VoiceService _voiceService = VoiceService();
   final SpeechService _speechService = SpeechService();
-  
+
   bool _isListening = false;
   bool _showScrollToTop = false;
 
@@ -45,9 +51,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _setupScrollListener() {
     _scrollController.addListener(() {
-      final showFab = _scrollController.hasClients &&
-          _scrollController.offset > 200;
-      
+      final showFab =
+          _scrollController.hasClients && _scrollController.offset > 200;
+
       if (showFab != _showScrollToTop) {
         setState(() => _showScrollToTop = showFab);
       }
@@ -72,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<bool?> _showExitDialog() async {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
-    
+
     try {
       return await showDialog<bool>(
         context: context,
@@ -120,9 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
@@ -177,7 +181,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _startListening() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     if (!await authProvider.canSendVoice()) {
       _showUpgradeDialog(
         'Voice Limit Reached',
@@ -188,7 +192,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     HapticFeedback.lightImpact();
-    
+
     final available = await _speechService.startListening(
       onResult: (text) => setState(() => _controller.text = text),
       onDone: () async {
@@ -211,10 +215,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<String?> _showRenameDialog(BuildContext context, String currentTitle) {
     return showDialog<String>(
       context: context,
-      builder: (context) => RenameConversationDialog(currentTitle: currentTitle),
+      builder: (context) =>
+          RenameConversationDialog(currentTitle: currentTitle),
     );
   }
-  
+
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -238,7 +243,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (message.isEmpty) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
         'Message Limit Reached',
@@ -253,7 +258,10 @@ class _ChatScreenState extends State<ChatScreen> {
     _focusNode.unfocus();
 
     try {
-      await Provider.of<ChatProvider>(context, listen: false).sendMessage(message);
+      await Provider.of<ChatProvider>(
+        context,
+        listen: false,
+      ).sendMessage(message);
       await authProvider.incrementMessageUsage();
       _scrollToTop();
     } catch (e) {
@@ -261,10 +269,215 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _handleImageGeneration() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    if (!await authProvider.canUploadImage()) {
+      _showUpgradeDialog(
+        'Image Generation Limit Reached',
+        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_IMAGES} images.',
+        'Upgrade to Premium for unlimited image generation!',
+      );
+      return;
+    }
+
+    // Check if there's text in the input field
+    String prompt = _controller.text.trim();
+
+    if (prompt.isEmpty) {
+      // Show dialog to get prompt if text field is empty
+      prompt = await _showImagePromptDialog();
+      if (prompt.isEmpty) return; // User cancelled or entered empty prompt
+    } else {
+      // Use text from field and clear it
+      _controller.clear();
+    }
+
+    HapticFeedback.selectionClick();
+    _focusNode.unfocus();
+
+    try {
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      await chatProvider.generateImageMessage(prompt);
+
+      // Safely scroll with additional checks
+      _scrollToTopSafely();
+    } catch (e) {
+      _showErrorSnackBar('Failed to generate image: $e');
+    }
+  }
+
+  // Add this new safer scroll method:
+  void _scrollToTopSafely() {
+    // Wait a bit longer for the UI to update
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted && _scrollController != null) {
+        try {
+          if (_scrollController.hasClients &&
+              _scrollController.position.hasContentDimensions) {
+            final maxScroll = _scrollController.position.maxScrollExtent;
+            if (maxScroll > 0) {
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('❌ Safe scroll failed: $e');
+        }
+      }
+    });
+  }
+
+  // Add this new method to show the image prompt dialog:
+
+  Future<String> _showImagePromptDialog() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDark;
+    final promptController = TextEditingController();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.getSurface(isDark),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.image_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppText.displayMedium(
+                  'Generate Image',
+                  color: AppColors.getTextPrimary(isDark),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText.bodyMedium(
+                'Describe what you want to create:',
+                color: AppColors.getTextSecondary(isDark),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: promptController,
+                autofocus: true,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText:
+                      'e.g., A beautiful sunset over mountains, digital art style',
+                  hintStyle: TextStyle(
+                    color: AppColors.getTextTertiary(isDark),
+                    fontSize: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                  filled: true,
+                  fillColor: AppColors.getBackground(isDark).withOpacity(0.5),
+                ),
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(isDark),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.tips_and_updates,
+                      color: AppColors.primary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AppText.bodySmall(
+                        'Be specific! Include style, mood, colors, and details for better results.',
+                        color: AppColors.getTextSecondary(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(''),
+              child: AppText.bodyMedium(
+                'Cancel',
+                color: AppColors.getTextSecondary(isDark),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final prompt = promptController.text.trim();
+                Navigator.of(dialogContext).pop(prompt);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: AppText.bodyMedium(
+                'Generate',
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Dispose after a delay to allow dialog dismiss animation to complete
+    Future.delayed(const Duration(milliseconds: 300), () {
+      promptController.dispose();
+    });
+
+    return result ?? '';
+  }
+
   void _showUpgradeDialog(String title, String description, String benefits) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -333,7 +546,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: AppColors.error, size: 16),
+                      Icon(
+                        Icons.info_outline,
+                        color: AppColors.error,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppText.bodySmall(
@@ -369,7 +586,9 @@ class _ChatScreenState extends State<ChatScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: AppText.bodyMedium(
               'Upgrade Now',
@@ -383,12 +602,43 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollToTop() {
+    // Add comprehensive null checks and safety measures
+    if (_scrollController == null) {
+      debugPrint('⚠️ Scroll controller is null, cannot scroll');
+      return;
+    }
+
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+      // Check if widget is still mounted and controller is still valid
+      if (mounted &&
+          _scrollController != null &&
+          _scrollController.hasClients) {
+        try {
+          // Additional safety check for position
+          if (_scrollController.position.hasContentDimensions) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        } catch (e) {
+          debugPrint('❌ Error during scroll animation: $e');
+          // Try immediate jump as fallback
+          try {
+            if (mounted &&
+                _scrollController != null &&
+                _scrollController.hasClients &&
+                _scrollController.position.hasContentDimensions) {  // Added check here
+              _scrollController.jumpTo(0);
+            }
+          } catch (fallbackError) {
+            debugPrint('❌ Even fallback scroll failed: $fallbackError');
+          }
+        }
+      } else {
+        debugPrint(
+          '⚠️ Cannot scroll: mounted=$mounted, hasClients=${_scrollController?.hasClients}',
         );
       }
     });
@@ -397,7 +647,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showSuggestionModal(List<String> suggestions) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -431,36 +681,44 @@ class _ChatScreenState extends State<ChatScreen> {
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: AppColors.getTextSecondary(isDark)),
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.getTextSecondary(isDark),
+                    ),
                   ),
                 ],
               ),
             ),
-            ...suggestions.map((suggestion) => ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+            ...suggestions.map(
+              (suggestion) => ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.chat_bubble_outline,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
                 ),
-                child: Icon(
-                  Icons.chat_bubble_outline,
-                  color: AppColors.primary,
-                  size: 16,
+                title: AppText.bodyMedium(
+                  suggestion,
+                  color: AppColors.getTextPrimary(isDark),
                 ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppColors.getTextTertiary(isDark),
+                  size: 14,
+                ),
+                onTap: () {
+                  _controller.text = suggestion;
+                  Navigator.pop(context);
+                  _focusNode.requestFocus();
+                },
               ),
-              title: AppText.bodyMedium(suggestion, color: AppColors.getTextPrimary(isDark)),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: AppColors.getTextTertiary(isDark),
-                size: 14,
-              ),
-              onTap: () {
-                _controller.text = suggestion;
-                Navigator.pop(context);
-                _focusNode.requestFocus();
-              },
-            )),
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -472,7 +730,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         final isDark = themeProvider.isDark;
-        
+
         return Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -495,46 +753,48 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: AppColors.primary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 AppText.displayLarge(
                   'How can I help you today?',
                   color: AppColors.getTextPrimary(isDark),
                   textAlign: TextAlign.center,
                   fontWeight: FontWeight.w600,
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 AppText.bodyMedium(
                   'Choose a topic below or start typing your question',
                   color: AppColors.getTextSecondary(isDark),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 12,
                   runSpacing: 12,
-                  children: suggestionChipData.map((chipData) => 
-                    SuggestionChip(
-                      label: chipData['label'],
-                      icon: chipData['icon'],
-                      suggestions: chipData['suggestions'],
-                      onTap: _showSuggestionModal,
-                    ),
-                  ).toList(),
+                  children: suggestionChipData
+                      .map(
+                        (chipData) => SuggestionChip(
+                          label: chipData['label'],
+                          icon: chipData['icon'],
+                          suggestions: chipData['suggestions'],
+                          onTap: _showSuggestionModal,
+                        ),
+                      )
+                      .toList(),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     if (authProvider.isPremium) return const SizedBox.shrink();
-                    
+
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -580,7 +840,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SubscriptionScreen(),
+                                  builder: (context) =>
+                                      const SubscriptionScreen(),
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
@@ -601,9 +862,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -642,14 +903,12 @@ class _ChatScreenState extends State<ChatScreen> {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         final isDark = themeProvider.isDark;
-        
+
         return Container(
           decoration: BoxDecoration(
             color: AppColors.getBackground(isDark).withOpacity(0.9),
             border: Border(
-              bottom: BorderSide(
-                color: AppColors.primary.withOpacity(0.1),
-              ),
+              bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
             ),
           ),
           child: AppBar(
@@ -672,16 +931,23 @@ class _ChatScreenState extends State<ChatScreen> {
                 builder: (context, authProvider, child) {
                   if (authProvider.isPremium) {
                     return IconButton(
-                      icon: Icon(Icons.star, color: AppColors.primary, size: 20),
+                      icon: Icon(
+                        Icons.star,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                       onPressed: () {},
                       tooltip: 'Premium User',
                     );
                   }
-                  
+
                   return IconButton(
                     icon: Stack(
                       children: [
-                        Icon(Icons.show_chart, color: AppColors.getTextSecondary(isDark)),
+                        Icon(
+                          Icons.show_chart,
+                          color: AppColors.getTextSecondary(isDark),
+                        ),
                         if (!authProvider.isPremium)
                           Positioned(
                             right: 0,
@@ -703,14 +969,32 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, color: AppColors.getTextPrimary(isDark)),
+                icon: Icon(
+                  Icons.more_vert,
+                  color: AppColors.getTextPrimary(isDark),
+                ),
                 color: AppColors.getSurface(isDark),
                 onSelected: _handleMenuSelection,
                 itemBuilder: (_) => [
-                  _buildMenuItem('clear', 'Clear Chat', Icons.clear_all, isDark),
+                  _buildMenuItem(
+                    'clear',
+                    'Clear Chat',
+                    Icons.clear_all,
+                    isDark,
+                  ),
                   _buildMenuItem('rename', 'Rename', Icons.edit, isDark),
-                  _buildMenuItem('delete', 'Delete', Icons.delete_outline, isDark),
-                  _buildMenuItem('settings', 'Settings', Icons.settings, isDark),
+                  _buildMenuItem(
+                    'delete',
+                    'Delete',
+                    Icons.delete_outline,
+                    isDark,
+                  ),
+                  _buildMenuItem(
+                    'settings',
+                    'Settings',
+                    Icons.settings,
+                    isDark,
+                  ),
                 ],
               ),
             ],
@@ -723,7 +1007,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showUsageDialog(AuthProvider authProvider) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -793,7 +1077,9 @@ class _ChatScreenState extends State<ChatScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: AppText.bodyMedium(
               'Upgrade',
@@ -806,7 +1092,12 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  PopupMenuItem<String> _buildMenuItem(String value, String label, IconData icon, bool isDark) {
+  PopupMenuItem<String> _buildMenuItem(
+    String value,
+    String label,
+    IconData icon,
+    bool isDark,
+  ) {
     return PopupMenuItem<String>(
       value: value,
       child: Row(
@@ -821,7 +1112,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _handleMenuSelection(String value) async {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final convoProvider = Provider.of<ConversationsProvider>(context, listen: false);
+    final convoProvider = Provider.of<ConversationsProvider>(
+      context,
+      listen: false,
+    );
 
     switch (value) {
       case 'clear':
@@ -839,32 +1133,42 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _handleRename(ConversationsProvider convoProvider, ChatProvider chatProvider) async {
+  Future<void> _handleRename(
+    ConversationsProvider convoProvider,
+    ChatProvider chatProvider,
+  ) async {
     final convo = convoProvider.conversations.firstWhere(
       (c) => c.id == chatProvider.conversationId,
-      orElse: () => ConversationSummary(id: '', title: '', createdAt: DateTime.now()),
+      orElse: () =>
+          ConversationSummary(id: '', title: '', createdAt: DateTime.now()),
     );
-    
+
     final newTitle = await showDialog<String>(
       context: context,
       builder: (context) => RenameConversationDialog(currentTitle: convo.title),
     );
-    
+
     if (newTitle != null && newTitle.trim().isNotEmpty) {
       await convoProvider.renameConversation(convo.id, newTitle.trim());
     }
   }
 
-  Future<void> _handleDelete(ChatProvider chatProvider, ConversationsProvider convoProvider) async {
+  Future<void> _handleDelete(
+    ChatProvider chatProvider,
+    ConversationsProvider convoProvider,
+  ) async {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.getSurface(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: AppText.displayMedium('Delete Chat', color: AppColors.getTextPrimary(isDark)),
+        title: AppText.displayMedium(
+          'Delete Chat',
+          color: AppColors.getTextPrimary(isDark),
+        ),
         content: AppText.bodyMedium(
           'Are you sure you want to delete this chat? This action cannot be undone.',
           color: AppColors.getTextSecondary(isDark),
@@ -872,20 +1176,25 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: AppText.bodyMedium('Cancel', color: AppColors.getTextSecondary(isDark)),
+            child: AppText.bodyMedium(
+              'Cancel',
+              color: AppColors.getTextSecondary(isDark),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: AppText.bodyMedium('Delete', color: Colors.white),
           ),
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       await chatProvider.deleteConversation();
       await convoProvider.loadConversations();
@@ -902,133 +1211,172 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   // Only showing the modified build method and related spacing fixes
-// The rest of the ChatScreen class remains the same
+  // The rest of the ChatScreen class remains the same
 
-@override
-Widget build(BuildContext context) {
-  final chatProvider = Provider.of<ChatProvider>(context);
-  final convoProvider = Provider.of<ConversationsProvider>(context);
+  @override
+  Widget build(BuildContext context) {
+    final chatProvider = Provider.of<ChatProvider>(context);
+    final convoProvider = Provider.of<ConversationsProvider>(context);
 
-  final currentTitle = convoProvider.conversations
-      .firstWhere(
-        (c) => c.id == chatProvider.conversationId,
-        orElse: () => ConversationSummary(id: '', title: 'New Chat', createdAt: DateTime.now()),
-      )
-      .title;
+    final currentTitle = convoProvider.conversations
+        .firstWhere(
+          (c) => c.id == chatProvider.conversationId,
+          orElse: () => ConversationSummary(
+            id: '',
+            title: 'New Chat',
+            createdAt: DateTime.now(),
+          ),
+        )
+        .title;
 
-  return Consumer<ThemeProvider>(
-    builder: (context, themeProvider, child) {
-      final isDark = themeProvider.isDark;
-      
-      return WillPopScope(
-        onWillPop: _onWillPop,
-        child: GestureDetector(
-          onTap: () => _focusNode.unfocus(),
-          child: Scaffold(
-            backgroundColor: AppColors.getBackground(isDark),
-            drawer: ConversationDrawer(
-              onRenameDialog: _showRenameDialog,
-              onDrawerClosed: () {
-                Provider.of<ConversationsProvider>(context, listen: false).clearSearch();
-              },
-            ),
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.getBackground(isDark),
-                    AppColors.getSurface(isDark),
-                    AppColors.getBackground(isDark),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+
+        return WillPopScope(
+          onWillPop: _onWillPop,
+          child: GestureDetector(
+            onTap: () => _focusNode.unfocus(),
+            child: Scaffold(
+              backgroundColor: AppColors.getBackground(isDark),
+              drawer: ConversationDrawer(
+                onRenameDialog: _showRenameDialog,
+                onDrawerClosed: () {
+                  Provider.of<ConversationsProvider>(
+                    context,
+                    listen: false,
+                  ).clearSearch();
+                },
               ),
-              child: Column(
-                children: [
-                  SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
-                  
-                  Expanded(
-                    child: chatProvider.messages.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            controller: _scrollController,
-                            reverse: true,
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // Reduced bottom padding
-                            itemCount: chatProvider.messages.length,
-                            itemBuilder: (context, index) {
-                              final reverseIndex = chatProvider.messages.length - 1 - index;
-                              final msg = chatProvider.messages[reverseIndex];
-                              final isUser = msg.sender == 'user';
+              body: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.getBackground(isDark),
+                      AppColors.getSurface(isDark),
+                      AppColors.getBackground(isDark),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    SafeArea(bottom: false, child: _buildAppBar(currentTitle)),
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: isUser
-                                    ? UserMessageBubble(message: msg.text)
-                                    : BotMessageBubble(
-                                        message: msg.text,
-                                        onSpeak: () => _voiceService.speak(msg.text),
-                                        onCopy: () {
-                                          ClipboardService.copyText(msg.text);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: const Text(
-                                                'Copied to clipboard',
-                                                style: TextStyle(
-                                                  fontFamily: 'Poppins',
-                                                  fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: chatProvider.messages.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              controller: _scrollController,
+                              reverse: true,
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                16,
+                                16,
+                                8,
+                              ), // Reduced bottom padding
+                              itemCount: chatProvider.messages.length,
+                              itemBuilder: (context, index) {
+                                final reverseIndex =
+                                    chatProvider.messages.length - 1 - index;
+                                final msg = chatProvider.messages[reverseIndex];
+                                final isUser = msg.sender == 'user';
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: isUser
+                                      ? UserMessageBubble(
+                                          message: msg,
+                                        ) // Changed from message: msg.text
+                                      : BotMessageBubble(
+                                          message:
+                                              msg, // Changed from message: msg.text
+                                          onSpeak: () => _voiceService.speak(
+                                            msg.displayText,
+                                          ), // Use displayText
+                                          onCopy: () {
+                                            ClipboardService.copyText(
+                                              msg.displayText,
+                                            ); // Use displayText
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: const Text(
+                                                  'Copied to clipboard',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Poppins',
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                backgroundColor:
+                                                    AppColors.success,
+                                                duration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                               ),
-                                              backgroundColor: AppColors.success,
-                                              duration: const Duration(seconds: 2),
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                              );
-                            },
-                          ),
-                  ),
-                  
-                  if (chatProvider.isTyping)
+                                            );
+                                          },
+                                        ),
+                                );
+                              },
+                            ),
+                    ),
+
+                    if (chatProvider.isTyping)
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(
+                          20,
+                          4,
+                          20,
+                          4,
+                        ), // Reduced vertical padding
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(child: ModernTypingIndicator()),
+                          ],
+                        ),
+                      ),
+
+                    // Fixed input container padding - this is the key fix
                     Container(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4), // Reduced vertical padding
-                      child: Row(
-                        children: [
-                          Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
-                          const SizedBox(width: 8),
-                          const Expanded(child: ModernTypingIndicator()),
-                        ],
+                      padding: EdgeInsets.only(
+                        bottom:
+                            MediaQuery.of(context).padding.bottom +
+                            6, // Reduced bottom padding
+                        top: 0, // Reduced top padding
+                      ),
+                      child: MessageInputField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        isListening: _isListening,
+                        onMicTap: _startListening,
+                        onSend: _handleSend,
+                        onImageGeneration:
+                            _handleImageGeneration, // Add this line
                       ),
                     ),
-                    
-                  // Fixed input container padding - this is the key fix
-                  Container(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).padding.bottom + 6, // Reduced bottom padding
-                      top: 0, // Reduced top padding
-                    
-                    ),
-                    child: MessageInputField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      isListening: _isListening,
-                      onMicTap: _startListening,
-                      onSend: _handleSend,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 }

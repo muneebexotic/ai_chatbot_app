@@ -1,7 +1,9 @@
 import 'package:ai_chatbot_app/providers/conversation_provider.dart';
+import 'package:ai_chatbot_app/providers/image_generation_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
+import '../models/generated_image.dart';
 import '../services/firestore_service.dart';
 import '../services/gemini_service.dart';
 import '../providers/auth_provider.dart';
@@ -43,6 +45,105 @@ class ChatProvider with ChangeNotifier {
     return text.substring(0, 30).split('\n').first + '...';
   }
 
+  /// Detect if user input is requesting image generation
+bool _isImageGenerationRequest(String input) {
+  final lowerInput = input.toLowerCase().trim();
+  
+  // Common image generation phrases
+  final imageKeywords = [
+    'generate image',
+    'create image',
+    'make image',
+    'draw image',
+    'generate picture',
+    'create picture', 
+    'make picture',
+    'draw picture',
+    'generate photo',
+    'create photo',
+    'make a photo',
+    'draw a photo',
+    'image of',
+    'picture of',
+    'photo of',
+    'generate:',
+    'create:',
+    'draw:',
+    '/imagine',
+    '/generate',
+    '/image',
+  ];
+  
+  return imageKeywords.any((keyword) => lowerInput.contains(keyword));
+}
+
+/// Extract image prompt from user input
+String _extractImagePrompt(String input) {
+  final lowerInput = input.toLowerCase().trim();
+  
+  // Remove common prefixes
+  final prefixesToRemove = [
+    'generate image of',
+    'generate image:',
+    'generate image',
+    'create image of',
+    'create image:',
+    'create image',
+    'make image of',
+    'make image:',
+    'make image',
+    'draw image of',
+    'draw image:',
+    'draw image',
+    'generate picture of',
+    'generate picture:',
+    'generate picture',
+    'create picture of',
+    'create picture:',
+    'create picture',
+    'make picture of',
+    'make picture:',
+    'make picture',
+    'draw picture of',
+    'draw picture:',
+    'draw picture',
+    'generate photo of',
+    'generate photo:',
+    'generate photo',
+    'create photo of',
+    'create photo:',
+    'create photo',
+    'make a photo of',
+    'make photo of',
+    'make photo:',
+    'make photo',
+    'draw a photo of',
+    'draw photo of',
+    'draw photo:',
+    'draw photo',
+    'image of',
+    'picture of',
+    'photo of',
+    '/imagine',
+    '/generate',
+    '/image',
+  ];
+  
+  String cleanedInput = input.trim();
+  
+  for (final prefix in prefixesToRemove) {
+    if (lowerInput.startsWith(prefix)) {
+      cleanedInput = input.substring(prefix.length).trim();
+      break;
+    }
+  }
+  
+  // Remove colons and clean up
+  cleanedInput = cleanedInput.replaceAll(':', '').trim();
+  
+  return cleanedInput.isNotEmpty ? cleanedInput : input.trim();
+}
+
   Future<void> startNewConversation() async {
     _conversationId = await _firestoreService.createConversation(userId);
     _messages.clear();
@@ -66,7 +167,7 @@ class ChatProvider with ChangeNotifier {
     try {
       final conversationMessages = <String>[];
       for (final message in _messages) {
-        conversationMessages.add('${message.sender}: ${message.text}');
+        conversationMessages.add('${message.sender}: ${message.displayText}');
       }
 
       String? aiTitle = await _geminiService.generateConversationTitle(
@@ -75,7 +176,7 @@ class ChatProvider with ChangeNotifier {
 
       final generatedTitle = (aiTitle != null && aiTitle.trim().isNotEmpty)
           ? aiTitle.trim()
-          : _generateFallbackTitle(_messages.first.text);
+          : _generateFallbackTitle(_messages.first.displayText);
 
       print('🧠 AI-generated title: $generatedTitle');
 
@@ -228,73 +329,172 @@ class ChatProvider with ChangeNotifier {
     );
   }
 
-  Future<void> sendMessage(String userInput) async {
-    // Check usage limits before sending
-    final canSend = await _canSendMessage();
-    if (!canSend) {
-      await _showUsageLimitDialog('message');
-      return;
-    }
+Future<void> sendMessage(String userInput) async {
+  // Check usage limits before sending
+  final canSend = await _canSendMessage();
+  if (!canSend) {
+    await _showUsageLimitDialog('message');
+    return;
+  }
 
-    if (_conversationId == null) {
-      _conversationId = await _firestoreService.createConversationWithTitle(
-        userId,
-        'New Chat',
-      );
-      _messages.clear();
-      _titleGenerated = false;
-      notifyListeners();
-    }
+  // NEW: Check if this is an image generation request
+  if (_isImageGenerationRequest(userInput)) {
+    final imagePrompt = _extractImagePrompt(userInput);
+    print('🖼️ Detected image generation request: "$imagePrompt"');
+    await generateImageMessage(imagePrompt);
+    return; // Exit early, don't process as text message
+  }
 
-    final userMessage = ChatMessage(text: userInput, sender: 'user');
-    _messages.add(userMessage);
-    _setTyping(true);
+  // Continue with normal text message flow
+  if (_conversationId == null) {
+    _conversationId = await _firestoreService.createConversationWithTitle(
+      userId,
+      'New Chat',
+    );
+    _messages.clear();
+    _titleGenerated = false;
     notifyListeners();
-    print('✅ User message added: ${userMessage.text}');
+  }
 
+  final userMessage = ChatMessage.text(text: userInput, sender: 'user');
+  _messages.add(userMessage);
+  _setTyping(true);
+  notifyListeners();
+  print('✅ User message added: ${userMessage.text}');
+
+  try {
+    // Increment message usage
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.incrementMessageUsage();
+
+    await _firestoreService.saveMessage(
+      userId,
+      _conversationId!,
+      userMessage,
+    );
+
+    // Send to Gemini with conversation history
+    final aiReply = await _geminiService.sendMessageWithHistory(_messages);
+
+    final botReply = ChatMessage.text(
+      text: aiReply ?? "Sorry, I couldn't understand that.",
+      sender: 'bot',
+    );
+
+    _messages.add(botReply);
+    notifyListeners();
+    print('🤖 Gemini reply: ${botReply.text}');
+
+    await _firestoreService.saveMessage(userId, _conversationId!, botReply);
+
+    // Generate AI title after 2nd bot response (4 total messages)
+    if (!_titleGenerated && _messages.length >= 4) {
+      await _generateConversationTitle();
+    }
+  } catch (e) {
+    print('❌ Error in sendMessage: $e');
+
+    // If Gemini fails, still show an error message
+    final errorMessage = ChatMessage.text(
+      text: "Sorry, I'm having trouble responding right now. Please try again.",
+      sender: 'bot',
+    );
+
+    _messages.add(errorMessage);
+    notifyListeners();
+  } finally {
+    _setTyping(false);
+  }
+}
+
+  /// NEW: Generate and add image message to chat
+  Future<void> generateImageMessage(String prompt) async {
     try {
-      // Increment message usage
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.incrementMessageUsage();
+      // Check if user can generate images
+      final canGenerate = await canGenerateImage();
+      if (!canGenerate) {
+        await _showUsageLimitDialog('image generation');
+        return;
+      }
 
-      await _firestoreService.saveMessage(
-        userId,
-        _conversationId!,
-        userMessage,
+      if (_conversationId == null) {
+        _conversationId = await _firestoreService.createConversationWithTitle(
+          userId,
+          'New Chat',
+        );
+        _messages.clear();
+        _titleGenerated = false;
+      }
+
+      // Add user request message
+      final userMessage = ChatMessage.text(
+        text: 'Generate image: $prompt',
+        sender: 'user',
       );
-
-      // Send to Gemini with conversation history
-      final aiReply = await _geminiService.sendMessageWithHistory(_messages);
-
-      final botReply = ChatMessage(
-        text: aiReply ?? "Sorry, I couldn't understand that.",
-        sender: 'bot',
-      );
-
-      _messages.add(botReply);
+      _messages.add(userMessage);
+      _setTyping(true);
       notifyListeners();
-      print('🤖 Gemini reply: ${botReply.text}');
 
-      await _firestoreService.saveMessage(userId, _conversationId!, botReply);
+      // Increment image usage
+      await incrementImageUsage();
 
-      // Generate AI title after 2nd bot response (4 total messages)
+      // Save user message
+      await _firestoreService.saveMessage(userId, _conversationId!, userMessage);
+
+      // Generate image using ImageGenerationProvider
+      final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
+      final generatedImage = await imageProvider.generateImage(context, prompt);
+
+      if (generatedImage != null) {
+        // Create image message
+        final imageMessage = ChatMessage.image(
+          image: generatedImage,
+          sender: 'bot',
+        );
+
+        _messages.add(imageMessage);
+        notifyListeners();
+
+        // Save image message
+        await _firestoreService.saveMessage(userId, _conversationId!, imageMessage);
+
+        print('🖼️ Image generated successfully: ${generatedImage.id}');
+      } else {
+        // Add error message if image generation failed
+        final errorMessage = ChatMessage.text(
+          text: "Sorry, I couldn't generate that image. Please try again with a different prompt.",
+          sender: 'bot',
+        );
+        _messages.add(errorMessage);
+        await _firestoreService.saveMessage(userId, _conversationId!, errorMessage);
+      }
+
+      // Generate title if needed
       if (!_titleGenerated && _messages.length >= 4) {
         await _generateConversationTitle();
       }
     } catch (e) {
-      print('❌ Error in sendMessage: $e');
-
-      // If Gemini fails, still show an error message
-      final errorMessage = ChatMessage(
-        text:
-            "Sorry, I'm having trouble responding right now. Please try again.",
+      debugPrint('❌ Error generating image: $e');
+      
+      final errorMessage = ChatMessage.text(
+        text: "Sorry, there was an error generating the image. Please try again later.",
         sender: 'bot',
       );
-
       _messages.add(errorMessage);
       notifyListeners();
     } finally {
       _setTyping(false);
+    }
+  }
+
+  /// Check if user can generate images
+  Future<bool> canGenerateImage() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      return await authProvider.canUploadImage(); // Reuse image limit for generation
+    } catch (e) {
+      debugPrint('❌ Error checking image generation limit: $e');
+      return true;
     }
   }
 
