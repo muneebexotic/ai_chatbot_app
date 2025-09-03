@@ -10,6 +10,7 @@ import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
 import '../providers/themes_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// Enhanced SignUp Screen with improved architecture, performance, and theming
 ///
@@ -192,11 +193,11 @@ class _SignUpScreenState extends State<SignUpScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.displayLarge(
-              SignUpConstants.headerLine1,
+              AppLocalizations.of(context).createYour,
               color: headerColor,
             ),
             AppText.displayLarge(
-              SignUpConstants.headerLine2,
+              AppLocalizations.of(context).account,
               color: headerColor,
             ),
           ],
@@ -214,8 +215,8 @@ class _SignUpScreenState extends State<SignUpScreen>
           animation: inputAnimation1,
           inputWidget: AppInput.text(
             controller: controller.fullNameController,
-            label: SignUpConstants.fullNameLabel,
-            hintText: SignUpConstants.fullNameHint,
+            label: AppLocalizations.of(context).fullName,
+            hintText: AppLocalizations.of(context).fullNameHint,
             prefixIcon: Icon(
               Icons.person_outline,
               color: theme.colorScheme.onSurfaceVariant,
@@ -229,8 +230,8 @@ class _SignUpScreenState extends State<SignUpScreen>
           animation: inputAnimation2,
           inputWidget: AppInput.email(
             controller: controller.emailController,
-            label: SignUpConstants.emailLabel,
-            hintText: SignUpConstants.emailHint,
+            label: AppLocalizations.of(context).email,
+            hintText: AppLocalizations.of(context).emailHint,
             validator: controller.validateEmail,
           ),
         ),
@@ -242,8 +243,8 @@ class _SignUpScreenState extends State<SignUpScreen>
             builder: (context, ctrl, _) {
               return AppInput.password(
                 controller: ctrl.passwordController,
-                label: SignUpConstants.passwordLabel,
-                hintText: SignUpConstants.passwordHint,
+                label: AppLocalizations.of(context).password,
+                hintText: AppLocalizations.of(context).passwordHint,
                 obscureText: ctrl.obscurePassword,
                 onToggleVisibility: ctrl.togglePasswordVisibility,
                 validator: ctrl.validatePassword,
@@ -274,7 +275,7 @@ class _SignUpScreenState extends State<SignUpScreen>
       child: SlideTransition(
         position: buttonAnimation,
         child: AppButton.primary(
-          text: SignUpConstants.signUpButtonText,
+          text: AppLocalizations.of(context).signUp,
           onPressed: controller.isLoading ? null : _handleSignUp,
           isFullWidth: true,
           isLoading: controller.isLoading,
@@ -295,11 +296,11 @@ class _SignUpScreenState extends State<SignUpScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AppText.bodyMedium(
-              SignUpConstants.loginPrompt,
+              AppLocalizations.of(context).alreadyHaveAccount,
               color: secondaryTextColor,
             ),
             AppButton.text(
-              text: SignUpConstants.loginButtonText,
+              text: AppLocalizations.of(context).signIn,
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -326,7 +327,7 @@ class _SignUpScreenState extends State<SignUpScreen>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
-              SignUpConstants.dividerText,
+              AppLocalizations.of(context).orContinueWith,
               color: textColor,
             ),
           ),

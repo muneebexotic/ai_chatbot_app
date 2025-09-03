@@ -7,6 +7,7 @@ import '../controllers/login_controller.dart';
 import '../mixins/login_animations_mixin.dart';
 import '../constants/login_constants.dart';
 import '../utils/validation_utils.dart';
+import '../l10n/generated/app_localizations.dart';
 
 // UI Components
 import '../components/ui/app_text.dart';
@@ -199,11 +200,11 @@ class _LoginScreenState extends State<LoginScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.displayLarge(
-              LoginConstants.titleLine1,
+              AppLocalizations.of(context).welcomeBack,
               color: colorScheme.onBackground, // Theme-aware
             ),
             AppText.displayLarge(
-              LoginConstants.titleLine2,
+              AppLocalizations.of(context).backText,
               color: colorScheme.onBackground, // Theme-aware
             ),
           ],
@@ -219,8 +220,8 @@ class _LoginScreenState extends State<LoginScreen>
         position: emailSlideAnimation,
         child: AppInput.email(
           controller: _emailController,
-          label: LoginConstants.emailLabel,
-          hintText: LoginConstants.emailHint,
+          label: AppLocalizations.of(context).email,
+          hintText: AppLocalizations.of(context).emailHint,
           validator: ValidationUtils.validateEmail,
         ),
       ),
@@ -238,8 +239,8 @@ class _LoginScreenState extends State<LoginScreen>
               position: passwordSlideAnimation,
               child: AppInput.password(
                 controller: _passwordController,
-                label: LoginConstants.passwordLabel,
-                hintText: LoginConstants.passwordHint,
+                label: AppLocalizations.of(context).password,
+                hintText: AppLocalizations.of(context).passwordHint,
                 obscureText: controller.obscurePassword,
                 onToggleVisibility: controller.togglePasswordVisibility,
                 validator: ValidationUtils.validatePassword,
@@ -257,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Align(
         alignment: Alignment.centerRight,
         child: AppButton.text(
-          text: LoginConstants.forgotPasswordText,
+          text: AppLocalizations.of(context).forgotPassword,
           onPressed: _loginController.navigateToForgotPassword,
         ),
       ),
@@ -274,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen>
             child: SlideTransition(
               position: buttonSlideAnimation,
               child: AppButton.primary(
-                text: LoginConstants.loginButtonText,
+                text: AppLocalizations.of(context).login,
                 onPressed: _handleLogin,
                 isFullWidth: true,
                 isLoading: controller.isLoading,
@@ -298,11 +299,11 @@ class _LoginScreenState extends State<LoginScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AppText.bodyMedium(
-              LoginConstants.signUpPrompt,
+              AppLocalizations.of(context).dontHaveAccount,
               color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware
             ),
             AppButton.text(
-              text: LoginConstants.signUpText,
+              text: AppLocalizations.of(context).signUp,
               onPressed: _loginController.navigateToSignup,
             ),
           ],
@@ -328,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
-              LoginConstants.dividerText,
+              AppLocalizations.of(context).orContinueWith,
               color: colorScheme.onBackground.withOpacity(0.5), // Theme-aware
             ),
           ),

@@ -460,5 +460,111 @@
         "description": "The error message"
       }
     }
+  },
+
+  "chooseTopicOrType": "Choose a topic below or start typing your question",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "Quick Suggestions",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "Daily Usage",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "Generate Image",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "Describe what you want to create:",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "e.g., A beautiful sunset over mountains, digital art style",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "Be specific! Include style, mood, colors, and details for better results.",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "Generate",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "Voice Limit Reached",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "Message Limit Reached",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "Image Generation Limit Reached",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "Upgrade to Premium for unlimited {feature}!",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "Premium Benefits:",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• Unlimited messages",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• Unlimited images & voice",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• All personas unlocked",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• Priority support",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "Later",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "Upgrade Now",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "Microphone not available",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
   }
 }

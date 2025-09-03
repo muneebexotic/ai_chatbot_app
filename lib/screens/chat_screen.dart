@@ -25,6 +25,7 @@ import '../widgets/rename_conversation_dialog.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
 import '../providers/image_generation_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -105,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: AppText.displayMedium(
-                  'Exit App?',
+                  AppLocalizations.of(context).exitApp,
                   color: AppColors.getTextPrimary(isDark),
                   fontWeight: FontWeight.w600,
                 ),
@@ -117,7 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.bodyMedium(
-                'Are you sure you want to exit the app?',
+                AppLocalizations.of(context).exitAppMessage,
                 color: AppColors.getTextSecondary(isDark),
               ),
               const SizedBox(height: 16),
@@ -138,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: AppText.bodySmall(
-                        'Your conversations will be saved and available when you return.',
+                        AppLocalizations.of(context).conversationsSaved,
                         color: AppColors.getTextSecondary(isDark),
                       ),
                     ),
@@ -151,7 +152,7 @@ class _ChatScreenState extends State<ChatScreen> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: AppText.bodyMedium(
-                'Cancel',
+                AppLocalizations.of(context).cancel,
                 color: AppColors.getTextSecondary(isDark),
                 fontWeight: FontWeight.w500,
               ),
@@ -165,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               child: AppText.bodyMedium(
-                'Exit',
+                AppLocalizations.of(context).exit,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
@@ -184,9 +185,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (!await authProvider.canSendVoice()) {
       _showUpgradeDialog(
-        'Voice Limit Reached',
+        AppLocalizations.of(context).voiceLimitReached,
         'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_VOICE} voice messages.',
-        'Upgrade to Premium for unlimited voice messages!',
+        AppLocalizations.of(context).upgradeForUnlimited('voice messages'),
       );
       return;
     }
@@ -208,7 +209,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (available) {
       setState(() => _isListening = true);
     } else {
-      _showErrorSnackBar('Microphone not available');
+      _showErrorSnackBar(AppLocalizations.of(context).microphoneNotAvailable);
     }
   }
 
@@ -246,9 +247,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
-        'Message Limit Reached',
+        AppLocalizations.of(context).messageLimitReached,
         'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_MESSAGES} messages.',
-        'Upgrade to Premium for unlimited messages!',
+        AppLocalizations.of(context).upgradeForUnlimited('messages'),
       );
       return;
     }
@@ -265,7 +266,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await authProvider.incrementMessageUsage();
       _scrollToTop();
     } catch (e) {
-      _showErrorSnackBar('Failed to send message: $e');
+      _showErrorSnackBar(AppLocalizations.of(context).failedToSendMessage(e.toString()));
     }
   }
 
@@ -274,9 +275,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (!await authProvider.canUploadImage()) {
       _showUpgradeDialog(
-        'Image Generation Limit Reached',
+        AppLocalizations.of(context).imageLimitReached,
         'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_IMAGES} images.',
-        'Upgrade to Premium for unlimited image generation!',
+        AppLocalizations.of(context).upgradeForUnlimited('image generation'),
       );
       return;
     }
@@ -303,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
       // Safely scroll with additional checks
       _scrollToTopSafely();
     } catch (e) {
-      _showErrorSnackBar('Failed to generate image: $e');
+      _showErrorSnackBar(AppLocalizations.of(context).failedToGenerateImage(e.toString()));
     }
   }
 
@@ -363,7 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: AppText.displayMedium(
-                  'Generate Image',
+                  AppLocalizations.of(context).generateImage,
                   color: AppColors.getTextPrimary(isDark),
                   fontWeight: FontWeight.w600,
                 ),
@@ -375,7 +376,7 @@ class _ChatScreenState extends State<ChatScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.bodyMedium(
-                'Describe what you want to create:',
+                AppLocalizations.of(context).describeWhatYouWant,
                 color: AppColors.getTextSecondary(isDark),
               ),
               const SizedBox(height: 16),
@@ -384,8 +385,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 autofocus: true,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText:
-                      'e.g., A beautiful sunset over mountains, digital art style',
+                  hintText: AppLocalizations.of(context).imagePromptHint,
                   hintStyle: TextStyle(
                     color: AppColors.getTextTertiary(isDark),
                     fontSize: 14,
@@ -427,7 +427,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: AppText.bodySmall(
-                        'Be specific! Include style, mood, colors, and details for better results.',
+                        AppLocalizations.of(context).imagePromptTip,
                         color: AppColors.getTextSecondary(isDark),
                       ),
                     ),
@@ -440,7 +440,7 @@ class _ChatScreenState extends State<ChatScreen> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(''),
               child: AppText.bodyMedium(
-                'Cancel',
+                AppLocalizations.of(context).cancel,
                 color: AppColors.getTextSecondary(isDark),
               ),
             ),
@@ -456,7 +456,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               child: AppText.bodyMedium(
-                'Generate',
+                AppLocalizations.of(context).generate,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
@@ -522,13 +522,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppText.bodyMedium(
-                    'Premium Benefits:',
+                    AppLocalizations.of(context).premiumBenefits,
                     color: AppColors.getTextPrimary(isDark),
                     fontWeight: FontWeight.w600,
                   ),
                   const SizedBox(height: 8),
                   AppText.bodySmall(
-                    '• Unlimited messages\n• Unlimited images & voice\n• All personas unlocked\n• Priority support',
+                    '${AppLocalizations.of(context).unlimitedMessages}\n${AppLocalizations.of(context).unlimitedImagesVoice}\n${AppLocalizations.of(context).allPersonasUnlocked}\n${AppLocalizations.of(context).prioritySupport}',
                     color: AppColors.getTextSecondary(isDark),
                   ),
                 ],
@@ -570,7 +570,7 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: AppText.bodyMedium(
-              'Later',
+              AppLocalizations.of(context).later,
               color: AppColors.getTextSecondary(isDark),
             ),
           ),
@@ -591,7 +591,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             child: AppText.bodyMedium(
-              'Upgrade Now',
+              AppLocalizations.of(context).upgradeNow,
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -674,7 +674,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Row(
                 children: [
                   AppText.bodyLarge(
-                    'Quick Suggestions',
+                    AppLocalizations.of(context).quickSuggestions,
                     color: AppColors.getTextPrimary(isDark),
                     fontWeight: FontWeight.w600,
                   ),
@@ -757,7 +757,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(height: 32),
 
                 AppText.displayLarge(
-                  'How can I help you today?',
+                  AppLocalizations.of(context).howCanIHelp,
                   color: AppColors.getTextPrimary(isDark),
                   textAlign: TextAlign.center,
                   fontWeight: FontWeight.w600,
@@ -766,7 +766,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(height: 12),
 
                 AppText.bodyMedium(
-                  'Choose a topic below or start typing your question',
+                  AppLocalizations.of(context).chooseTopicOrType,
                   color: AppColors.getTextSecondary(isDark),
                   textAlign: TextAlign.center,
                 ),
@@ -819,7 +819,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     AppText.bodyMedium(
-                                      'Daily Usage',
+                                      AppLocalizations.of(context).dailyUsage,
                                       color: AppColors.getTextPrimary(isDark),
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -1018,7 +1018,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Icon(Icons.show_chart, color: AppColors.primary, size: 24),
             const SizedBox(width: 12),
             AppText.displayMedium(
-              'Daily Usage',
+              AppLocalizations.of(context).dailyUsage,
               color: AppColors.getTextPrimary(isDark),
               fontWeight: FontWeight.w600,
             ),
@@ -1177,7 +1177,7 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: AppText.bodyMedium(
-              'Cancel',
+              AppLocalizations.of(context).cancel,
               color: AppColors.getTextSecondary(isDark),
             ),
           ),

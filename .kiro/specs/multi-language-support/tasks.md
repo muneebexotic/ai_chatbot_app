@@ -114,19 +114,30 @@
     - Show current language and trigger selection dialog
     - _Requirements: 1.1, 1.2_
 
-- [ ] 6. Replace hardcoded strings with localized versions
-  - [ ] 6.1 Update settings screen with localized strings
+- [x] 6. Replace hardcoded strings with localized versions
+
+
+
+
+
+  - [x] 6.1 Update settings screen with localized strings
+
+
     - Replace all hardcoded strings in settings_screen.dart
     - Use AppLocalizations.of(context) for all text
     - Test immediate language switching in settings
     - _Requirements: 2.1, 2.2, 6.1, 6.4_
 
-  - [ ] 6.2 Update authentication screens with localized strings
+  - [x] 6.2 Update authentication screens with localized strings
+
+
     - Replace hardcoded strings in login_screen.dart and signup_screen.dart
     - Localize all form labels, buttons, and error messages
     - _Requirements: 2.1, 2.3_
 
-  - [ ] 6.3 Update chat screen with localized strings
+  - [x] 6.3 Update chat screen with localized strings
+
+
     - Replace hardcoded strings in chat_screen.dart
     - Localize input placeholder, buttons, and system messages
     - Ensure RTL support for chat interface elements
