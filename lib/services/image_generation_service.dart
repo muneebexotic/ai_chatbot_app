@@ -23,7 +23,7 @@ class ImageGenerationService {
   static const String _openAIApiKey = 'your_openai_api_key_here';
   
   static const String _hfApiBaseUrl = 'https://api-inference.huggingface.co/models/'; // Made base URL
-  static const String _hfApiKey = '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';
+  static const String _hfApiKey = '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';
   
   static const String _stabilityApiUrl = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
   static const String _stabilityApiKey = 'your_stability_api_key_here';
