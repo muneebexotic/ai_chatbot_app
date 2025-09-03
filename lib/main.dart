@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'config/bootstrap.dart';
 import 'config/app_providers.dart';
 import 'config/app_router.dart';
@@ -38,6 +39,21 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'), // English
+              Locale('ur', 'PK'), // Urdu
+              Locale('es', 'ES'), // Spanish
+              Locale('ru', 'RU'), // Russian
+              Locale('zh', 'CN'), // Chinese
+              Locale('fr', 'FR'), // French
+              Locale('ar', 'SA'), // Arabic
+            ],
             home: _buildInitialScreen(authProvider, themeProvider),
             routes: buildAppRoutes(),
             onUnknownRoute: (settings) {

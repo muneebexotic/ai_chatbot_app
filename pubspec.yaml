@@ -11,6 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   firebase_core: ^4.0.0
   firebase_auth: ^6.0.0
@@ -89,6 +91,7 @@ flutter_native_splash:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   assets:

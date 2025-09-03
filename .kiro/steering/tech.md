@@ -1,67 +1,87 @@
 # Technology Stack
 
 ## Framework & Language
-- **Flutter**: Cross-platform UI framework
-- **Dart**: Programming language (SDK ^3.8.1)
+- **Flutter**: Cross-platform UI framework (SDK ^3.8.1)
+- **Dart**: Programming language
 
 ## Backend Services
 - **Firebase Core**: Backend infrastructure
-- **Firebase Auth**: User authentication
-- **Cloud Firestore**: NoSQL database for chat history
-- **Firebase Storage**: File and image storage
-- **Google Generative AI**: Gemini API for chat functionality
+- **Firebase Auth**: User authentication with Google Sign-In
+- **Cloud Firestore**: NoSQL database for chat history and user data
+- **Firebase Storage**: File storage for images and media
+
+## AI & ML Services
+- **Google Generative AI**: Gemini API for chat conversations
+- **OpenAI**: DALL-E for image generation
+- **Hugging Face**: Alternative image generation models
+- **Stability AI**: Stable Diffusion for image generation
+- **Cloudinary**: Image processing and CDN
 
 ## Key Dependencies
-- **State Management**: Provider pattern (provider ^6.1.2)
-- **HTTP Client**: http ^1.4.0 for API calls
-- **Voice Features**: 
-  - speech_to_text ^7.1.0
-  - flutter_tts ^4.2.3
-- **Image Handling**:
-  - image_picker ^1.1.2
-  - cloudinary_api ^1.1.1 for image processing
-- **UI/UX**:
-  - flutter_svg ^2.2.0
-  - flutter_markdown ^0.7.7+1
-  - markdown_widget ^2.3.2+8
-- **Payments**: in_app_purchase ^3.2.3
-- **Storage**: shared_preferences ^2.5.3
+- **Provider**: State management (^6.1.2)
+- **HTTP**: API communication (^1.4.0)
+- **Speech-to-Text**: Voice input (^7.1.0)
+- **Flutter TTS**: Text-to-speech output (^4.2.3)
+- **Image Picker**: Camera/gallery access (^1.1.2)
+- **Shared Preferences**: Local storage (^2.5.3)
+- **In-App Purchase**: Subscription management (^3.2.3)
+- **Flutter Markdown**: Rich text rendering
+- **Connectivity Plus**: Network status monitoring
 
-## Build System
-- **Flutter SDK**: Standard Flutter build system
-- **Gradle**: Android builds (build.gradle, build.gradle.kts)
-- **Xcode**: iOS builds
-- **Native Splash**: flutter_native_splash for app launch
+## Development Tools
+- **Flutter Launcher Icons**: App icon generation
+- **Flutter Native Splash**: Splash screen configuration
+- **Change App Package Name**: Package renaming utility
 
 ## Common Commands
+
+### Development
 ```bash
-# Development
-flutter run                    # Run in debug mode
-flutter run --release         # Run in release mode
-flutter hot-reload            # Hot reload during development
+# Install dependencies
+flutter pub get
 
-# Building
-flutter build apk             # Build Android APK
-flutter build appbundle      # Build Android App Bundle
-flutter build ios            # Build iOS app
-flutter build web            # Build web version
+# Run on device/emulator
+flutter run
 
-# Testing & Analysis
-flutter test                  # Run unit tests
-flutter analyze              # Static code analysis
-flutter doctor               # Check Flutter installation
+# Run with hot reload
+flutter run --hot
 
-# Dependencies
-flutter pub get              # Install dependencies
-flutter pub upgrade          # Update dependencies
-flutter pub deps             # Show dependency tree
-
-# Platform-specific
-flutter build windows        # Build Windows app
-flutter build macos          # Build macOS app
-flutter build linux          # Build Linux app
+# Build for specific platforms
+flutter build apk --release          # Android APK
+flutter build appbundle --release    # Android App Bundle
+flutter build ios --release          # iOS
+flutter build web --release          # Web
+flutter build windows --release      # Windows
+flutter build macos --release        # macOS
+flutter build linux --release        # Linux
 ```
 
-## Code Quality
-- **Linting**: flutter_lints ^6.0.0 with standard Flutter rules
-- **Analysis**: analysis_options.yaml configured for Flutter best practices
+### Testing & Analysis
+```bash
+# Run tests
+flutter test
+
+# Analyze code
+flutter analyze
+
+# Format code
+dart format .
+
+# Check for outdated packages
+flutter pub outdated
+```
+
+### Asset Management
+```bash
+# Generate app icons
+flutter pub run flutter_launcher_icons
+
+# Generate native splash screens
+flutter pub run flutter_native_splash:create
+```
+
+## Build Configuration
+- **Minimum SDK**: Android API 21+, iOS 12+
+- **Target SDK**: Latest stable versions
+- **Signing**: Configured via android/key.properties
+- **Obfuscation**: Enab

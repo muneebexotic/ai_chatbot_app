@@ -1,89 +1,120 @@
 # Project Structure
 
-## Root Directory
+## Architecture Pattern
+This Flutter app follows a **Provider-based MVVM architecture** with clear separation of concerns:
+
+- **Models**: Data structures and business entities
+- **Views**: UI screens and widgets
+- **Providers**: State management and business logic
+- **Services**: External API integrations and data persistence
+- **Controllers**: Screen-specific logic and lifecycle management
+
+## Folder Organization
+
+### `/lib` - Main Application Code
 ```
-├── lib/                    # Main Dart source code
-├── assets/                 # Static assets (images, fonts, icons)
-├── android/               # Android-specific configuration
-├── ios/                   # iOS-specific configuration
-├── web/                   # Web-specific configuration
-├── windows/               # Windows-specific configuration
-├── macos/                 # macOS-specific configuration
-├── linux/                 # Linux-specific configuration
-├── test/                  # Unit and widget tests
-├── pubspec.yaml           # Dependencies and project configuration
-└── analysis_options.yaml  # Dart analyzer configuration
+lib/
+├── main.dart                    # App entry point
+├── components/                  # Reusable UI components
+│   ├── ui/                     # Generic UI components
+│   └── welcome/                # Welcome screen components
+├── config/                     # App configuration
+│   ├── app_providers.dart      # Provider setup
+│   ├── app_router.dart         # Route definitions
+│   └── bootstrap.dart          # App initialization
+├── constants/                  # App constants and static data
+├── controllers/                # Screen controllers (lifecycle management)
+├── mixins/                     # Animation and behavior mixins
+├── models/                     # Data models and entities
+├── providers/                  # State management (Provider pattern)
+├── screens/                    # Full-screen UI pages
+├── services/                   # External integrations and APIs
+├── utils/                      # Helper functions and utilities
+└── widgets/                    # Custom reusable widgets
 ```
 
-## lib/ Architecture (Feature-First + Layered)
+### Key Directories
 
-### Core Configuration
-- `lib/main.dart` - App entry point with provider setup
-- `lib/config/` - App-wide configuration
-  - `bootstrap.dart` - App initialization (Firebase, system UI)
-  - `app_providers.dart` - Provider dependency injection setup
-  - `app_router.dart` - Route configuration
+#### `/models`
+Data structures for:
+- `app_user.dart` - User profile data
+- `chat_message.dart` - Chat message structure
+- `conversation.dart` - Chat conversation data
+- `generated_image.dart` - AI-generated image metadata
+- `image_generation_request.dart` - Image generation parameters
 
-### Feature Layers
-- `lib/screens/` - UI screens (pages/views)
-- `lib/widgets/` - Reusable UI components
-- `lib/components/` - Complex UI components with business logic
-- `lib/providers/` - State management (Provider pattern)
-- `lib/controllers/` - Screen-specific business logic
-- `lib/services/` - External API and platform integrations
-- `lib/models/` - Data models and entities
+#### `/providers`
+State management for:
+- `auth_provider.dart` - Authentication state
+- `chat_provider.dart` - Chat functionality
+- `conversation_provider.dart` - Conversation management
+- `image_generation_provider.dart` - Image generation state
+- `subscription_provider.dart` - Premium features
+- `themes_provider.dart` - UI theme management
 
-### Supporting Code
-- `lib/constants/` - App constants and static data
-- `lib/utils/` - Helper functions and utilities
-- `lib/mixins/` - Reusable behavior (mainly animations)
+#### `/services`
+External integrations:
+- `firestore_service.dart` - Database operations
+- `gemini_service.dart` - AI chat API
+- `image_generation_service.dart` - Image AI APIs
+- `speech_service.dart` - Voice input/output
+- `cloudinary_service.dart` - Image storage/processing
+
+#### `/screens`
+Main UI pages:
+- `chat_screen.dart` - Primary chat interface
+- `welcome_screen.dart` - Onboarding
+- `login_screen.dart` / `signup_screen.dart` - Authentication
+- `settings_screen.dart` - User preferences
+- `subscription_screen.dart` - Premium features
 
 ## Naming Conventions
 
 ### Files & Directories
 - Use `snake_case` for all file and directory names
-- Screen files: `*_screen.dart` (e.g., `chat_screen.dart`)
-- Provider files: `*_provider.dart` (e.g., `auth_provider.dart`)
-- Service files: `*_service.dart` (e.g., `gemini_service.dart`)
-- Controller files: `*_controller.dart` (e.g., `login_controller.dart`)
-- Model files: descriptive names (e.g., `chat_message.dart`, `app_user.dart`)
+- Suffix files with their type: `_screen.dart`, `_provider.dart`, `_service.dart`
+- Group related files in appropriate directories
 
 ### Classes & Variables
 - Use `PascalCase` for class names
-- Use `camelCase` for variables, methods, and parameters
+- Use `camelCase` for variables and methods
 - Use `SCREAMING_SNAKE_CASE` for constants
+- Prefix private members with underscore `_`
 
-## Architecture Patterns
+### Assets
+- Store in `/assets` with organized subdirectories
+- Use descriptive names: `bot_icon.png`, `user_avatar.png`
+- Include multiple resolutions for images when needed
+
+## Configuration Files
+
+### Root Level
+- `pubspec.yaml` - Dependencies and app metadata
+- `analysis_options.yaml` - Dart analyzer configuration
+- `.env` - Environment variables (not committed)
+
+### Platform Specific
+- `/android` - Android build configuration
+- `/ios` - iOS build configuration  
+- `/web` - Web deployment files
+- `/windows`, `/macos`, `/linux` - Desktop configurations
+
+## Development Guidelines
 
 ### State Management
-- **Provider Pattern**: Primary state management solution
-- **ChangeNotifier**: For reactive state updates
-- **Consumer/Selector**: For efficient UI rebuilds
-- **ProxyProvider**: For dependent providers (e.g., auth-dependent services)
+- Use Provider pattern for app-wide state
+- Keep providers focused on single responsibilities
+- Use `ChangeNotifier` for reactive state updates
+- Implement proper disposal in providers
 
-### Dependency Flow
-```
-main.dart → app_providers.dart → Individual Providers → Services → Models
-```
+### Service Layer
+- Keep services stateless and focused
+- Implement proper error handling and timeouts
+- Use dependency injection through providers
+- Cache frequently accessed data appropriately
 
-### Screen Structure
-Each screen typically follows this pattern:
-1. **Screen Widget** (`lib/screens/`) - UI layout and navigation
-2. **Controller** (`lib/controllers/`) - Business logic and state
-3. **Provider** (`lib/providers/`) - Global state management
-4. **Service** (`lib/services/`) - External integrations
-5. **Models** (`lib/models/`) - Data structures
-
-## Asset Organization
-- `assets/images/` - App images and graphics
-- `assets/fonts/` - Custom fonts (Poppins, Urbanist)
-- `assets/png_icons/` - PNG icon assets
-- `assets/logo.png` - Main app logo
-- `assets/google_logo.png` - Google branding
-
-## Key Architectural Decisions
-- **Single Responsibility**: Each file has a clear, focused purpose
-- **Separation of Concerns**: UI, business logic, and data access are separated
-- **Provider Pattern**: Centralized state management with reactive updates
-- **Service Layer**: External dependencies abstracted behind service interfaces
-- **Feature Grouping**: Related functionality grouped together (e.g., auth, chat, subscription)
+### UI Components
+- Create reusable widgets in `/widgets`
+- Use consistent theming through `AppTheme`
+- Implement responsive design for multiple screen sizes
+- Follow Material Design guidelines

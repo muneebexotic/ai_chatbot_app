@@ -4,22 +4,25 @@
 
 A Flutter-based AI chatbot application that provides conversational AI capabilities with advanced features including:
 
-- **Core Chat Features**: Real-time conversations with AI using Google's Gemini API
-- **Authentication**: Firebase-based user authentication with Google Sign-In support
-- **Voice Integration**: Speech-to-text input and text-to-speech output capabilities
-- **Image Generation**: AI-powered image generation functionality
-- **Conversation Management**: Persistent chat history with conversation organization
-- **Subscription System**: In-app purchase integration for premium features
+- **Chat Interface**: Real-time conversations with AI using Google's Gemini API
+- **Image Generation**: AI-powered image creation using multiple providers (OpenAI DALL-E, Hugging Face, Stability AI)
+- **Voice Integration**: Speech-to-text and text-to-speech functionality
+- **User Authentication**: Firebase Auth with Google Sign-In support
+- **Cloud Storage**: Firebase Firestore for chat history and user data
+- **Subscription System**: In-app purchases for premium features
 - **Multi-Platform**: Supports Android, iOS, Web, Windows, macOS, and Linux
-- **Theming**: Light and dark theme support with custom styling
+
+## Key Features
+
+- Persistent chat conversations with history
+- Multiple AI personas/characters
+- Image upload and analysis capabilities
+- Voice input and audio responses
+- Dark/light theme support
+- Offline capability with sync
+- User settings and preferences
+- Subscription management
 
 ## Target Platforms
-- Primary: Mobile (Android/iOS)
-- Secondary: Web, Desktop (Windows, macOS, Linux)
 
-## Key User Flows
-1. User authentication and onboarding
-2. AI chat conversations with voice input/output
-3. Image generation requests
-4. Conversation history management
-5. Subscription and premium feature access
+Cross-platform Flutter application targeting mobile (Android/iOS) as primary platforms with desktop and web support.
