@@ -1,0 +1,464 @@
+{
+  "appTitle": "روبوت الدردشة الذكي",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "settings": "الإعدادات",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "back": "رجوع",
+  "@back": {
+    "description": "Back button text"
+  },
+
+  "cancel": "إلغاء",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "حفظ",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "done": "تم",
+  "@done": {
+    "description": "Done button text"
+  },
+
+  "signIn": "تسجيل الدخول",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+
+  "signOut": "تسجيل الخروج",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+
+  "signUp": "إنشاء حساب",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "email": "البريد الإلكتروني",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "password": "كلمة المرور",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "typeMessage": "اكتب رسالة...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input field"
+  },
+
+  "sendMessage": "إرسال",
+  "@sendMessage": {
+    "description": "Send message button text"
+  },
+
+  "chatHistory": "سجل المحادثات",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+
+  "newChat": "محادثة جديدة",
+  "@newChat": {
+    "description": "New chat button text"
+  },
+
+  "accountInformation": "معلومات الحساب",
+  "@accountInformation": {
+    "description": "Account information section title"
+  },
+
+  "appearance": "المظهر",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "preferences": "التفضيلات",
+  "@preferences": {
+    "description": "Preferences section title"
+  },
+
+  "language": "اللغة",
+  "@language": {
+    "description": "Language setting option"
+  },
+
+  "selectLanguage": "اختر اللغة",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+
+  "securitySupport": "الأمان والدعم",
+  "@securitySupport": {
+    "description": "Security and support section title"
+  },
+
+  "errorGeneral": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "@errorGeneral": {
+    "description": "General error message"
+  },
+
+  "errorNetwork": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
+  "@errorNetwork": {
+    "description": "Network error message"
+  },
+
+  "errorAuth": "فشل في المصادقة. يرجى المحاولة مرة أخرى.",
+  "@errorAuth": {
+    "description": "Authentication error message"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+
+  "languageUrdu": "اردو",
+  "@languageUrdu": {
+    "description": "Urdu language name in native script"
+  },
+
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Spanish language name in native script"
+  },
+
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Russian language name in native script"
+  },
+
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language name in native script"
+  },
+
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "French language name in native script"
+  },
+
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Arabic language name in native script"
+  },
+
+  "phoneNumber": "رقم الهاتف",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "upgradeToPlusTitle": "الترقية إلى بلس",
+  "@upgradeToPlusTitle": {
+    "description": "Upgrade to Plus option title"
+  },
+
+  "upgradeToPlusSubtitle": "فتح الميزات المميزة",
+  "@upgradeToPlusSubtitle": {
+    "description": "Upgrade to Plus option subtitle"
+  },
+
+  "personalizationTitle": "التخصيص",
+  "@personalizationTitle": {
+    "description": "Personalization option title"
+  },
+
+  "personalizationSubtitle": "خصص تجربتك",
+  "@personalizationSubtitle": {
+    "description": "Personalization option subtitle"
+  },
+
+  "dataControlsTitle": "ضوابط البيانات",
+  "@dataControlsTitle": {
+    "description": "Data controls option title"
+  },
+
+  "dataControlsSubtitle": "إدارة بياناتك",
+  "@dataControlsSubtitle": {
+    "description": "Data controls option subtitle"
+  },
+
+  "voiceTitle": "الصوت",
+  "@voiceTitle": {
+    "description": "Voice settings option title"
+  },
+
+  "voiceSubtitle": "إعدادات وتفضيلات الصوت",
+  "@voiceSubtitle": {
+    "description": "Voice settings option subtitle"
+  },
+
+  "securityTitle": "الأمان",
+  "@securityTitle": {
+    "description": "Security option title"
+  },
+
+  "securitySubtitle": "إعدادات الخصوصية والأمان",
+  "@securitySubtitle": {
+    "description": "Security option subtitle"
+  },
+
+  "aboutTitle": "حول",
+  "@aboutTitle": {
+    "description": "About option title"
+  },
+
+  "aboutSubtitle": "معلومات التطبيق والإصدار",
+  "@aboutSubtitle": {
+    "description": "About option subtitle"
+  },
+
+  "signOutSubtitle": "تسجيل الخروج من حسابك",
+  "@signOutSubtitle": {
+    "description": "Sign out option subtitle"
+  },
+
+  "signOutDialogTitle": "تسجيل الخروج",
+  "@signOutDialogTitle": {
+    "description": "Sign out confirmation dialog title"
+  },
+
+  "signOutDialogMessage": "هل أنت متأكد من أنك تريد تسجيل الخروج من حسابك؟",
+  "@signOutDialogMessage": {
+    "description": "Sign out confirmation dialog message"
+  },
+
+  "darkMode": "الوضع المظلم",
+  "@darkMode": {
+    "description": "Dark mode setting text"
+  },
+
+  "lightMode": "الوضع الفاتح",
+  "@lightMode": {
+    "description": "Light mode setting text"
+  },
+
+  "welcomeBack": "أهلاً بعودتك",
+  "@welcomeBack": {
+    "description": "Welcome back text on login screen"
+  },
+
+  "backText": "",
+  "@backText": {
+    "description": "Second part of welcome back text"
+  },
+
+  "emailHint": "أدخل بريدك الإلكتروني",
+  "@emailHint": {
+    "description": "Email input field hint"
+  },
+
+  "passwordHint": "أدخل كلمة المرور",
+  "@passwordHint": {
+    "description": "Password input field hint"
+  },
+
+  "forgotPassword": "نسيت كلمة المرور؟",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "login": "تسجيل الدخول",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "dontHaveAccount": "ليس لديك حساب؟ ",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+
+  "orContinueWith": "أو المتابعة باستخدام",
+  "@orContinueWith": {
+    "description": "Social login divider text"
+  },
+
+  "createYour": "أنشئ",
+  "@createYour": {
+    "description": "First part of sign up header"
+  },
+
+  "account": "حسابك",
+  "@account": {
+    "description": "Second part of sign up header"
+  },
+
+  "fullName": "الاسم الكامل",
+  "@fullName": {
+    "description": "Full name field label"
+  },
+
+  "fullNameHint": "أدخل اسمك الكامل",
+  "@fullNameHint": {
+    "description": "Full name input field hint"
+  },
+
+  "alreadyHaveAccount": "لديك حساب بالفعل؟ ",
+  "@alreadyHaveAccount": {
+    "description": "Login prompt text on sign up screen"
+  },
+
+  "exitApp": "الخروج من التطبيق؟",
+  "@exitApp": {
+    "description": "Exit app dialog title"
+  },
+
+  "exitAppMessage": "هل أنت متأكد من أنك تريد الخروج من التطبيق؟",
+  "@exitAppMessage": {
+    "description": "Exit app dialog message"
+  },
+
+  "conversationsSaved": "ستُحفظ محادثاتك وستكون متاحة عند عودتك.",
+  "@conversationsSaved": {
+    "description": "Exit app dialog info message"
+  },
+
+  "exit": "خروج",
+  "@exit": {
+    "description": "Exit button text"
+  },
+
+  "howCanIHelp": "كيف يمكنني مساعدتك اليوم؟",
+  "@howCanIHelp": {
+    "description": "Chat screen welcome message"
+  },
+
+  "chooseTopicOrType": "اختر موضوعاً أدناه أو ابدأ بكتابة سؤالك",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "اقتراحات سريعة",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "الاستخدام اليومي",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "إنشاء صورة",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "صف ما تريد إنشاءه:",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "مثال: غروب جميل فوق الجبال، بأسلوب الفن الرقمي",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "كن محدداً! اذكر الأسلوب والمزاج والألوان والتفاصيل للحصول على نتائج أفضل.",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "إنشاء",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "تم الوصول لحد الصوت",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "تم الوصول لحد الرسائل",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "تم الوصول لحد إنشاء الصور",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "ترقى إلى المميز للحصول على {feature} غير محدود!",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "مزايا العضوية المميزة:",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• رسائل غير محدودة",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• صور وصوت غير محدود",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• جميع الشخصيات مفتوحة",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• دعم أولوية",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "لاحقاً",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "ترقى الآن",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "الميكروفون غير متاح",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
+  },
+
+  "failedToSendMessage": "فشل في إرسال الرسالة: {error}",
+  "@failedToSendMessage": {
+    "description": "Failed to send message error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  },
+
+  "failedToGenerateImage": "فشل في إنشاء الصورة: {error}",
+  "@failedToGenerateImage": {
+    "description": "Failed to generate image error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  }
+}

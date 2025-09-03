@@ -1,0 +1,464 @@
+{
+  "appTitle": "ИИ Чат-бот",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "settings": "Настройки",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "back": "Назад",
+  "@back": {
+    "description": "Back button text"
+  },
+
+  "cancel": "Отмена",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "Сохранить",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "done": "Готово",
+  "@done": {
+    "description": "Done button text"
+  },
+
+  "signIn": "Войти",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+
+  "signOut": "Выйти",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+
+  "signUp": "Регистрация",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "email": "Электронная почта",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "password": "Пароль",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "typeMessage": "Введите сообщение...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input field"
+  },
+
+  "sendMessage": "Отправить",
+  "@sendMessage": {
+    "description": "Send message button text"
+  },
+
+  "chatHistory": "История чата",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+
+  "newChat": "Новый чат",
+  "@newChat": {
+    "description": "New chat button text"
+  },
+
+  "accountInformation": "Информация об аккаунте",
+  "@accountInformation": {
+    "description": "Account information section title"
+  },
+
+  "appearance": "Внешний вид",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "preferences": "Предпочтения",
+  "@preferences": {
+    "description": "Preferences section title"
+  },
+
+  "language": "Язык",
+  "@language": {
+    "description": "Language setting option"
+  },
+
+  "selectLanguage": "Выбрать язык",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+
+  "securitySupport": "Безопасность и поддержка",
+  "@securitySupport": {
+    "description": "Security and support section title"
+  },
+
+  "errorGeneral": "Что-то пошло не так. Пожалуйста, попробуйте еще раз.",
+  "@errorGeneral": {
+    "description": "General error message"
+  },
+
+  "errorNetwork": "Ошибка сети. Пожалуйста, проверьте подключение.",
+  "@errorNetwork": {
+    "description": "Network error message"
+  },
+
+  "errorAuth": "Ошибка аутентификации. Пожалуйста, попробуйте еще раз.",
+  "@errorAuth": {
+    "description": "Authentication error message"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+
+  "languageUrdu": "اردو",
+  "@languageUrdu": {
+    "description": "Urdu language name in native script"
+  },
+
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Spanish language name in native script"
+  },
+
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Russian language name in native script"
+  },
+
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language name in native script"
+  },
+
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "French language name in native script"
+  },
+
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Arabic language name in native script"
+  },
+
+  "phoneNumber": "Номер телефона",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "upgradeToPlusTitle": "Обновить до Plus",
+  "@upgradeToPlusTitle": {
+    "description": "Upgrade to Plus option title"
+  },
+
+  "upgradeToPlusSubtitle": "Разблокировать премиум функции",
+  "@upgradeToPlusSubtitle": {
+    "description": "Upgrade to Plus option subtitle"
+  },
+
+  "personalizationTitle": "Персонализация",
+  "@personalizationTitle": {
+    "description": "Personalization option title"
+  },
+
+  "personalizationSubtitle": "Настройте свой опыт",
+  "@personalizationSubtitle": {
+    "description": "Personalization option subtitle"
+  },
+
+  "dataControlsTitle": "Управление данными",
+  "@dataControlsTitle": {
+    "description": "Data controls option title"
+  },
+
+  "dataControlsSubtitle": "Управляйте своими данными",
+  "@dataControlsSubtitle": {
+    "description": "Data controls option subtitle"
+  },
+
+  "voiceTitle": "Голос",
+  "@voiceTitle": {
+    "description": "Voice settings option title"
+  },
+
+  "voiceSubtitle": "Настройки и предпочтения голоса",
+  "@voiceSubtitle": {
+    "description": "Voice settings option subtitle"
+  },
+
+  "securityTitle": "Безопасность",
+  "@securityTitle": {
+    "description": "Security option title"
+  },
+
+  "securitySubtitle": "Настройки конфиденциальности и безопасности",
+  "@securitySubtitle": {
+    "description": "Security option subtitle"
+  },
+
+  "aboutTitle": "О приложении",
+  "@aboutTitle": {
+    "description": "About option title"
+  },
+
+  "aboutSubtitle": "Информация о приложении и версии",
+  "@aboutSubtitle": {
+    "description": "About option subtitle"
+  },
+
+  "signOutSubtitle": "Выйти из аккаунта",
+  "@signOutSubtitle": {
+    "description": "Sign out option subtitle"
+  },
+
+  "signOutDialogTitle": "Выйти",
+  "@signOutDialogTitle": {
+    "description": "Sign out confirmation dialog title"
+  },
+
+  "signOutDialogMessage": "Вы уверены, что хотите выйти из аккаунта?",
+  "@signOutDialogMessage": {
+    "description": "Sign out confirmation dialog message"
+  },
+
+  "darkMode": "Темная тема",
+  "@darkMode": {
+    "description": "Dark mode setting text"
+  },
+
+  "lightMode": "Светлая тема",
+  "@lightMode": {
+    "description": "Light mode setting text"
+  },
+
+  "welcomeBack": "Добро пожаловать",
+  "@welcomeBack": {
+    "description": "Welcome back text on login screen"
+  },
+
+  "backText": "обратно",
+  "@backText": {
+    "description": "Second part of welcome back text"
+  },
+
+  "emailHint": "Введите ваш email",
+  "@emailHint": {
+    "description": "Email input field hint"
+  },
+
+  "passwordHint": "Введите ваш пароль",
+  "@passwordHint": {
+    "description": "Password input field hint"
+  },
+
+  "forgotPassword": "Забыли пароль?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "login": "Войти",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "dontHaveAccount": "Нет аккаунта? ",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+
+  "orContinueWith": "или продолжить с",
+  "@orContinueWith": {
+    "description": "Social login divider text"
+  },
+
+  "createYour": "Создайте свой",
+  "@createYour": {
+    "description": "First part of sign up header"
+  },
+
+  "account": "аккаунт",
+  "@account": {
+    "description": "Second part of sign up header"
+  },
+
+  "fullName": "Полное имя",
+  "@fullName": {
+    "description": "Full name field label"
+  },
+
+  "fullNameHint": "Введите ваше полное имя",
+  "@fullNameHint": {
+    "description": "Full name input field hint"
+  },
+
+  "alreadyHaveAccount": "Уже есть аккаунт? ",
+  "@alreadyHaveAccount": {
+    "description": "Login prompt text on sign up screen"
+  },
+
+  "exitApp": "Выйти из приложения?",
+  "@exitApp": {
+    "description": "Exit app dialog title"
+  },
+
+  "exitAppMessage": "Вы уверены, что хотите выйти из приложения?",
+  "@exitAppMessage": {
+    "description": "Exit app dialog message"
+  },
+
+  "conversationsSaved": "Ваши разговоры будут сохранены и доступны при возвращении.",
+  "@conversationsSaved": {
+    "description": "Exit app dialog info message"
+  },
+
+  "exit": "Выйти",
+  "@exit": {
+    "description": "Exit button text"
+  },
+
+  "howCanIHelp": "Как я могу помочь вам сегодня?",
+  "@howCanIHelp": {
+    "description": "Chat screen welcome message"
+  },
+
+  "chooseTopicOrType": "Выберите тему ниже или начните вводить ваш вопрос",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "Быстрые предложения",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "Ежедневное использование",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "Создать изображение",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "Опишите, что вы хотите создать:",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "например, Красивый закат над горами, стиль цифрового искусства",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "Будьте конкретны! Включите стиль, настроение, цвета и детали для лучших результатов.",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "Создать",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "Лимит голоса достигнут",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "Лимит сообщений достигнут",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "Лимит создания изображений достигнут",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "Обновитесь до Premium для неограниченных {feature}!",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "Преимущества Premium:",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• Неограниченные сообщения",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• Неограниченные изображения и голос",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• Все персонажи разблокированы",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• Приоритетная поддержка",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "Позже",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "Обновить сейчас",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "Микрофон недоступен",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
+  },
+
+  "failedToSendMessage": "Не удалось отправить сообщение: {error}",
+  "@failedToSendMessage": {
+    "description": "Failed to send message error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  },
+
+  "failedToGenerateImage": "Не удалось создать изображение: {error}",
+  "@failedToGenerateImage": {
+    "description": "Failed to generate image error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  }
+}

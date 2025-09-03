@@ -1,0 +1,464 @@
+{
+  "appTitle": "AI چیٹ بوٹ",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "settings": "سیٹنگز",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "back": "واپس",
+  "@back": {
+    "description": "Back button text"
+  },
+
+  "cancel": "منسوخ",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "محفوظ کریں",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "done": "مکمل",
+  "@done": {
+    "description": "Done button text"
+  },
+
+  "signIn": "سائن ان",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+
+  "signOut": "سائن آؤٹ",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+
+  "signUp": "سائن اپ",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "email": "ای میل",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "password": "پاس ورڈ",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "typeMessage": "پیغام ٹائپ کریں...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input field"
+  },
+
+  "sendMessage": "بھیجیں",
+  "@sendMessage": {
+    "description": "Send message button text"
+  },
+
+  "chatHistory": "چیٹ کی تاریخ",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+
+  "newChat": "نئی چیٹ",
+  "@newChat": {
+    "description": "New chat button text"
+  },
+
+  "accountInformation": "اکاؤنٹ کی معلومات",
+  "@accountInformation": {
+    "description": "Account information section title"
+  },
+
+  "appearance": "ظاہری شکل",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "preferences": "ترجیحات",
+  "@preferences": {
+    "description": "Preferences section title"
+  },
+
+  "language": "زبان",
+  "@language": {
+    "description": "Language setting option"
+  },
+
+  "selectLanguage": "زبان منتخب کریں",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+
+  "securitySupport": "سیکیورٹی اور سپورٹ",
+  "@securitySupport": {
+    "description": "Security and support section title"
+  },
+
+  "errorGeneral": "کچھ غلط ہوا۔ براہ کرم دوبارہ کوشش کریں۔",
+  "@errorGeneral": {
+    "description": "General error message"
+  },
+
+  "errorNetwork": "نیٹ ورک کی خرابی۔ براہ کرم اپنا کنکشن چیک کریں۔",
+  "@errorNetwork": {
+    "description": "Network error message"
+  },
+
+  "errorAuth": "تصدیق ناکام۔ براہ کرم دوبارہ کوشش کریں۔",
+  "@errorAuth": {
+    "description": "Authentication error message"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+
+  "languageUrdu": "اردو",
+  "@languageUrdu": {
+    "description": "Urdu language name in native script"
+  },
+
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Spanish language name in native script"
+  },
+
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Russian language name in native script"
+  },
+
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language name in native script"
+  },
+
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "French language name in native script"
+  },
+
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Arabic language name in native script"
+  },
+
+  "phoneNumber": "فون نمبر",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "upgradeToPlusTitle": "پلس میں اپگریڈ کریں",
+  "@upgradeToPlusTitle": {
+    "description": "Upgrade to Plus option title"
+  },
+
+  "upgradeToPlusSubtitle": "پریمیم فیچرز کو انلاک کریں",
+  "@upgradeToPlusSubtitle": {
+    "description": "Upgrade to Plus option subtitle"
+  },
+
+  "personalizationTitle": "ذاتی بنانا",
+  "@personalizationTitle": {
+    "description": "Personalization option title"
+  },
+
+  "personalizationSubtitle": "اپنے تجربے کو اپنی مرضی کے مطابق بنائیں",
+  "@personalizationSubtitle": {
+    "description": "Personalization option subtitle"
+  },
+
+  "dataControlsTitle": "ڈیٹا کنٹرولز",
+  "@dataControlsTitle": {
+    "description": "Data controls option title"
+  },
+
+  "dataControlsSubtitle": "اپنے ڈیٹا کا انتظام کریں",
+  "@dataControlsSubtitle": {
+    "description": "Data controls option subtitle"
+  },
+
+  "voiceTitle": "آواز",
+  "@voiceTitle": {
+    "description": "Voice settings option title"
+  },
+
+  "voiceSubtitle": "آواز کی سیٹنگز اور ترجیحات",
+  "@voiceSubtitle": {
+    "description": "Voice settings option subtitle"
+  },
+
+  "securityTitle": "سیکیورٹی",
+  "@securityTitle": {
+    "description": "Security option title"
+  },
+
+  "securitySubtitle": "پرائیویسی اور سیکیورٹی کی سیٹنگز",
+  "@securitySubtitle": {
+    "description": "Security option subtitle"
+  },
+
+  "aboutTitle": "کے بارے میں",
+  "@aboutTitle": {
+    "description": "About option title"
+  },
+
+  "aboutSubtitle": "ایپ کی معلومات اور ورژن",
+  "@aboutSubtitle": {
+    "description": "About option subtitle"
+  },
+
+  "signOutSubtitle": "اپنے اکاؤنٹ سے سائن آؤٹ کریں",
+  "@signOutSubtitle": {
+    "description": "Sign out option subtitle"
+  },
+
+  "signOutDialogTitle": "سائن آؤٹ",
+  "@signOutDialogTitle": {
+    "description": "Sign out confirmation dialog title"
+  },
+
+  "signOutDialogMessage": "کیا آپ واقعی اپنے اکاؤنٹ سے سائن آؤٹ کرنا چاہتے ہیں؟",
+  "@signOutDialogMessage": {
+    "description": "Sign out confirmation dialog message"
+  },
+
+  "darkMode": "ڈارک موڈ",
+  "@darkMode": {
+    "description": "Dark mode setting text"
+  },
+
+  "lightMode": "لائٹ موڈ",
+  "@lightMode": {
+    "description": "Light mode setting text"
+  },
+
+  "welcomeBack": "خوش آمدید",
+  "@welcomeBack": {
+    "description": "Welcome back text on login screen"
+  },
+
+  "backText": "واپس",
+  "@backText": {
+    "description": "Second part of welcome back text"
+  },
+
+  "emailHint": "اپنا ای میل درج کریں",
+  "@emailHint": {
+    "description": "Email input field hint"
+  },
+
+  "passwordHint": "اپنا پاس ورڈ درج کریں",
+  "@passwordHint": {
+    "description": "Password input field hint"
+  },
+
+  "forgotPassword": "پاس ورڈ بھول گئے؟",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "login": "لاگ ان",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "dontHaveAccount": "اکاؤنٹ نہیں ہے؟ ",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+
+  "orContinueWith": "یا جاری رکھیں",
+  "@orContinueWith": {
+    "description": "Social login divider text"
+  },
+
+  "createYour": "اپنا",
+  "@createYour": {
+    "description": "First part of sign up header"
+  },
+
+  "account": "اکاؤنٹ بنائیں",
+  "@account": {
+    "description": "Second part of sign up header"
+  },
+
+  "fullName": "مکمل نام",
+  "@fullName": {
+    "description": "Full name field label"
+  },
+
+  "fullNameHint": "اپنا مکمل نام درج کریں",
+  "@fullNameHint": {
+    "description": "Full name input field hint"
+  },
+
+  "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟ ",
+  "@alreadyHaveAccount": {
+    "description": "Login prompt text on sign up screen"
+  },
+
+  "exitApp": "ایپ سے باہر نکلیں؟",
+  "@exitApp": {
+    "description": "Exit app dialog title"
+  },
+
+  "exitAppMessage": "کیا آپ واقعی ایپ سے باہر نکلنا چاہتے ہیں؟",
+  "@exitAppMessage": {
+    "description": "Exit app dialog message"
+  },
+
+  "conversationsSaved": "آپ کی گفتگو محفوظ ہو جائے گی اور واپس آنے پر دستیاب ہوگی۔",
+  "@conversationsSaved": {
+    "description": "Exit app dialog info message"
+  },
+
+  "exit": "باہر نکلیں",
+  "@exit": {
+    "description": "Exit button text"
+  },
+
+  "howCanIHelp": "آج میں آپ کی کیسے مدد کر سکتا ہوں؟",
+  "@howCanIHelp": {
+    "description": "Chat screen welcome message"
+  },
+
+  "chooseTopicOrType": "نیچے سے کوئی موضوع منتخب کریں یا اپنا سوال ٹائپ کرنا شروع کریں",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "فوری تجاویز",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "روزانہ استعمال",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "تصویر بنائیں",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "بتائیں کہ آپ کیا بنانا چاہتے ہیں:",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "مثال: پہاڑوں پر خوبصورت غروب آفتاب، ڈیجیٹل آرٹ اسٹائل",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "مخصوص بنیں! بہتر نتائج کے لیے اسٹائل، موڈ، رنگ اور تفصیلات شامل کریں۔",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "بنائیں",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "آواز کی حد ختم",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "پیغام کی حد ختم",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "تصویر بنانے کی حد ختم",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "لامحدود {feature} کے لیے پریمیم میں اپگریڈ کریں!",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "پریمیم فوائد:",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• لامحدود پیغامات",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• لامحدود تصاویر اور آواز",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• تمام کردار انلاک",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• ترجیحی سپورٹ",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "بعد میں",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "ابھی اپگریڈ کریں",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "مائیکروفون دستیاب نہیں",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
+  },
+
+  "failedToSendMessage": "پیغام بھیجنے میں ناکام: {error}",
+  "@failedToSendMessage": {
+    "description": "Failed to send message error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  },
+
+  "failedToGenerateImage": "تصویر بنانے میں ناکام: {error}",
+  "@failedToGenerateImage": {
+    "description": "Failed to generate image error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  }
+}

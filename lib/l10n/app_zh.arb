@@ -1,0 +1,464 @@
+{
+  "appTitle": "AI 聊天机器人",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "settings": "设置",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "back": "返回",
+  "@back": {
+    "description": "Back button text"
+  },
+
+  "cancel": "取消",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "保存",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "done": "完成",
+  "@done": {
+    "description": "Done button text"
+  },
+
+  "signIn": "登录",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+
+  "signOut": "退出登录",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+
+  "signUp": "注册",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "email": "邮箱",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "password": "密码",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "typeMessage": "输入消息...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input field"
+  },
+
+  "sendMessage": "发送",
+  "@sendMessage": {
+    "description": "Send message button text"
+  },
+
+  "chatHistory": "聊天记录",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+
+  "newChat": "新聊天",
+  "@newChat": {
+    "description": "New chat button text"
+  },
+
+  "accountInformation": "账户信息",
+  "@accountInformation": {
+    "description": "Account information section title"
+  },
+
+  "appearance": "外观",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "preferences": "偏好设置",
+  "@preferences": {
+    "description": "Preferences section title"
+  },
+
+  "language": "语言",
+  "@language": {
+    "description": "Language setting option"
+  },
+
+  "selectLanguage": "选择语言",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+
+  "securitySupport": "安全与支持",
+  "@securitySupport": {
+    "description": "Security and support section title"
+  },
+
+  "errorGeneral": "出现错误，请重试。",
+  "@errorGeneral": {
+    "description": "General error message"
+  },
+
+  "errorNetwork": "网络错误，请检查您的连接。",
+  "@errorNetwork": {
+    "description": "Network error message"
+  },
+
+  "errorAuth": "身份验证失败，请重试。",
+  "@errorAuth": {
+    "description": "Authentication error message"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+
+  "languageUrdu": "اردو",
+  "@languageUrdu": {
+    "description": "Urdu language name in native script"
+  },
+
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Spanish language name in native script"
+  },
+
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Russian language name in native script"
+  },
+
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language name in native script"
+  },
+
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "French language name in native script"
+  },
+
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Arabic language name in native script"
+  },
+
+  "phoneNumber": "电话号码",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "upgradeToPlusTitle": "升级到 Plus",
+  "@upgradeToPlusTitle": {
+    "description": "Upgrade to Plus option title"
+  },
+
+  "upgradeToPlusSubtitle": "解锁高级功能",
+  "@upgradeToPlusSubtitle": {
+    "description": "Upgrade to Plus option subtitle"
+  },
+
+  "personalizationTitle": "个性化",
+  "@personalizationTitle": {
+    "description": "Personalization option title"
+  },
+
+  "personalizationSubtitle": "自定义您的体验",
+  "@personalizationSubtitle": {
+    "description": "Personalization option subtitle"
+  },
+
+  "dataControlsTitle": "数据控制",
+  "@dataControlsTitle": {
+    "description": "Data controls option title"
+  },
+
+  "dataControlsSubtitle": "管理您的数据",
+  "@dataControlsSubtitle": {
+    "description": "Data controls option subtitle"
+  },
+
+  "voiceTitle": "语音",
+  "@voiceTitle": {
+    "description": "Voice settings option title"
+  },
+
+  "voiceSubtitle": "语音设置和偏好",
+  "@voiceSubtitle": {
+    "description": "Voice settings option subtitle"
+  },
+
+  "securityTitle": "安全",
+  "@securityTitle": {
+    "description": "Security option title"
+  },
+
+  "securitySubtitle": "隐私和安全设置",
+  "@securitySubtitle": {
+    "description": "Security option subtitle"
+  },
+
+  "aboutTitle": "关于",
+  "@aboutTitle": {
+    "description": "About option title"
+  },
+
+  "aboutSubtitle": "应用信息和版本",
+  "@aboutSubtitle": {
+    "description": "About option subtitle"
+  },
+
+  "signOutSubtitle": "退出您的账户",
+  "@signOutSubtitle": {
+    "description": "Sign out option subtitle"
+  },
+
+  "signOutDialogTitle": "退出登录",
+  "@signOutDialogTitle": {
+    "description": "Sign out confirmation dialog title"
+  },
+
+  "signOutDialogMessage": "您确定要退出登录吗？",
+  "@signOutDialogMessage": {
+    "description": "Sign out confirmation dialog message"
+  },
+
+  "darkMode": "深色模式",
+  "@darkMode": {
+    "description": "Dark mode setting text"
+  },
+
+  "lightMode": "浅色模式",
+  "@lightMode": {
+    "description": "Light mode setting text"
+  },
+
+  "welcomeBack": "欢迎",
+  "@welcomeBack": {
+    "description": "Welcome back text on login screen"
+  },
+
+  "backText": "回来",
+  "@backText": {
+    "description": "Second part of welcome back text"
+  },
+
+  "emailHint": "请输入您的邮箱",
+  "@emailHint": {
+    "description": "Email input field hint"
+  },
+
+  "passwordHint": "请输入您的密码",
+  "@passwordHint": {
+    "description": "Password input field hint"
+  },
+
+  "forgotPassword": "忘记密码？",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "login": "登录",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "dontHaveAccount": "还没有账户？ ",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+
+  "orContinueWith": "或继续使用",
+  "@orContinueWith": {
+    "description": "Social login divider text"
+  },
+
+  "createYour": "创建您的",
+  "@createYour": {
+    "description": "First part of sign up header"
+  },
+
+  "account": "账户",
+  "@account": {
+    "description": "Second part of sign up header"
+  },
+
+  "fullName": "全名",
+  "@fullName": {
+    "description": "Full name field label"
+  },
+
+  "fullNameHint": "请输入您的全名",
+  "@fullNameHint": {
+    "description": "Full name input field hint"
+  },
+
+  "alreadyHaveAccount": "已有账户？ ",
+  "@alreadyHaveAccount": {
+    "description": "Login prompt text on sign up screen"
+  },
+
+  "exitApp": "退出应用？",
+  "@exitApp": {
+    "description": "Exit app dialog title"
+  },
+
+  "exitAppMessage": "您确定要退出应用吗？",
+  "@exitAppMessage": {
+    "description": "Exit app dialog message"
+  },
+
+  "conversationsSaved": "您的对话将被保存，返回时可用。",
+  "@conversationsSaved": {
+    "description": "Exit app dialog info message"
+  },
+
+  "exit": "退出",
+  "@exit": {
+    "description": "Exit button text"
+  },
+
+  "howCanIHelp": "今天我能为您做些什么？",
+  "@howCanIHelp": {
+    "description": "Chat screen welcome message"
+  },
+
+  "chooseTopicOrType": "选择下面的话题或开始输入您的问题",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "快速建议",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "每日使用",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "生成图像",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "描述您想要创建的内容：",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "例如：山上美丽的日落，数字艺术风格",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "请具体描述！包含风格、情绪、颜色和细节以获得更好的结果。",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "生成",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "语音限制已达到",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "消息限制已达到",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "图像生成限制已达到",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "升级到高级版以获得无限{feature}！",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "高级版权益：",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• 无限消息",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• 无限图像和语音",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• 所有角色已解锁",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• 优先支持",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "稍后",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "立即升级",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "麦克风不可用",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
+  },
+
+  "failedToSendMessage": "发送消息失败：{error}",
+  "@failedToSendMessage": {
+    "description": "Failed to send message error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  },
+
+  "failedToGenerateImage": "生成图像失败：{error}",
+  "@failedToGenerateImage": {
+    "description": "Failed to generate image error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  }
+}

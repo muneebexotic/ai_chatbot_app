@@ -1,0 +1,464 @@
+{
+  "appTitle": "Chatbot IA",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "settings": "Configuración",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "back": "Atrás",
+  "@back": {
+    "description": "Back button text"
+  },
+
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "Guardar",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "done": "Hecho",
+  "@done": {
+    "description": "Done button text"
+  },
+
+  "signIn": "Iniciar sesión",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+
+  "signOut": "Cerrar sesión",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+
+  "signUp": "Registrarse",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "email": "Correo electrónico",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "password": "Contraseña",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "typeMessage": "Escribe un mensaje...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input field"
+  },
+
+  "sendMessage": "Enviar",
+  "@sendMessage": {
+    "description": "Send message button text"
+  },
+
+  "chatHistory": "Historial de chat",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+
+  "newChat": "Nuevo chat",
+  "@newChat": {
+    "description": "New chat button text"
+  },
+
+  "accountInformation": "Información de la cuenta",
+  "@accountInformation": {
+    "description": "Account information section title"
+  },
+
+  "appearance": "Apariencia",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+
+  "preferences": "Preferencias",
+  "@preferences": {
+    "description": "Preferences section title"
+  },
+
+  "language": "Idioma",
+  "@language": {
+    "description": "Language setting option"
+  },
+
+  "selectLanguage": "Seleccionar idioma",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+
+  "securitySupport": "Seguridad y soporte",
+  "@securitySupport": {
+    "description": "Security and support section title"
+  },
+
+  "errorGeneral": "Algo salió mal. Por favor, inténtalo de nuevo.",
+  "@errorGeneral": {
+    "description": "General error message"
+  },
+
+  "errorNetwork": "Error de red. Por favor, verifica tu conexión.",
+  "@errorNetwork": {
+    "description": "Network error message"
+  },
+
+  "errorAuth": "Autenticación fallida. Por favor, inténtalo de nuevo.",
+  "@errorAuth": {
+    "description": "Authentication error message"
+  },
+
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+
+  "languageUrdu": "اردو",
+  "@languageUrdu": {
+    "description": "Urdu language name in native script"
+  },
+
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Spanish language name in native script"
+  },
+
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Russian language name in native script"
+  },
+
+  "languageChinese": "中文",
+  "@languageChinese": {
+    "description": "Chinese language name in native script"
+  },
+
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "French language name in native script"
+  },
+
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Arabic language name in native script"
+  },
+
+  "phoneNumber": "Número de teléfono",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "upgradeToPlusTitle": "Actualizar a Plus",
+  "@upgradeToPlusTitle": {
+    "description": "Upgrade to Plus option title"
+  },
+
+  "upgradeToPlusSubtitle": "Desbloquea funciones premium",
+  "@upgradeToPlusSubtitle": {
+    "description": "Upgrade to Plus option subtitle"
+  },
+
+  "personalizationTitle": "Personalización",
+  "@personalizationTitle": {
+    "description": "Personalization option title"
+  },
+
+  "personalizationSubtitle": "Personaliza tu experiencia",
+  "@personalizationSubtitle": {
+    "description": "Personalization option subtitle"
+  },
+
+  "dataControlsTitle": "Controles de datos",
+  "@dataControlsTitle": {
+    "description": "Data controls option title"
+  },
+
+  "dataControlsSubtitle": "Gestiona tus datos",
+  "@dataControlsSubtitle": {
+    "description": "Data controls option subtitle"
+  },
+
+  "voiceTitle": "Voz",
+  "@voiceTitle": {
+    "description": "Voice settings option title"
+  },
+
+  "voiceSubtitle": "Configuración y preferencias de voz",
+  "@voiceSubtitle": {
+    "description": "Voice settings option subtitle"
+  },
+
+  "securityTitle": "Seguridad",
+  "@securityTitle": {
+    "description": "Security option title"
+  },
+
+  "securitySubtitle": "Configuración de privacidad y seguridad",
+  "@securitySubtitle": {
+    "description": "Security option subtitle"
+  },
+
+  "aboutTitle": "Acerca de",
+  "@aboutTitle": {
+    "description": "About option title"
+  },
+
+  "aboutSubtitle": "Información y versión de la aplicación",
+  "@aboutSubtitle": {
+    "description": "About option subtitle"
+  },
+
+  "signOutSubtitle": "Cerrar sesión de tu cuenta",
+  "@signOutSubtitle": {
+    "description": "Sign out option subtitle"
+  },
+
+  "signOutDialogTitle": "Cerrar sesión",
+  "@signOutDialogTitle": {
+    "description": "Sign out confirmation dialog title"
+  },
+
+  "signOutDialogMessage": "¿Estás seguro de que quieres cerrar sesión de tu cuenta?",
+  "@signOutDialogMessage": {
+    "description": "Sign out confirmation dialog message"
+  },
+
+  "darkMode": "Modo oscuro",
+  "@darkMode": {
+    "description": "Dark mode setting text"
+  },
+
+  "lightMode": "Modo claro",
+  "@lightMode": {
+    "description": "Light mode setting text"
+  },
+
+  "welcomeBack": "Bienvenido",
+  "@welcomeBack": {
+    "description": "Welcome back text on login screen"
+  },
+
+  "backText": "de vuelta",
+  "@backText": {
+    "description": "Second part of welcome back text"
+  },
+
+  "emailHint": "Ingresa tu correo electrónico",
+  "@emailHint": {
+    "description": "Email input field hint"
+  },
+
+  "passwordHint": "Ingresa tu contraseña",
+  "@passwordHint": {
+    "description": "Password input field hint"
+  },
+
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "login": "Iniciar sesión",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "dontHaveAccount": "¿No tienes una cuenta? ",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+
+  "orContinueWith": "o continúa con",
+  "@orContinueWith": {
+    "description": "Social login divider text"
+  },
+
+  "createYour": "Crea tu",
+  "@createYour": {
+    "description": "First part of sign up header"
+  },
+
+  "account": "cuenta",
+  "@account": {
+    "description": "Second part of sign up header"
+  },
+
+  "fullName": "Nombre completo",
+  "@fullName": {
+    "description": "Full name field label"
+  },
+
+  "fullNameHint": "Ingresa tu nombre completo",
+  "@fullNameHint": {
+    "description": "Full name input field hint"
+  },
+
+  "alreadyHaveAccount": "¿Ya tienes una cuenta? ",
+  "@alreadyHaveAccount": {
+    "description": "Login prompt text on sign up screen"
+  },
+
+  "exitApp": "¿Salir de la aplicación?",
+  "@exitApp": {
+    "description": "Exit app dialog title"
+  },
+
+  "exitAppMessage": "¿Estás seguro de que quieres salir de la aplicación?",
+  "@exitAppMessage": {
+    "description": "Exit app dialog message"
+  },
+
+  "conversationsSaved": "Tus conversaciones se guardarán y estarán disponibles cuando regreses.",
+  "@conversationsSaved": {
+    "description": "Exit app dialog info message"
+  },
+
+  "exit": "Salir",
+  "@exit": {
+    "description": "Exit button text"
+  },
+
+  "howCanIHelp": "¿Cómo puedo ayudarte hoy?",
+  "@howCanIHelp": {
+    "description": "Chat screen welcome message"
+  },
+
+  "chooseTopicOrType": "Elige un tema a continuación o comienza a escribir tu pregunta",
+  "@chooseTopicOrType": {
+    "description": "Chat screen instruction text"
+  },
+
+  "quickSuggestions": "Sugerencias rápidas",
+  "@quickSuggestions": {
+    "description": "Suggestions modal title"
+  },
+
+  "dailyUsage": "Uso diario",
+  "@dailyUsage": {
+    "description": "Daily usage section title"
+  },
+
+  "generateImage": "Generar imagen",
+  "@generateImage": {
+    "description": "Generate image dialog title"
+  },
+
+  "describeWhatYouWant": "Describe lo que quieres crear:",
+  "@describeWhatYouWant": {
+    "description": "Image generation prompt instruction"
+  },
+
+  "imagePromptHint": "ej., Un hermoso atardecer sobre montañas, estilo arte digital",
+  "@imagePromptHint": {
+    "description": "Image generation prompt hint text"
+  },
+
+  "imagePromptTip": "¡Sé específico! Incluye estilo, ambiente, colores y detalles para mejores resultados.",
+  "@imagePromptTip": {
+    "description": "Image generation tip text"
+  },
+
+  "generate": "Generar",
+  "@generate": {
+    "description": "Generate button text"
+  },
+
+  "voiceLimitReached": "Límite de voz alcanzado",
+  "@voiceLimitReached": {
+    "description": "Voice limit reached dialog title"
+  },
+
+  "messageLimitReached": "Límite de mensajes alcanzado",
+  "@messageLimitReached": {
+    "description": "Message limit reached dialog title"
+  },
+
+  "imageLimitReached": "Límite de generación de imágenes alcanzado",
+  "@imageLimitReached": {
+    "description": "Image limit reached dialog title"
+  },
+
+  "upgradeForUnlimited": "¡Actualiza a Premium para {feature} ilimitados!",
+  "@upgradeForUnlimited": {
+    "description": "Upgrade prompt message",
+    "placeholders": {
+      "feature": {
+        "type": "String",
+        "description": "The feature name (messages, images, etc.)"
+      }
+    }
+  },
+
+  "premiumBenefits": "Beneficios Premium:",
+  "@premiumBenefits": {
+    "description": "Premium benefits section title"
+  },
+
+  "unlimitedMessages": "• Mensajes ilimitados",
+  "@unlimitedMessages": {
+    "description": "Premium benefit: unlimited messages"
+  },
+
+  "unlimitedImagesVoice": "• Imágenes y voz ilimitadas",
+  "@unlimitedImagesVoice": {
+    "description": "Premium benefit: unlimited images and voice"
+  },
+
+  "allPersonasUnlocked": "• Todas las personalidades desbloqueadas",
+  "@allPersonasUnlocked": {
+    "description": "Premium benefit: all personas unlocked"
+  },
+
+  "prioritySupport": "• Soporte prioritario",
+  "@prioritySupport": {
+    "description": "Premium benefit: priority support"
+  },
+
+  "later": "Más tarde",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "upgradeNow": "Actualizar ahora",
+  "@upgradeNow": {
+    "description": "Upgrade now button text"
+  },
+
+  "microphoneNotAvailable": "Micrófono no disponible",
+  "@microphoneNotAvailable": {
+    "description": "Microphone not available error message"
+  },
+
+  "failedToSendMessage": "Error al enviar mensaje: {error}",
+  "@failedToSendMessage": {
+    "description": "Failed to send message error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  },
+
+  "failedToGenerateImage": "Error al generar imagen: {error}",
+  "@failedToGenerateImage": {
+    "description": "Failed to generate image error",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "The error message"
+      }
+    }
+  }
+}
