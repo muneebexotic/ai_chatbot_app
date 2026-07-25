@@ -3,6 +3,28 @@
 **Status: INCOMPLETE. Action required by the repository owner.**
 Prepared 2026-07-25 as PRD Milestone 0 (§1). Implements R1.2 and R1.3.
 
+> ## ⚠ CONFIRMED BREACH — 2026-07-26
+>
+> This is no longer a precautionary cleanup. Google Cloud has **suspended
+> project `ai-chatbot-app-22e84`** for "abusive activity consistent with
+> hijacking", stating that credentials were published publicly, harvested by a
+> third party, and used to initiate resources in the project.
+>
+> The exposure in Part 1 was exploited. Both `AIzaSy…` keys (C1 and C4) belong
+> to that project, so both are dead with it — but the suspension also takes
+> Firebase Auth, Firestore, and Storage down, which means the shipped app is
+> non-functional right now.
+>
+> Owner actions taken so far: Hugging Face token deleted (only one remained;
+> the second appears to have been auto-revoked earlier by Hugging Face's leaked
+> token scanning). The Gemini key was not found in AI Studio, consistent with
+> it living in the now-suspended project.
+>
+> **Open and urgent: confirm whether a billing account was ever linked to
+> `ai-chatbot-app-22e84`.** Hijackers spin up compute. With no card linked the
+> loss is bounded at zero; with one linked there may be real charges to
+> dispute. See 2.3.
+
 The working tree is now clean. **The published git history is not, and cannot be
 cleaned by anything in this branch.** Everything in Part 2 must be run by a
 human. The agent that wrote this file deliberately did not run any
