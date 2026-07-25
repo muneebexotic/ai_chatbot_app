@@ -20,8 +20,10 @@ Where sources disagree, that is reported as disagreement rather than averaged
 into a false number. Nothing here is invented; where I could not get a figure,
 it says so.
 
-**The single most important finding is §4. It contradicts a load-bearing
-assumption in the PRD and should be read before anything else.**
+**Read §4 first. It contains two independent findings — a capacity problem
+(§4.A) and a terms problem (§4.B) — and each on its own contradicts a
+load-bearing assumption in the PRD. §4.B is the more serious of the two and was
+missed entirely on the first pass of this research.**
 
 ---
 
@@ -191,141 +193,211 @@ ASO tool for v1.
 
 ---
 
-## 4. Model options with usable free tiers — READ THIS ONE
+## 4. The free-tier problem — TWO independent findings
 
-### 4.1 The finding
+**There are two, not one. They are unrelated in cause, they compound in
+effect, and either alone is enough to force a decision before Milestone 3.**
 
-**The PRD's zero-cost model does not survive the Gemini free tier as it exists
-in 2026.** This is a floor-level problem, not a ceiling-level one, and it needs
-an owner decision before Milestone 3.
+- **§4.A — Capacity.** The free quota is far too small for the product.
+- **§4.B — Terms.** Google's unpaid tier trains on user content, allows human
+  review of it, and cannot lawfully serve Europe at all.
+
+§4.B is the one that matters more, because capacity is an engineering problem
+and terms are a promise problem. Kalaam's privacy claim (R4.2.7: "audio never
+leaves the device... state this plainly in the UI, because it is both true and
+a genuine selling point") is a load-bearing part of the product's honesty. On
+Gemini's unpaid tier, the accompanying claim about transcripts would not be.
+
+---
+
+### 4.A Capacity
 
 Google **no longer publishes free-tier numbers in its public docs**. The
-official rate-limits page now says only that limits "depend on a variety of
+official rate-limits page says only that limits "depend on a variety of
 factors" and directs you to the AI Studio dashboard **[A —
-ai.google.dev/gemini-api/docs/rate-limits]**. That alone is a planning risk: a
-business model resting on an undocumented, unguaranteed quota.
+ai.google.dev/gemini-api/docs/rate-limits]**. A business model resting on an
+undocumented, unguaranteed quota is itself the risk.
 
 Third-party trackers disagree sharply:
 
 | Source | gemini-2.5-flash free tier |
 |---|---|
-| aifreeapi.com, pub. 2026-01-27 **[C]** | **10 RPM / 250 RPD**, and notes some configurations fell to 20–50 RPD |
+| aifreeapi.com, pub. 2026-01-27 **[C]** | **10 RPM / 250 RPD**, notes some configurations fell to 20–50 RPD |
 | tokenmix.ai **[C]** | **1,500 RPD** on "Gemini Flash" |
 
-Both agree on the direction: **on 2025-12-07 Google cut free-tier quotas by
-50–80% without advance notice** **[C, multiple]**. Flash was hit hardest.
+Both agree on direction: **on 2025-12-07 Google cut free-tier quotas by 50–80%
+without advance notice** **[C, multiple]**. Flash was hit hardest.
 
-**Crucially, limits are per *project*, not per key — this is confirmed in
-Google's own documentation [A].** The PRD's gateway design (R9.3) means every
-user in the world shares one project's quota.
+**Limits are per *project*, not per key — confirmed in Google's own docs [A].**
+The gateway design (R9.3) means every user in the world shares one quota.
 
-### 4.2 Why this breaks the product, with arithmetic
+#### The arithmetic
 
-A spoken session is not one model call. It is **one call per conversational
-turn**, plus one for the report (R4.3.2), plus memory extraction (R5.2.1).
+A spoken session is **one model call per conversational turn**, plus the report
+(R4.3.2), plus memory extraction (R5.2.1). A 10-minute session at a turn every
+~20 seconds is ~30 turns ≈ **31+ calls**.
 
-A 10-minute session with a turn roughly every 20 seconds is ~30 turns ≈ **31+
-model calls**.
-
-| Assumed RPD | Total sessions/day, **all users combined** |
+| Assumed RPD | Sessions/day, **all users combined** |
 |---|---|
 | 250 (pessimistic) | **~8** |
 | 1,000 (Flash-Lite) | **~32** |
 | 1,500 (optimistic) | **~48** |
 
-R12.2 asks for the projected free-tier breach point at 1,000 DAU. **The real
-breach point is roughly 8 to 48 daily active users**, depending on whose number
-is right — between one and two orders of magnitude below where the PRD expects
-trouble. Also note 10 RPM would cap *concurrency* at about ten simultaneous
-speakers regardless of the daily total.
-
-The PRD's §12 ledger line — "Model calls | Gemini API free tier | Free tier
-limits | No card" — is therefore accurate on the "no card" column and
-dangerously optimistic on capacity.
-
-### 4.3 What is actually available, free, no card
-
-| Provider | Free limits **[C]** | Notes |
-|---|---|---|
-| **Google Gemini** | disputed; 250–1,500 RPD | 1M context, multimodal, image understanding (needed for §5.4) |
-| **Groq** | 30 RPM / 1,000 RPD / 12K TPM | **700+ tokens/sec** — by far the best fit for the R4.2.4 latency budget |
-| **Cerebras** | ~1M tokens/day | up to 2,000 tokens/sec; token-based rather than request-based |
-| **OpenRouter** | 20 RPM / 50 RPD free models | 50/day is too small to matter until $10 credit is added |
-| **Mistral, GitHub Models** | free tiers exist | not evaluated in depth |
-
-Multi-provider routing is standard practice precisely because each provider's
-limits are independent, so routing across several multiplies free capacity
-**[C]**.
-
-### 4.4 Recommendation
-
-The PRD's architecture is already right and should not change: R9.3.3 requires
-model routing to be a server-side config value and the routing layer to be
-provider-agnostic. **What must change is the assumption that one provider's
-free tier is sufficient.** Concretely, for Milestone 3:
-
-1. Build the router to fan out across **Gemini + Groq + Cerebras** from day
-   one, not as a later optimisation. This is not scope creep; R9.3.3 already
-   demands provider-agnosticism, and this is what it is for.
-2. **Route by job.** Live conversational turns go to Groq first — it is the
-   fastest free option available and R4.2.4's sub-1.5s budget is the hardest
-   number in the PRD. Reports and memory extraction are not latency-sensitive
-   and can go to Gemini or Cerebras. Vision (§5.4) must go to Gemini.
-3. Treat R10.4's global circuit breaker as **essential infrastructure, not a
-   safety net.** At these limits it will trigger in normal operation, so its
-   "at capacity, try later" state needs to be a designed, non-embarrassing
-   screen.
-4. Make the local-only report (R4.3.1) the primary experience it already
-   deserves to be. It needs no model call, so it is the only part of the
-   product that scales to any number of users at zero cost. This is a
-   strength the PRD already built in — it just matters far more than the PRD
-   realised.
-
-**Owner action:** open <https://aistudio.google.com/rate-limit> on a project
-you control and record the real figure. It is the only authoritative number,
-and no blog can substitute for it.
+R12.2 asks for the breach point at 1,000 DAU. **The real one is roughly 8–48
+daily active users** — one to two orders of magnitude below where the PRD
+expects trouble. Separately, 10 RPM caps *concurrency* at about ten
+simultaneous speakers regardless of the daily total.
 
 ---
+
+### 4.B Terms — training, human review, and a hard block on Europe
+
+Primary source: **Gemini API Additional Terms of Service [A]**.
+
+**Four distinct provisions, all applying to the unpaid tier:**
+
+**1. Google trains on submitted content.**
+> "Google uses the content you submit to the Services and any generated
+> responses to provide, improve, and develop Google products and services and
+> machine learning technologies."
+
+**2. Humans may read it.**
+> "To help with quality and improve products, human reviewers may read,
+> annotate, and process your API input and output."
+
+**3. Do not send personal information.**
+> "Do not submit sensitive, confidential, or personal information to the Unpaid
+> Services."
+
+**4. Europe requires the paid tier — an availability restriction, not just a
+data one.**
+> "You may use only Paid Services when making API Clients available to users in
+> the European Economic Area, Switzerland, or the United Kingdom."
+
+Note there are **two separate EEA provisions** and they are easy to confuse.
+The one above restricts *who you may serve* on the free tier. A different
+clause says that for users in those regions, paid-tier data protections apply
+to all services including free ones. The second does not cancel the first: the
+data carve-out protects the user, the availability clause still binds the
+developer. Reading only the second gives a dangerously reassuring answer —
+which is exactly the mistake made on the first pass of this research. Scope
+extends to the UK, Switzerland, Norway, Iceland, and Liechtenstein **[C]**.
+
+#### Why this is disqualifying for Kalaam specifically
+
+This is not generic API boilerplate that every app lives with. It collides with
+four things the PRD treats as non-negotiable:
+
+| PRD requirement | Conflict |
+|---|---|
+| **R4.2.7** — audio never leaves the device, "state this plainly in the UI... a genuine selling point" | Transcripts *do* leave, and on the unpaid tier they train a third-party model and may be read by humans. The privacy story becomes technically true but misleading |
+| **R5.2.1 / R5.2.4** — memory extraction sends durable personal facts; sensitive categories must never be stored | Sending exactly the content the terms say not to send. The R5.2.4 filter protects *our* database, not Google's training set |
+| **§16** — "No invented facts", and the honesty running through the §7.6 copy rules | A privacy claim that omitted this would be the kind of thing §16 exists to prevent |
+| **§3, R11.7** — South Asia primary, Urdu as first follow-up | Europe is not the primary market, so the block is survivable — but it forecloses a market rather than deferring it, and that should be a knowing choice |
+
+The session transcript is the single most personal artefact this app produces.
+It is someone practising for a job interview, rehearsing a difficult
+conversation, or speaking a second language badly on purpose. That is precisely
+the content the terms tell you not to submit.
+
+---
+
+### 4.C What is actually available, free, no card
+
+The terms columns are the important ones. They invert the obvious ranking.
+
+| Provider | Free limits **[C]** | Trains on your content? | Serves EEA/UK? |
+|---|---|---|---|
+| **Gemini (unpaid)** | disputed; 250–1,500 RPD | **Yes**, plus human review **[A]** | **No — paid only [A]** |
+| **Groq** | 30 RPM / 1,000 RPD / 12K TPM | **No** — contractually prohibited **[A]** | no restriction found |
+| **Cerebras** | ~1M tokens/day | **No** — no retention, no training **[C]** | independent controller |
+| **OpenRouter** | 20 RPM / 50 RPD free models | varies by model | varies |
+
+**Groq [A], Services Agreement:**
+> "Groq is not permitted to use Inputs or Outputs for training or fine-tuning
+> any AI Model Services or other models, unless explicitly granted permission"
+
+The agreement makes **no free/paid distinction** on this point — it applies at
+every tier. Zero-data-retention is additionally available to eligible
+customers. **Cerebras** reportedly does not retain or train on user data
+**[C — not verified against the primary EULA; verify before relying on it]**.
+
+Groq is also the fastest free option at 700+ tokens/sec **[C]**, the best
+available shot at the R4.2.4 sub-1.5-second latency budget.
+
+**So the free provider with the worst terms is the one the PRD names as the
+default, and two alternatives are both faster and contractually cleaner.**
+
+---
+
+### 4.D Recommendation
+
+The PRD's architecture is right and should not change: R9.3.3 already requires
+server-side model routing and a provider-agnostic layer. What must change is
+the assumption that Gemini's free tier is a suitable default.
+
+1. **Live conversational turns → Groq.** Fastest free option, and the only one
+   of the three with an explicit contractual ban on training that covers the
+   free tier. Latency and privacy point the same way.
+2. **Reports and memory extraction → Groq or Cerebras**, not Gemini unpaid.
+   These carry the most personal content and are not latency-sensitive.
+3. **Vision (§5.4) → Gemini is the only free option.** Either accept the terms
+   for images specifically and disclose it, or defer image understanding past
+   v1. Recommend deferring: §5.4 is a supporting feature, not the product.
+4. **Treat R10.4's circuit breaker as core infrastructure, not a safety net.**
+   At these limits it fires during normal operation, so "at capacity, try
+   later" needs to be a designed screen.
+5. **Whatever is chosen, the privacy copy must match it exactly.** If any
+   transcript reaches a provider that trains on it, R4.2.7's UI statement must
+   say so in plain words.
+
+**Owner actions:** (a) open <https://aistudio.google.com/rate-limit> and record
+the real quota; (b) read the Groq Services Agreement and the Cerebras EULA in
+full before either is wired in — the Cerebras position above is **[C]** and has
+not been verified at the source.
 
 ## 5. Where the market contradicts the PRD
 
 Per R0.5.1 point 5 — stated plainly.
 
 **5.1 The zero-cost model rests on a quota that has already been cut 50–80% and
-is no longer published.** See §4. This is the one finding that should change
-the plan. Mitigation is multi-provider routing (§4.4), which the PRD's own
-architecture anticipates. Nothing here breaks the *no-credit-card* rule — every
-provider in §4.3 has a card-free free tier — so §0.5.2's closed ceiling holds.
-What breaks is the capacity assumption, not the principle.
+is no longer published.** §4.A. Mitigation is multi-provider routing, which the
+PRD's own architecture anticipates. It buys roughly 2–3x, not a fix — see
+`PROPOSALS.md` P1.
 
-**5.2 "Speech recognition runs on-device, so a spoken minute costs zero" is
+**5.2 The named default provider's terms are incompatible with the product's
+privacy claim, and bar Europe outright.** §4.B. This is the more serious of the
+two findings and it is not solvable by engineering. It is solvable by provider
+choice (Groq/Cerebras), by revenue (paid tiers end training and unblock the
+EEA), or by disclosure. It is not solvable by staying on Gemini's free tier and
+saying nothing.
+
+**5.3 "Speech recognition runs on-device, so a spoken minute costs zero" is
 true, and it is a bigger advantage than the PRD claims.** Given §4, on-device
 recognition is not merely a margin advantage — it is the only reason the
-product is viable at all. Every competitor complaint in C2 is about recognition
-quality, and on-device recognition is also what makes R4.2.7 ("audio never
-leaves the device") true. Three separate PRD goals converge on one decision.
-Protect it.
+product is viable at all. Every complaint in cluster C2 is about recognition
+quality, and on-device recognition is also what makes R4.2.7 true. Three PRD
+goals converge on one decision. Protect it.
 
-**5.3 The PRD underrates memory as a differentiator.** §5.2.2 calls visible,
+**5.4 The PRD underrates memory as a differentiator.** §5.2.2 calls visible,
 editable memory "a trust feature and a differentiator." §1.4 says it is the
-single loudest complaint in the adjacent category. This deserves to be a
-headline feature in store listing and onboarding, not a settings screen.
+single loudest complaint in the adjacent category. It deserves to be a headline
+in the store listing and onboarding, not a settings screen.
 
-**5.4 The PRD may underrate the free-tier generosity required to compete.**
+**5.5 The PRD may underrate the free-tier generosity required to compete.**
 ELSA's free tier offers *unlimited* pronunciation drills and is described as
-genuinely the best free pronunciation tool available **[C]**. Against that,
-10 minutes/day of speaking (§8) is defensible but not obviously generous. The
-counter-argument holds — ELSA's drills are a cheap local computation, whereas
-spoken sessions cost model calls — but the owner should know the free-tier bar
-in this category is set high by a well-funded competitor.
+genuinely the best free tool in the category **[C]**. Against that, 10
+minutes/day is defensible but not obviously generous. This is the argument that
+became `PROPOSALS.md` P2.
 
-**5.5 Regional pricing matters more than "recommended: on" implies.** §2: the
-gap is roughly 8–10×, not a discount. R8.1 should be treated as MUST.
+**5.6 Regional pricing matters more than "recommended: on" implies.** §2: the
+gap is roughly 8–10x, not a discount. R8.1 should be treated as MUST. Plan
+margin on Play's 15% subscription fee, not the 10% headline **[C]**.
 
-**5.6 Nothing found contradicts** the design direction, the on-device
-speech decision, the Supabase choice, or the monetization ethics. The Replika
-FTC complaint and GDPR fine (§1.4) actively support §16's ban on dark patterns
-and guilt-based streaks.
+**5.7 Nothing found contradicts** the design direction, the on-device speech
+decision, the Supabase choice, or the monetization ethics. The Replika FTC
+complaint and GDPR fine (§1.4) actively support §16's ban on dark patterns and
+guilt-based streaks.
 
 ---
 
@@ -334,6 +406,11 @@ and guilt-based streaks.
 Accessed 2026-07-26.
 
 - [Gemini API rate limits — official docs](https://ai.google.dev/gemini-api/docs/rate-limits) **[A]**
+- [**Gemini API Additional Terms of Service**](https://ai.google.dev/gemini-api/terms) **[A]** — training, human review, EEA/CH/UK restriction
+- [**Groq Services Agreement**](https://console.groq.com/docs/legal/services-agreement) **[A]** — no training on inputs/outputs, all tiers
+- [Groq privacy policy](https://groq.com/privacy-policy) **[A]**
+- [Cerebras Inference terms](https://d7umqicpi7263.cloudfront.net/eula/4rCqa7snChhObjYFAYH325D2kcqkCRpGXBZYsSMc3mg) **[A]** — not yet read in full
+- [Clarification on "Only Paid Services" for EEA/CH/UK — Google AI Developers Forum](https://discuss.ai.google.dev/t/clarification-on-only-paid-services-for-eea-ch-uk/107860) **[B]**
 - [Google AI Studio rate limit dashboard](https://aistudio.google.com/rate-limit) **[A]** (owner must check)
 - [Set up your app's prices — Play Console Help](https://support.google.com/googleplay/android-developer/answer/6334373) **[A]**
 - [Speak: Language Learning — Google Play](https://play.google.com/store/apps/details?id=com.selabs.speak) **[A]**
