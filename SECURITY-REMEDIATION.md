@@ -1,38 +1,75 @@
 # Security remediation runbook
 
-**Status: INCOMPLETE. Action required by the repository owner.**
+**Status: CONTAINED. All exposed credentials are dead. One optional
+housekeeping task remains (2.5–2.6, history purge).**
 Prepared 2026-07-25 as PRD Milestone 0 (§1). Implements R1.2 and R1.3.
+Breach confirmed and closed out 2026-07-26.
 
-> ## ⚠ CONFIRMED BREACH — 2026-07-26
+> ## Incident record — closed 2026-07-26
 >
-> This is no longer a precautionary cleanup. Google Cloud has **suspended
-> project `ai-chatbot-app-22e84`** for "abusive activity consistent with
-> hijacking", stating that credentials were published publicly, harvested by a
-> third party, and used to initiate resources in the project.
+> **The leak was exploited.** Google Cloud suspended project
+> `ai-chatbot-app-22e84` for "abusive activity consistent with hijacking",
+> stating that credentials were published publicly, harvested by a third party,
+> and used to initiate resources in the project. This was not a near miss.
 >
-> The exposure in Part 1 was exploited. Both `AIzaSy…` keys (C1 and C4) belong
-> to that project, so both are dead with it — but the suspension also takes
-> Firebase Auth, Firestore, and Storage down, which means the shipped app is
-> non-functional right now.
+> **Impact: none.** Confirmed with the owner on 2026-07-26:
 >
-> Owner actions taken so far: Hugging Face token deleted (only one remained;
-> the second appears to have been auto-revoked earlier by Hugging Face's leaked
-> token scanning). The Gemini key was not found in AI Studio, consistent with
-> it living in the now-suspended project.
+> - **No billing account was ever linked**, and billing was disabled on the
+>   project. The attacker could not provision anything chargeable. Financial
+>   loss is zero, and that is a fact rather than an estimate.
+> - **No real users.** All accounts were the owner's own testers. No user data
+>   was lost, and none needs recovering.
+> - **No appeal will be filed.** PRD §2.2 already scheduled Firebase for
+>   removal in Milestone 2 under the zero-cost rule; the suspension merely did
+>   it early. The project is abandoned deliberately, not lost.
 >
-> **Open and urgent: confirm whether a billing account was ever linked to
-> `ai-chatbot-app-22e84`.** Hijackers spin up compute. With no card linked the
-> loss is bounded at zero; with one linked there may be real charges to
-> dispute. See 2.3.
+> **Credential status — all four are dead:**
+>
+> | | Credential | How it died |
+> |---|---|---|
+> | C1 | Gemini API key | project suspension |
+> | C2 | Hugging Face token | auto-revoked by Hugging Face's leaked-token scanning |
+> | C3 | Hugging Face token | manually deleted by owner, 2026-07-26 |
+> | C4 | Firebase Android API key | project suspension |
+>
+> Only one Hugging Face token remained in the console; the other had already
+> been killed by Hugging Face, which scans public GitHub. C1 and C4 never
+> appeared in AI Studio because that page lists only imported projects, and
+> theirs was suspended.
+>
+> **Consequence for the rebuild:** the shipped app no longer runs —
+> `AppBootstrap.initialize()` calls `Firebase.initializeApp()` against a dead
+> project. This is acceptable and expected. Milestone 2 becomes *build Supabase
+> from scratch* rather than *migrate off Firebase*, which is less work, not
+> more. The local `google-services.json` now points at nothing and is deleted
+> in Milestone 2.
+>
+> **The remaining history purge is now housekeeping, not security.** Every
+> leaked value is inert. Reasons still to do it: this is a public portfolio
+> repository and `git log -S` currently shows committed keys to anyone curious;
+> GitHub secret scanning will keep flagging it; and it drops ~1.4MB of junk
+> blobs from every clone. Reason to do it *soon* rather than eventually: the
+> rewrite gets more painful with every commit stacked on top, and right now
+> there are only four.
 
-The working tree is now clean. **The published git history is not, and cannot be
-cleaned by anything in this branch.** Everything in Part 2 must be run by a
-human. The agent that wrote this file deliberately did not run any
-history-rewriting command and did not force-push, per R1.2.
+The working tree is clean and every exposed credential is revoked. The
+published git history still contains the dead key literals, and nothing in this
+branch can change that — history rewriting must be run by a human, per R1.2.
+The agent that wrote this file deliberately ran no history-rewriting command
+and no force push.
 
-Read Part 1, then do Part 2 **in order**. Step 2.1 (revocation) is the only
-step that actually stops an attacker. The history purge is cleanup; it is not
-containment, and doing it first wastes the time that matters.
+Part 1 is the audit and the post-mortem; read it even though the incident is
+closed, because 1.3 explains the mistake that caused it and 1.4 lists the one
+thing still open. Part 2 is the runbook, now largely marked DONE or NOT
+APPLICABLE — 2.5 and 2.6 are all that remain, and they are optional
+housekeeping.
+
+**The lesson worth keeping** is the ordering, which held up under a real
+incident: revocation is what stops an attacker, and history rewriting never
+was. Had this gone the other way — a linked billing account and a few hours
+spent on `filter-repo` first — the outcome would have been a bill rather than a
+suspension notice. It ended at zero because the keys died before the cleanup
+started, not because the cleanup was thorough.
 
 ---
 
@@ -175,6 +212,10 @@ touches a live account.
 
 ### 2.1 Revoke and regenerate every exposed credential — DO THIS FIRST
 
+> **DONE, 2026-07-26.** All four credentials are dead: C1 and C4 with the
+> project suspension, C2 auto-revoked by Hugging Face, C3 deleted by the owner.
+> Kept below as the record of what was done and as the procedure for next time.
+
 Assume all four keys are already compromised. Automated scanners harvest public
 GitHub within minutes of a push; C1 has been readable for roughly a year. The
 absence of a surprise bill is not evidence of no abuse — free tiers fail
@@ -216,6 +257,9 @@ the client holds none. Do not let it become the permanent answer.
 
 ### 2.2 Rotate Google / Firebase service credentials
 
+> **NOT APPLICABLE.** No service-account key was ever committed (verified). The
+> project is suspended and abandoned; there is nothing left to rotate.
+
 - **Firebase Android API key (C4)**: see 2.4 — restrict rather than rotate,
   unless it was reused elsewhere.
 - **Service account keys**: none were committed (verified). If you have ever
@@ -230,6 +274,12 @@ the client holds none. Do not let it become the permanent answer.
   emergency — it was not committed here.
 
 ### 2.3 Check for abuse before you assume you got away with it
+
+> **DONE, 2026-07-26 — abuse confirmed, impact zero.** Google detected the
+> hijacking and suspended the project. No billing account was ever linked, so
+> nothing chargeable could be provisioned. No real users, no data lost. This
+> section is exactly why the check is in the runbook: the abuse was real and
+> would not have shown up as a bill.
 
 - Google Cloud console → APIs & Services → Metrics for project
   `ai-chatbot-app-22e84`. Look for request spikes outside your own usage.
@@ -247,6 +297,10 @@ forks (2.6).
 
 ### 2.4 Restrict the Firebase API key
 
+> **NOT APPLICABLE.** The key died with the project suspension. Firebase is
+> being removed entirely in Milestone 2 (PRD §2.2), so no replacement key will
+> exist to restrict.
+
 Google Cloud console → APIs & Services → Credentials → the `AIzaSyDxT_…` key:
 
 - **Application restrictions** → Android apps → add package name
@@ -259,6 +313,11 @@ reasons. Restrict the key now anyway — Milestone 2 is not today, and the key i
 live in every APK already shipped.
 
 ### 2.5 Purge the history
+
+> **OPTIONAL — housekeeping, not security.** Every leaked value is already
+> dead. Do this for repository hygiene and to stop GitHub secret scanning
+> flagging the repo. Cheapest done now, while only a handful of commits sit on
+> top of the rewrite.
 
 Only now. Revocation is done, so a leaked-but-dead key is a cleanliness problem
 rather than a live one.
