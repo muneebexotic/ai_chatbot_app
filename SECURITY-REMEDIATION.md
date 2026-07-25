@@ -244,6 +244,25 @@ rather than a live one.
 **Preferred: `git filter-repo`.** `git filter-branch` is deprecated, slow, and
 easy to get wrong.
 
+**Merge the Milestone 0 branch to `main` and push it BEFORE you purge.**
+
+This ordering is not optional and it is easy to get backwards. The purge
+rewrites every commit in the repository. If the Milestone 0 work is still
+sitting only on your machine when you rewrite, its commits will be based on
+parents that no longer exist, and you will be resolving that by hand
+afterwards. Merge first and the purge simply carries the fix along with
+everything else.
+
+```bash
+git checkout main
+git merge --no-ff milestone-0-security-remediation
+git push origin main
+```
+
+Yes, this pushes the branch while the old keys are still in history. That
+changes nothing: they have been public for a year, and by this point 2.1 has
+already killed them. There is nothing left to protect by waiting.
+
 ```bash
 # Install (once)
 pip install git-filter-repo
