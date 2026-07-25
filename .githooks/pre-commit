@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Blocks commits that contain credentials. Implements PRD R1.6.
+#
+# Enable once per clone (hooks are not transferred by git clone):
+#
+#     git config core.hooksPath .githooks
+#
+# Verify with:  git config --get core.hooksPath   ->  .githooks
+
+set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+SCANNER="$REPO_ROOT/scripts/check-secrets.sh"
+
+if [ ! -f "$SCANNER" ]; then
+  echo "pre-commit: scripts/check-secrets.sh is missing. Refusing to commit blind." >&2
+  echo "Restore it from the repository, or bypass once with --no-verify." >&2
+  exit 1
+fi
+
+exec bash "$SCANNER"

@@ -5,6 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class GeminiService {
+  /// TRANSITIONAL — Milestone 0 only.
+  ///
+  /// The key that used to sit here as a literal was published to a public repo
+  /// and must be treated as burned (see SECURITY-REMEDIATION.md). It is now
+  /// supplied at build time so that no key exists in source.
+  ///
+  /// This is NOT the end state. Any key shipped in an APK is extractable, so
+  /// --dart-define is a stopgap, not a fix. PRD F1/R9.3 move every model call
+  /// behind the Supabase Edge Function gateway, which holds the key
+  /// server-side; this whole class is deleted in Milestone 3.
+  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
+
   late final GenerativeModel _model;
   final String? _systemPrompt;
   final SettingsProvider _settingsProvider;
@@ -14,10 +26,17 @@ class GeminiService {
       _systemPrompt = _getSystemPrompt(
         Provider.of<SettingsProvider>(context, listen: false).persona,
       ) {
-    _model = GenerativeModel(
-      model: 'gemini-2.5-flash',
-      apiKey: 'AIzaSyAss8fSmad3Q60ynhwZPUnfKgsSuMZMtJY',
-    );
+    if (_apiKey.isEmpty) {
+      // Fail closed and loudly. A silent empty key produces confusing 400s
+      // from the API instead of naming the actual problem.
+      throw StateError(
+        'GEMINI_API_KEY was not provided at build time. Run with '
+        '--dart-define=GEMINI_API_KEY=<key>. See README.md. This mechanism is '
+        'temporary and is removed when the gateway lands (PRD R9.3).',
+      );
+    }
+
+    _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
     
     // Debug log to verify persona is being applied
     print('🎭 GeminiService initialized with persona: ${_settingsProvider.persona}');
