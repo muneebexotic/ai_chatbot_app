@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
+import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
+import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
 import 'package:ai_chatbot_app/design/waveform/waveform_painter.dart';
 
 export 'package:ai_chatbot_app/design/waveform/waveform_painter.dart'
@@ -102,32 +104,65 @@ class _WaveformState extends State<Waveform>
     final colors = AppColors.of(context);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    return Semantics(
-      label: widget.semanticLabel,
-      // The painter is a live readout, not something a screen reader should
-      // try to describe frame by frame.
-      excludeSemantics: true,
-      child: SizedBox(
-        height: widget.height,
-        width: double.infinity,
-        child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) => CustomPaint(
-              painter: WaveformPainter(
-                amplitudes: widget.amplitudes,
-                mode: widget.mode,
-                phase: _controller.value * 2 * 3.141592653589793,
-                signalColor: colors.signal,
-                liveColor: colors.live,
-                mutedColor: colors.line,
-                barCount: widget.barCount,
-                reduceMotion: reduceMotion,
-                progress: widget.progress,
-              ),
+    final isCapturing = widget.mode == WaveformMode.capturing;
+
+    final painter = SizedBox(
+      height: widget.height,
+      width: double.infinity,
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) => CustomPaint(
+            painter: WaveformPainter(
+              amplitudes: widget.amplitudes,
+              mode: widget.mode,
+              phase: _controller.value * 2 * 3.141592653589793,
+              signalColor: colors.signal,
+              liveColor: colors.live,
+              mutedColor: colors.line,
+              barCount: widget.barCount,
+              reduceMotion: reduceMotion,
+              progress: widget.progress,
             ),
           ),
         ),
+      ),
+    );
+
+    return Semantics(
+      // Announced to screen readers, and it changes when the mic opens or
+      // closes — §11.6 requires the session screen to announce state changes.
+      // The mic being live is the one state a non-sighted user cannot infer
+      // any other way.
+      label: isCapturing
+          ? 'Microphone live, recording. ${widget.semanticLabel ?? ''}'.trim()
+          : widget.semanticLabel,
+      liveRegion: isCapturing,
+      // The bars are a per-frame readout; describing them frame by frame would
+      // be noise. The label above carries the meaning.
+      excludeSemantics: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The TEXT channel of the live indicator (WCAG 1.4.1). Together with
+          // the record dot drawn by the painter, this means the microphone
+          // state is legible without perceiving colour at all — which matters
+          // for red-green colourblind users, in bright sunlight, and on a
+          // washed-out screen. See the long note in WaveformPainter.paint.
+          if (isCapturing)
+            Padding(
+              padding: const EdgeInsets.only(bottom: Space.xxs),
+              child: Text(
+                'LIVE',
+                style: AppTypography.micro.copyWith(
+                  color: colors.live,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          painter,
+        ],
       ),
     );
   }

@@ -65,6 +65,59 @@ is_exempt() {
   esac
 }
 
+# ── Text encoding ─────────────────────────────────────────────────────────
+#
+# This repository has now been damaged twice by the same trap, in two
+# different ways, so it is checked rather than remembered:
+#
+#   1. `.gitignore` was appended to from PowerShell, which writes UTF-16LE.
+#      Git read the bytes as `.\0e\0n\0v`, the rule matched nothing, and a
+#      live Hugging Face token stayed tracked for eleven months.
+#   2. A migration script round-tripped five Dart files through
+#      `Get-Content` without `-Encoding utf8`, which decodes UTF-8 as the
+#      ANSI codepage. Every em-dash became `a€"`.
+#
+# Both are invisible in most editors, which is exactly why they survive.
+#
+# NUL bytes in a text file mean UTF-16/UTF-32 was written where UTF-8 was
+# expected. The mojibake markers are the UTF-8 encodings of U+00C2/U+00C3
+# followed by a continuation byte — the signature of text that has been
+# encoded twice.
+check_encoding() {
+  local path="$1" blob="$2" total stripped
+  case "$path" in
+    *.png|*.jpg|*.jpeg|*.gif|*.ico|*.ttf|*.otf|*.woff|*.woff2|*.jks|*.keystore|*.aab|*.apk|*.so|*.zip|*.pdf)
+      return 0 ;;
+  esac
+  [ -f "$blob" ] || return 0
+
+  # NUL check runs FIRST and without a binary guard, on purpose. `grep -I`
+  # classifies a UTF-16 file as binary, so guarding on it above would skip
+  # precisely the case this exists to catch — which is how the first version
+  # of this function passed its own test.
+  #
+  # Counted with `tr` rather than matched with grep because a NUL cannot be
+  # put in a shell variable, and `grep -P` is not available everywhere (it
+  # fails outright in some locales on Git Bash).
+  total=$(wc -c < "$blob" | tr -d ' ')
+  stripped=$(LC_ALL=C tr -d '\000' < "$blob" | wc -c | tr -d ' ')
+  if [ "$total" != "$stripped" ]; then
+    printf '%s\t-\tENCODING\tNUL bytes present: UTF-16 written where UTF-8 was expected\n' \
+      "$path" >> "$FINDINGS"
+    return 0
+  fi
+
+  # No NULs, so grep will treat the file as text from here.
+  # ANSI-C quoting gives grep the literal bytes without needing -P.
+  if LC_ALL=C grep -q $'\xc3\xa2\xe2\x82\xac' "$blob" 2>/dev/null ||
+     LC_ALL=C grep -q $'\xc3\xa2\xc2\x80' "$blob" 2>/dev/null ||
+     LC_ALL=C grep -q $'\xc3\x83\xc2' "$blob" 2>/dev/null; then
+    printf '%s\t-\tENCODING\tmojibake: UTF-8 decoded as ANSI and re-encoded (use Get-Content -Encoding utf8)\n' \
+      "$path" >> "$FINDINGS"
+  fi
+  return 0
+}
+
 # ── Filenames that must never be committed at all ─────────────────────────
 check_filename() {
   local path="$1"
@@ -177,6 +230,33 @@ if [ "$SCAN_ALL" -eq 1 ]; then
   echo "check-secrets: scanning all tracked files..."
   git ls-files -z > "$WORK/tracked"
   while IFS= read -r -d '' path; do check_filename "$path"; done < "$WORK/tracked"
+
+  # Encoding, in bulk. Calling check_encoding per file spawns three processes
+  # each and took 95s across ~230 tracked files; this is two greps.
+  #
+  # `grep -LI` lists files grep considers BINARY. A UTF-16 text file lands in
+  # that list, which is the whole trick — real binaries are then filtered out
+  # by extension, and whatever remains is text that should not have been
+  # encoded as UTF-16.
+  xargs -0 grep -LI . -- < "$WORK/tracked" 2>/dev/null | while IFS= read -r path; do
+    case "$path" in
+      *.png|*.jpg|*.jpeg|*.gif|*.ico|*.ttf|*.otf|*.woff|*.woff2|*.jks|*.keystore|*.aab|*.apk|*.so|*.zip|*.pdf|*.webp|*.mp3|*.wav|*.jar|*.bin)
+        continue ;;
+    esac
+    # An EMPTY file also has "no text match", and an empty file obviously has
+    # no NUL bytes. Without this, `docs/.project_structure_ignore` (0 bytes)
+    # was reported as UTF-16 corruption — a false positive that would have
+    # taught the next person to ignore this check.
+    [ -s "$path" ] || continue
+    printf '%s\t-\tENCODING\tNUL bytes present: UTF-16 written where UTF-8 was expected\n' \
+      "$path" >> "$FINDINGS"
+  done
+
+  xargs -0 grep -lI $'\xc3\xa2\xe2\x82\xac' -- < "$WORK/tracked" 2>/dev/null |
+    while IFS= read -r path; do
+      printf '%s\t-\tENCODING\tmojibake: UTF-8 decoded as ANSI and re-encoded (use Get-Content -Encoding utf8)\n' \
+        "$path" >> "$FINDINGS"
+    done
   xargs -0 grep -HnEoI -e "$COMBINED" -- < "$WORK/tracked" 2>/dev/null \
     | collect SECRET '' || true
   xargs -0 grep -HnEiI -e "$TIER2_RE" -- < "$WORK/tracked" 2>/dev/null \
@@ -190,19 +270,21 @@ else
   while IFS= read -r -d '' path; do
     check_filename "$path"
     mkdir -p "$WORK/staged/$(dirname "$path")" 2>/dev/null || true
-    git show ":$path" > "$WORK/staged/$path" 2>/dev/null || true
+    if git show ":$path" > "$WORK/staged/$path" 2>/dev/null; then
+      check_encoding "$path" "$WORK/staged/$path"
+    fi
   done < <(git diff --cached --name-only --diff-filter=ACMR -z)
   scan_tree "$WORK/staged" ''
 fi
 
 # ── Report ────────────────────────────────────────────────────────────────
 if [ ! -s "$FINDINGS" ]; then
-  printf '%s✓%s check-secrets: no credentials detected.\n' "$GREEN" "$OFF"
+  printf '%s✓%s check-secrets: no credentials or encoding damage detected.\n' "$GREEN" "$OFF"
   exit 0
 fi
 
 count=$(wc -l < "$FINDINGS" | tr -d ' ')
-printf '\n%s%s✗ check-secrets: %s potential credential(s) found.%s\n\n' "$RED" "$BOLD" "$count" "$OFF"
+printf '\n%s%s✗ check-secrets: %s problem(s) found.%s\n\n' "$RED" "$BOLD" "$count" "$OFF"
 while IFS="$TAB" read -r path ln kind detail; do
   if [ "$ln" = "-" ]; then
     printf '  %s%s%s\n      %s: %s\n' "$RED" "$path" "$OFF" "$kind" "$detail"
@@ -211,9 +293,22 @@ while IFS="$TAB" read -r path ln kind detail; do
   fi
 done < "$FINDINGS"
 
-cat <<'EOF'
+echo
+if grep -q "${TAB}ENCODING${TAB}" "$FINDINGS"; then
+  cat <<'EOF'
+ENCODING findings: the file was written as UTF-16, or read as ANSI and
+re-encoded. Both are invisible in most editors and both have already cost
+this repository real damage -- a UTF-16 .gitignore rule that silently matched
+nothing let a live token stay tracked for eleven months.
 
-This commit is blocked. Do not "fix" it by deleting the line and committing --
+  On Windows, write UTF-8 explicitly:
+    Add-Content file 'text' -Encoding utf8
+    Get-Content file -Encoding utf8
+EOF
+fi
+if grep -qE "${TAB}(SECRET|ASSIGN|FILENAME)${TAB}" "$FINDINGS"; then
+  cat <<'EOF'
+CREDENTIAL findings: do not "fix" this by deleting the line and committing --
 if the secret was ever pushed it is already public, and deleting it changes
 nothing. See SECURITY-REMEDIATION.md.
 
@@ -221,8 +316,11 @@ nothing. See SECURITY-REMEDIATION.md.
   2. Move it out of source: --dart-define for build-time client values,
      Supabase Function secrets for anything the server holds.
   3. Re-stage and commit.
+EOF
+fi
+cat <<'EOF'
 
-False positive? Say why in the commit message and re-run with:
-  git commit --no-verify
+This commit is blocked. False positive? Say why in the commit message and
+re-run with:  git commit --no-verify
 EOF
 exit 1

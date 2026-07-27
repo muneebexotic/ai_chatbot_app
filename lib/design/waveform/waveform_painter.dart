@@ -95,12 +95,55 @@ class WaveformPainter extends CustomPainter {
   Color get _activeColor =>
       mode == WaveformMode.capturing ? liveColor : signalColor;
 
+  /// Radius of the record dot drawn while capturing. Zero in every other mode.
+  ///
+  /// This is the **shape** channel of the live-microphone indicator. See
+  /// [paint] for why colour alone is not sufficient.
+  static const double recordDotRadius = 5.0;
+  static const double _recordDotGap = 14.0;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
     final centerY = size.height / 2;
-    final slot = size.width / barCount;
+
+    // ── The live-microphone indicator is NOT colour alone ──────────────────
+    //
+    // R7.1.1 requires a user to tell from across the room whether the mic is
+    // hot, and WCAG 1.4.1 forbids colour as the only carrier of that state.
+    // `signal` amber and `live` red differ almost entirely in hue: for a
+    // red-green colourblind user, in bright sunlight, or on a washed-out
+    // screen they are close to indistinguishable. (Their WCAG contrast ratio
+    // against each other is 1.19:1 in light mode — a luminance measure, and
+    // the wrong test for two accents, but it does show they carry no
+    // brightness difference to fall back on.)
+    //
+    // So capturing gets three simultaneous channels:
+    //   1. colour  — `live` red                     (this file)
+    //   2. shape   — a solid record dot appears      (this file, below)
+    //   3. text    — a "LIVE" label                  (Waveform widget)
+    //
+    // Motion is deliberately NOT one of them. R7.7.4 disables animation under
+    // reduce-motion, so a motion-only second channel disappears for exactly
+    // the users most likely to need it. The dot and the label are static
+    // facts; the pulse is decoration on top.
+    var barsLeft = 0.0;
+    if (mode == WaveformMode.capturing) {
+      final dotPaint = Paint()
+        ..color = liveColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(
+        Offset(recordDotRadius, centerY),
+        recordDotRadius,
+        dotPaint,
+      );
+      barsLeft = recordDotRadius * 2 + _recordDotGap;
+    }
+
+    final barsWidth = size.width - barsLeft;
+    if (barsWidth <= 0) return;
+    final slot = barsWidth / barCount;
     // Half the slot for the bar, half for the gap, and never thinner than a
     // physical hairline or it disappears on low-density screens.
     final barWidth = math.max(1.0, slot * 0.5);
@@ -117,7 +160,7 @@ class WaveformPainter extends CustomPainter {
 
       // Keep a visible floor so the component never reads as broken or empty.
       final barHeight = math.max(2.0, amplitude * maxAmplitude);
-      final x = slot * i + slot / 2;
+      final x = barsLeft + slot * i + slot / 2;
 
       paint.color = _colorFor(t);
 
