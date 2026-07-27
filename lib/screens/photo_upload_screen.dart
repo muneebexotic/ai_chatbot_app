@@ -33,7 +33,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         
         return PopScope(
           canPop: false, // Prevent default back behavior
-          onPopInvoked: (didPop) {
+          onPopInvokedWithResult: (didPop, result) {
             if (!didPop) {
               // Handle swipe back - same as skip button
               _skipPhotoUpload();

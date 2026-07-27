@@ -1226,8 +1226,24 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, themeProvider, child) {
         final isDark = themeProvider.isDark;
 
-        return WillPopScope(
-          onWillPop: _onWillPop,
+        // PopScope replaces the deprecated WillPopScope. WillPopScope breaks
+        // Android's predictive-back gesture, which shows the destination
+        // behind the swipe — so this is a visible behaviour fix, not only a
+        // deprecation cleanup.
+        //
+        // The inversion is easy to get wrong: WillPopScope's callback returned
+        // "may I pop?", whereas PopScope declares `canPop` up front and then
+        // reports what happened. Blocking means canPop: false plus an explicit
+        // pop once the user confirms.
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            final shouldExit = await _onWillPop();
+            if (shouldExit && context.mounted) {
+              Navigator.of(context).pop();
+            }
+          },
           child: GestureDetector(
             onTap: () => _focusNode.unfocus(),
             child: Scaffold(

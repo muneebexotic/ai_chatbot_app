@@ -52,7 +52,6 @@ class _MessageInputFieldState extends State<MessageInputField>
   // Height constraints
   static const double _minHeight = 56.0;
   static const double _maxHeight = 120.0; // About 4-5 lines
-  static const double _lineHeight = 22.0; // Approximate line height
   
   Timer? _typingTimer;
   static const Duration _typingTimeout = Duration(milliseconds: 2000);

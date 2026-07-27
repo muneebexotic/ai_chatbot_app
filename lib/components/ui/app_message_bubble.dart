@@ -241,7 +241,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           end: Alignment.bottomRight,
           colors: [
             colorScheme.surface,
-            colorScheme.surfaceContainerHighest ?? colorScheme.surface,
+            colorScheme.surfaceContainerHighest,
           ],
         ),
         shape: BoxShape.circle,
@@ -270,7 +270,6 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
   Widget _buildMessageContent(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     if (widget.message.isImageMessage && widget.message.imageData != null) {
       // Display generated image preview (tappable to open full viewer)
@@ -371,8 +370,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) ?? 
-                     colorScheme.surface,
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: theme.primaryColor.withValues(alpha: 0.1),
@@ -600,7 +598,6 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     bool isPressed = false,
   }) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     return Transform.scale(
       scale: isPressed ? 0.9 : 1.0,
@@ -634,7 +631,6 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
   MarkdownStyleSheet _buildMarkdownStyleSheet(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     
     return MarkdownStyleSheet(
       p: TextStyle(
@@ -671,10 +667,10 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         fontFamily: 'JetBrains Mono',
         fontSize: 13,
         color: theme.primaryColor,
-        backgroundColor: (colorScheme.surfaceContainerHighest ?? colorScheme.surface).withValues(alpha: 0.5),
+        backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       ),
       codeblockDecoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest ?? colorScheme.surface,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: colorScheme.outline.withValues(alpha: 0.1),
@@ -716,7 +712,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         height: 1.5,
       ),
       blockquoteDecoration: BoxDecoration(
-        color: (colorScheme.surfaceContainerHighest ?? colorScheme.surface).withValues(alpha: 0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: Border(
           left: BorderSide(
             color: theme.primaryColor,
@@ -774,7 +770,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
               width: double.infinity,
               margin: const EdgeInsets.symmetric(vertical: 12.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest ?? colorScheme.surface,
+                color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.outline.withValues(alpha: 0.1),
@@ -842,5 +838,5 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
 
   Future<bool> _isOnline() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }

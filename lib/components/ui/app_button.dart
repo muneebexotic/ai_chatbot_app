@@ -221,8 +221,6 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     // Get button style properties based on theme
     final buttonStyle = _getButtonStyle(context);

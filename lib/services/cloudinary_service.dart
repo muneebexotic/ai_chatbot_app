@@ -119,7 +119,6 @@ class CloudinaryService {
   /// Get image info from Cloudinary
   Future<Map<String, dynamic>?> getImageInfo(String publicId) async {
     try {
-      final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
       
       final response = await http.get(
         Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/resources/image/upload/$publicId'),

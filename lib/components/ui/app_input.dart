@@ -64,45 +64,19 @@ class AppInput extends StatefulWidget {
     this.focusNode,
     this.contentPadding,
     this.borderRadius,
-  }) : _type = null;
-
-  // Old-style constructor for backward compatibility.
-  //
-  // NOTE: `dart fix` will try to delete the seven parameters below under
-  // `unused_element_parameter`, because no current caller passes them. Doing
-  // so is a compile error — every final field must be initialised by every
-  // constructor — so they stay. Re-run `dart fix` with care on this file.
-  const AppInput._withType({
-    super.key,
-    required AppInputType type,
-    required TextEditingController this.controller,
-    this.label,
-    this.hint,
-    this.hintText,
-    this.errorText,
-    this.helperText,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.obscureText = false,
-    this.enabled = true,
-    this.onToggleVisibility,
-    this.validator,
-    this.onTap,
-    this.readOnly = false,
-    this.maxLines = 1,
-    this.minLines,
-    this.maxLength,
-    this.keyboardType,
-    this.onChanged,
-    this.onSubmitted,
-    this.onEditingComplete,
-    this.inputFormatters,
-    this.textCapitalization = TextCapitalization.none,
-    this.textInputAction,
-    this.focusNode,
-    this.contentPadding,
-    this.borderRadius,
+    AppInputType? type,
   }) : _type = type;
+
+  // There used to be a second, private `_withType` constructor here that
+  // differed from the one above only by setting `_type`. It had to redeclare
+  // every field — Dart requires each constructor to initialise every final
+  // field — and because no caller passed the last seven, the analyzer flagged
+  // them as `unused_element_parameter`. Deleting them, as `dart fix` tried to,
+  // is a compile error; suppressing the warning would violate §14's "no
+  // ignored rules".
+  //
+  // Folding `type` into the public constructor removes the duplicate and the
+  // warnings together, which is the actual fix rather than a workaround.
 
   // Email input factory
   factory AppInput.email({
@@ -119,7 +93,7 @@ class AppInput extends StatefulWidget {
     bool readOnly = false,
     Key? key,
   }) =>
-      AppInput._withType(
+      AppInput(
         key: key,
         type: AppInputType.email,
         controller: controller!,
@@ -157,7 +131,7 @@ class AppInput extends StatefulWidget {
     bool readOnly = false,
     Key? key,
   }) =>
-      AppInput._withType(
+      AppInput(
         key: key,
         type: AppInputType.password,
         controller: controller!,
@@ -194,7 +168,7 @@ class AppInput extends StatefulWidget {
     ValueChanged<String>? onChanged,
     Key? key,
   }) =>
-      AppInput._withType(
+      AppInput(
         key: key,
         type: AppInputType.text,
         controller: controller!,
@@ -224,7 +198,7 @@ class AppInput extends StatefulWidget {
     ValueChanged<String>? onChanged,
     Key? key,
   }) =>
-      AppInput._withType(
+      AppInput(
         key: key,
         type: AppInputType.phone,
         controller: controller!,
@@ -278,7 +252,7 @@ class AppInput extends StatefulWidget {
     bool readOnly = false,
     Key? key,
   }) =>
-      AppInput._withType(
+      AppInput(
         key: key,
         type: AppInputType.multiline,
         controller: controller!,

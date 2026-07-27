@@ -315,7 +315,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 ),
                 const SizedBox(height: 12),
                 AppText.bodyMedium(
-                  authProvider.subscriptionStatus ?? 'Enjoying unlimited access',
+                  authProvider.subscriptionStatus,
                   color: isDark ? AppColors.textSecondary : Colors.black54,
                   textAlign: TextAlign.center,
                 ),
@@ -335,8 +335,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   Widget _buildUpgradeContent(AuthProvider authProvider, SubscriptionProvider subscriptionProvider, ThemeProvider themeProvider) {
     final isDark = themeProvider.isDark;
-    final cardColor = isDark ? AppColors.surface : Colors.white;
-    final textColor = isDark ? AppColors.textPrimary : Colors.black87;
 
     return Padding(
       padding: const EdgeInsets.all(20),

@@ -416,7 +416,6 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
     return TabBarView(
       controller: _tabController,
       children: _promptCategories.entries.map((entry) {
-        final category = entry.key;
         final prompts = _getFilteredPrompts(entry.value);
         
         if (prompts.isEmpty && _searchQuery.isNotEmpty) {
