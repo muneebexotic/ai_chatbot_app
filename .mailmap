@@ -1,0 +1,32 @@
+# Canonical authorship for this repository.
+#
+# The correct identity is:
+#     muneebexotic <muneebusman112233@gmail.com>
+#
+# Early commits — including the whole of the pushed
+# milestone-0-security-remediation branch — were made under a machine-global
+# git identity that belongs to different accounts:
+#
+#     muneebexotic3 <musman@innovative-pk.com>
+#
+# Those commits are already on the remote, and rewriting them would need a
+# force push, which is out of scope here. A mailmap fixes the attribution
+# **without touching history**: `git log`, `git blame`, and `git shortlog`
+# all honour it, and it costs nothing to carry.
+#
+# Two things it does NOT do:
+#   1. GitHub links a commit to an account by the raw author email, so the
+#      web UI will still show those commits as unattributed until history is
+#      rewritten.
+#   2. It does not stop a wrong identity being used again — the pre-commit
+#      hook does that.
+#
+# To make it permanent, the history purge in SECURITY-REMEDIATION.md §2.5
+# should pass `--mailmap ../.mailmap` to git-filter-repo. That rewrite is
+# already planned, so the correction is free if it happens then.
+#
+# Format: <canonical name> <canonical email> <wrong name> <wrong email>
+
+muneebexotic <muneebusman112233@gmail.com> muneebexotic3 <musman@innovative-pk.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <musman@innovative-pk.com>
+muneebexotic <muneebusman112233@gmail.com> <muneebexotic3@gmail.com>
