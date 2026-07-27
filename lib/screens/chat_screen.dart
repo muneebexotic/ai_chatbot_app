@@ -185,7 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!await authProvider.canSendVoice()) {
       _showUpgradeDialog(
         'Voice Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_VOICE} voice messages.',
+        'You\'ve reached your daily limit of ${PaymentService.freeDailyVoice} voice messages.',
         'Upgrade to Premium for unlimited voice messages!',
       );
       return;
@@ -247,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
         'Message Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_MESSAGES} messages.',
+        'You\'ve reached your daily limit of ${PaymentService.freeDailyMessages} messages.',
         'Upgrade to Premium for unlimited messages!',
       );
       return;
@@ -275,7 +275,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!await authProvider.canUploadImage()) {
       _showUpgradeDialog(
         'Image Generation Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_IMAGES} images.',
+        'You\'ve reached your daily limit of ${PaymentService.freeDailyImages} images.',
         'Upgrade to Premium for unlimited image generation!',
       );
       return;
@@ -1042,7 +1042,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(height: 8),
                   AppText.bodySmall(
-                    '• ${PaymentService.FREE_DAILY_MESSAGES} messages per day\n• ${PaymentService.FREE_DAILY_IMAGES} images per day\n• ${PaymentService.FREE_DAILY_VOICE} voice inputs per day\n• ${PaymentService.FREE_PERSONAS_COUNT} personas available',
+                    '• ${PaymentService.freeDailyMessages} messages per day\n• ${PaymentService.freeDailyImages} images per day\n• ${PaymentService.freeDailyVoice} voice inputs per day\n• ${PaymentService.freePersonasCount} personas available',
                     color: AppColors.getTextSecondary(isDark),
                   ),
                 ],

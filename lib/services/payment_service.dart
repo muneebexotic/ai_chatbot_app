@@ -32,12 +32,12 @@ class PaymentService {
   };
 
   // Free tier limits
-  static const int FREE_DAILY_MESSAGES =
+  static const int freeDailyMessages =
       SubscriptionConstants.freeMessagesPerDay;
-  static const int FREE_DAILY_IMAGES = SubscriptionConstants.freeImagesPerDay;
-  static const int FREE_DAILY_VOICE =
+  static const int freeDailyImages = SubscriptionConstants.freeImagesPerDay;
+  static const int freeDailyVoice =
       SubscriptionConstants.freeVoiceMinutesPerDay;
-  static const int FREE_PERSONAS_COUNT =
+  static const int freePersonasCount =
       SubscriptionConstants.maxConversationsForFreeUser;
 
   // State management
@@ -57,7 +57,7 @@ class PaymentService {
 
   // Cache management
   DateTime? _lastCacheUpdate;
-  static const Duration CACHE_DURATION = Duration(minutes: 5);
+  static const Duration cacheDuration = Duration(minutes: 5);
 
   // Offline queue for usage updates
   final List<Map<String, dynamic>> _pendingUsageUpdates = [];
@@ -78,13 +78,13 @@ class PaymentService {
 
   int get remainingMessages => _isPremium
       ? -1
-      : (FREE_DAILY_MESSAGES - dailyMessageCount).clamp(0, FREE_DAILY_MESSAGES);
+      : (freeDailyMessages - dailyMessageCount).clamp(0, freeDailyMessages);
   int get remainingImages => _isPremium
       ? -1
-      : (FREE_DAILY_IMAGES - dailyImageCount).clamp(0, FREE_DAILY_IMAGES);
+      : (freeDailyImages - dailyImageCount).clamp(0, freeDailyImages);
   int get remainingVoice => _isPremium
       ? -1
-      : (FREE_DAILY_VOICE - dailyVoiceCount).clamp(0, FREE_DAILY_VOICE);
+      : (freeDailyVoice - dailyVoiceCount).clamp(0, freeDailyVoice);
 
   // Callback functions
   Function(bool success, String message)? onPurchaseResult;
@@ -361,7 +361,7 @@ class PaymentService {
   /// Check if cache is valid
   bool _isCacheValid() {
     if (_lastCacheUpdate == null) return false;
-    return DateTime.now().difference(_lastCacheUpdate!) < CACHE_DURATION;
+    return DateTime.now().difference(_lastCacheUpdate!) < cacheDuration;
   }
 
   /// Check if we should sync with Google Play
@@ -717,9 +717,9 @@ class PaymentService {
 
   /// Usage validation methods
   bool canSendMessage() =>
-      _isPremium || dailyMessageCount < FREE_DAILY_MESSAGES;
-  bool canUploadImage() => _isPremium || dailyImageCount < FREE_DAILY_IMAGES;
-  bool canSendVoice() => _isPremium || dailyVoiceCount < FREE_DAILY_VOICE;
+      _isPremium || dailyMessageCount < freeDailyMessages;
+  bool canUploadImage() => _isPremium || dailyImageCount < freeDailyImages;
+  bool canSendVoice() => _isPremium || dailyVoiceCount < freeDailyVoice;
   bool canAccessAllPersonas() => _isPremium;
 
   /// Usage increment methods
@@ -859,9 +859,9 @@ class PaymentService {
   String getUsageText() {
     if (_isPremium) return 'Unlimited usage';
 
-    return 'Messages: $dailyMessageCount/$FREE_DAILY_MESSAGES, '
-        'Images: $dailyImageCount/$FREE_DAILY_IMAGES, '
-        'Voice: $dailyVoiceCount/$FREE_DAILY_VOICE';
+    return 'Messages: $dailyMessageCount/$freeDailyMessages, '
+        'Images: $dailyImageCount/$freeDailyImages, '
+        'Voice: $dailyVoiceCount/$freeDailyVoice';
   }
 
   /// Get error message

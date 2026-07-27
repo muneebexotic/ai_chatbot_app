@@ -17,11 +17,11 @@ class FirestoreService {
   final Map<String, DateTime> _cacheTimestamps = {};
 
   // Configuration constants
-  static const Duration CACHE_DURATION = Duration(minutes: 5);
-  static const Duration OPERATION_TIMEOUT = Duration(seconds: 30);
-  static const int MAX_RETRY_ATTEMPTS = 3;
-  static const int MAX_BATCH_SIZE = 500;
-  static const int SEARCH_RESULTS_LIMIT = 50;
+  static const Duration cacheDuration = Duration(minutes: 5);
+  static const Duration operationTimeout = Duration(seconds: 30);
+  static const int maxRetryAttempts = 3;
+  static const int maxBatchSize = 500;
+  static const int searchResultsLimit = 50;
 
   // Connection state
   bool _isOffline = false;
@@ -38,7 +38,7 @@ class FirestoreService {
     if (_userCache.containsKey(uid)) {
       final cacheTime = _cacheTimestamps[uid];
       if (cacheTime != null &&
-          DateTime.now().difference(cacheTime) < CACHE_DURATION) {
+          DateTime.now().difference(cacheTime) < cacheDuration) {
         Log.d('Returning cached user data for: $uid');
         return _userCache[uid];
       } else {
@@ -51,7 +51,7 @@ class FirestoreService {
     return await _performOperationWithRetry(
       operation: () => _fetchUserFromFirestore(uid),
       operationName: 'getUserWithCache',
-      maxRetries: MAX_RETRY_ATTEMPTS,
+      maxRetries: maxRetryAttempts,
     );
   }
 
@@ -64,7 +64,7 @@ class FirestoreService {
           .collection('users')
           .doc(uid)
           .get()
-          .timeout(OPERATION_TIMEOUT);
+          .timeout(operationTimeout);
 
       stopwatch.stop();
       Log.d('Firestore user fetch took: ${stopwatch.elapsedMilliseconds}ms');
@@ -134,11 +134,11 @@ class FirestoreService {
   Future<T> _performOperationWithRetry<T>({
     required Future<T> Function() operation,
     required String operationName,
-    int maxRetries = MAX_RETRY_ATTEMPTS,
+    int maxRetries = maxRetryAttempts,
   }) async {
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        final result = await operation().timeout(OPERATION_TIMEOUT);
+        final result = await operation().timeout(operationTimeout);
 
         // Reset offline status on successful operation
         if (_isOffline) {
@@ -427,7 +427,7 @@ class FirestoreService {
           }
 
           // Limit client-side results
-          if (results.length >= SEARCH_RESULTS_LIMIT) break;
+          if (results.length >= searchResultsLimit) break;
         }
 
         return results;
@@ -500,7 +500,7 @@ class FirestoreService {
     bool hasMore = true;
     while (hasMore) {
       final batch = _db.batch();
-      final snapshot = await messagesRef.limit(MAX_BATCH_SIZE).get();
+      final snapshot = await messagesRef.limit(maxBatchSize).get();
 
       if (snapshot.docs.isEmpty) {
         hasMore = false;
@@ -511,7 +511,7 @@ class FirestoreService {
         await batch.commit();
 
         // Check if there are more documents
-        hasMore = snapshot.docs.length == MAX_BATCH_SIZE;
+        hasMore = snapshot.docs.length == maxBatchSize;
       }
     }
 
@@ -829,7 +829,7 @@ class FirestoreService {
   /// Save user with enhanced retry logic and validation
   Future<void> saveUserWithRetry(
     AppUser user, {
-    int maxRetries = MAX_RETRY_ATTEMPTS,
+    int maxRetries = maxRetryAttempts,
   }) async {
     if (!user.isValid()) {
       throw FirestoreServiceException('Cannot save invalid user data');

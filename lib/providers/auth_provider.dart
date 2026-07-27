@@ -36,7 +36,7 @@ class AuthProvider with ChangeNotifier {
 
   // Cache management
   DateTime? _lastUserDataRefresh;
-  static const Duration USER_DATA_CACHE_DURATION = Duration(minutes: 3);
+  static const Duration userDataCacheDuration = Duration(minutes: 3);
 
   // Public getters
   User? get user => _firebaseUser;
@@ -77,9 +77,9 @@ class AuthProvider with ChangeNotifier {
       final images = _currentUser!.dailyUsage['images'] ?? 0;
       final voice = _currentUser!.dailyUsage['voice'] ?? 0;
 
-      return 'Messages: $messages/${PaymentService.FREE_DAILY_MESSAGES}, '
-          'Images: $images/${PaymentService.FREE_DAILY_IMAGES}, '
-          'Voice: $voice/${PaymentService.FREE_DAILY_VOICE}';
+      return 'Messages: $messages/${PaymentService.freeDailyMessages}, '
+          'Images: $images/${PaymentService.freeDailyImages}, '
+          'Voice: $voice/${PaymentService.freeDailyVoice}';
     }
 
     return 'No usage data';
@@ -401,7 +401,7 @@ class AuthProvider with ChangeNotifier {
   bool _isUserDataCacheValid() {
     if (_lastUserDataRefresh == null) return false;
     return DateTime.now().difference(_lastUserDataRefresh!) <
-        USER_DATA_CACHE_DURATION;
+        userDataCacheDuration;
   }
 
   // AUTHENTICATION METHODS
@@ -582,7 +582,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentMessages = _currentUser!.dailyUsage['messages'] ?? 0;
-      return currentMessages < PaymentService.FREE_DAILY_MESSAGES;
+      return currentMessages < PaymentService.freeDailyMessages;
     }
 
     return false;
@@ -596,7 +596,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentImages = _currentUser!.dailyUsage['images'] ?? 0;
-      return currentImages < PaymentService.FREE_DAILY_IMAGES;
+      return currentImages < PaymentService.freeDailyImages;
     }
 
     return false;
@@ -610,7 +610,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentVoice = _currentUser!.dailyUsage['voice'] ?? 0;
-      return currentVoice < PaymentService.FREE_DAILY_VOICE;
+      return currentVoice < PaymentService.freeDailyVoice;
     }
 
     return false;
@@ -624,7 +624,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentImages = _currentUser!.dailyUsage['images'] ?? 0;
-      return currentImages < PaymentService.FREE_DAILY_IMAGES;
+      return currentImages < PaymentService.freeDailyImages;
     }
 
     return false;
