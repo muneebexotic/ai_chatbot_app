@@ -401,6 +401,7 @@ class PersonaScreen extends StatelessWidget {
               );
 
               // Update ChatProvider with new persona
+              if (!context.mounted) return;
               try {
                 final chatProvider = Provider.of<ChatProvider>(
                   context,

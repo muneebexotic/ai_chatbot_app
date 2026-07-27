@@ -63,6 +63,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     
     try {
       await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
       final subscriptionProvider = context.read<SubscriptionProvider>();
       await subscriptionProvider.initialize();
       Log.d('Subscription initialization completed');

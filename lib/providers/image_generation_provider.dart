@@ -154,6 +154,7 @@ class ImageGenerationProvider with ChangeNotifier {
 
       if (generatedImage != null) {
         // Get user ID from AuthProvider
+        if (!context.mounted) return null;
         final userId = Provider.of<AuthProvider>(context, listen: false).user?.uid ?? 'anonymous';
         
         // Upload to cloud

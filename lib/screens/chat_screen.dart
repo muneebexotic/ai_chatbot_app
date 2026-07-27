@@ -257,6 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
     _focusNode.unfocus();
 
+    if (!mounted) return;
     try {
       await Provider.of<ChatProvider>(
         context,
@@ -296,6 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
     HapticFeedback.selectionClick();
     _focusNode.unfocus();
 
+    if (!mounted) return;
     try {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       await chatProvider.generateImageMessage(prompt);

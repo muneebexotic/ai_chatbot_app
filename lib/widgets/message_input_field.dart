@@ -312,6 +312,9 @@ class _MessageInputFieldState extends State<MessageInputField>
       return;
     }
 
+    // `mounted` on the State, not `context.mounted`: inside a State the
+    // analyzer treats the latter as an unrelated check.
+    if (!mounted) return;
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
 

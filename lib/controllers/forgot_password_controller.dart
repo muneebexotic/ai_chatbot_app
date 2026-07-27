@@ -23,6 +23,9 @@ class ForgotPasswordController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
 
+      // The user can leave this screen while the reset email is in flight.
+      // The state above is still worth setting; the context is not usable.
+      if (!context.mounted) return;
       _showSnackBar(context,
         message: 'Password reset email sent! Check your inbox.',
         icon: Icons.check_circle,
@@ -36,6 +39,7 @@ class ForgotPasswordController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
 
+      if (!context.mounted) return;
       _showSnackBar(
         context,
         message: AuthErrorUtils.getMessage(e.toString()),

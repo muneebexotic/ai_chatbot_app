@@ -232,6 +232,7 @@ class SettingsScreen extends StatelessWidget {
                           final confirmed = await _showSignOutDialog(context);
                           if (confirmed == true) {
                             await authProvider.logout();
+                            if (!context.mounted) return;
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(builder: (context) => const WelcomeScreen()),

@@ -187,6 +187,7 @@ String _extractImagePrompt(String input) {
       );
 
       try {
+        if (!context.mounted) return;
         await Provider.of<ConversationsProvider>(
           context,
           listen: false,
@@ -330,6 +331,12 @@ String _extractImagePrompt(String input) {
   }
 
 Future<void> sendMessage(String userInput) async {
+  // Resolved before any await. Reading a provider off a stored BuildContext
+  // after an async gap is unsafe, and hoisting preserves behaviour where a
+  // `mounted` guard would silently abandon the send. That this class holds a
+  // BuildContext at all is F3, removed by the Riverpod migration.
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
   // Check usage limits before sending
   final canSend = await _canSendMessage();
   if (!canSend) {
@@ -363,8 +370,7 @@ Future<void> sendMessage(String userInput) async {
   Log.d('User message added: ${userMessage.text}');
 
   try {
-    // Increment message usage
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // Increment message usage (authProvider resolved at method entry)
     await authProvider.incrementMessageUsage();
 
     await _firestoreService.saveMessage(
@@ -409,6 +415,12 @@ Future<void> sendMessage(String userInput) async {
 
   /// NEW: Generate and add image message to chat
   Future<void> generateImageMessage(String prompt) async {
+    // Resolved before any await — see the note in sendMessage.
+    final imageProvider = Provider.of<ImageGenerationProvider>(
+      context,
+      listen: false,
+    );
+
     try {
       // Check if user can generate images
       final canGenerate = await canGenerateImage();
@@ -441,8 +453,9 @@ Future<void> sendMessage(String userInput) async {
       // Save user message
       await _firestoreService.saveMessage(userId, _conversationId!, userMessage);
 
-      // Generate image using ImageGenerationProvider
-      final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
+      // Generate image (imageProvider resolved at method entry). This one
+      // passes the context onward, so it genuinely needs the liveness check.
+      if (!context.mounted) return;
       final generatedImage = await imageProvider.generateImage(context, prompt);
 
       if (generatedImage != null) {

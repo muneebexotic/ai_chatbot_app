@@ -27,6 +27,7 @@ class ImageGenerationController {
       return;
     }
 
+    if (!context.mounted) return;
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -57,6 +58,7 @@ class ImageGenerationController {
       await authProvider.incrementImageUsage();
 
       // Generate the image
+      if (!context.mounted) return null;
       final result = await imageProvider.generateImage(
         context,
         prompt,
@@ -123,7 +125,8 @@ class ImageGenerationController {
 
     try {
       await authProvider.incrementImageUsage();
-      
+
+      if (!context.mounted) return;
       final result = await imageProvider.regenerateImage(context);
       if (result != null) {
         _showSnackBar(
@@ -197,6 +200,7 @@ class ImageGenerationController {
   Future<bool> deleteImage(GeneratedImage image) async {
     final confirmed = await _showDeleteConfirmation(image);
     if (!confirmed) return false;
+    if (!context.mounted) return false;
 
     final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
     
@@ -311,6 +315,7 @@ class ImageGenerationController {
   Future<void> clearAllImages() async {
     final confirmed = await _showClearAllConfirmation();
     if (!confirmed) return;
+    if (!context.mounted) return;
 
     final imageProvider = Provider.of<ImageGenerationProvider>(context, listen: false);
     

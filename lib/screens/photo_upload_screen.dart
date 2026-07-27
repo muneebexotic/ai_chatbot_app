@@ -587,6 +587,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     setState(() => _isUploading = true);
     try {
       final avatarUrl = await _photoService.generateRandomAvatar();
+      if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.setUserAvatar(avatarUrl);
       if (mounted) {
