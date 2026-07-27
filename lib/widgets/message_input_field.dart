@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../screens/subscription_screen.dart';
 import '../components/ui/app_text.dart';
+import '../app/providers.dart';
 
-class MessageInputField extends StatefulWidget {
+class MessageInputField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isListening;
@@ -27,10 +26,10 @@ class MessageInputField extends StatefulWidget {
     this.onTypingStatusChanged,});
 
   @override
-  State<MessageInputField> createState() => _MessageInputFieldState();
+  ConsumerState<MessageInputField> createState() => _MessageInputFieldState();
 }
 
-class _MessageInputFieldState extends State<MessageInputField>
+class _MessageInputFieldState extends ConsumerState<MessageInputField>
     with TickerProviderStateMixin {
   AnimationController? _micAnimationController;
   AnimationController? _sendAnimationController;
@@ -255,7 +254,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleSendTap() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canSend = await authProvider.canSendMessage();
     
     if (!canSend) {
@@ -276,7 +275,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleMicTap() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canSendVoice = await authProvider.canSendVoice();
     
     if (!canSendVoice) {
@@ -288,7 +287,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleImageUpload() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canUpload = await authProvider.canUploadImage();
     
     if (!canUpload) {
@@ -299,7 +298,7 @@ class _MessageInputFieldState extends State<MessageInputField>
     // `mounted` on the State, not `context.mounted`: inside a State the
     // analyzer treats the latter as an unrelated check.
     if (!mounted) return;
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -323,8 +322,8 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   void _showUsageLimitDialog(String limitType) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
     
     showDialog(
@@ -425,8 +424,11 @@ class _MessageInputFieldState extends State<MessageInputField>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, ThemeProvider>(
-      builder: (context, authProvider, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Center(

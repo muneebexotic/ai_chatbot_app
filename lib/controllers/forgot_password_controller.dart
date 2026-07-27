@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/auth_error_utils.dart';
 
@@ -10,15 +9,17 @@ class ForgotPasswordController extends ChangeNotifier {
   bool isLoading = false;
   bool emailSent = false;
 
-  Future<void> resetPassword(BuildContext context) async {
+  /// [auth] is passed in rather than read from the tree: a controller that
+  /// calls `Provider.of` on a context it was handed is the same F3 shape as
+  /// a service doing it, just one layer up.
+  Future<void> resetPassword(BuildContext context, AuthProvider auth) async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     isLoading = true;
     notifyListeners();
 
     try {
-      await authProvider.sendPasswordResetEmail(emailController.text.trim());
+      await auth.sendPasswordResetEmail(emailController.text.trim());
       emailSent = true;
       isLoading = false;
       notifyListeners();

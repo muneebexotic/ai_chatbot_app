@@ -1,40 +1,80 @@
-import 'package:ai_chatbot_app/providers/conversation_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+// `foundation`, not `material`. This class holds state; it does not build
+// widgets, and importing Material is how it drifted into showing dialogs.
+import 'package:flutter/foundation.dart';
+
+import 'package:ai_chatbot_app/core/logging/log.dart';
 import '../models/chat_message.dart';
 import '../services/firestore_service.dart';
 import '../services/gemini_service.dart';
 import '../providers/auth_provider.dart';
-import '../screens/subscription_screen.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
 
+/// Chat state for one user.
+///
+/// **No `BuildContext`.** It previously held one and used it to read other
+/// providers, to build an `AlertDialog`, and to push a route — F3, and the
+/// reason every method here needed a `mounted` guard. Dependencies are now
+/// constructor-injected, so this class can be constructed and driven in a
+/// test with no widget tree at all.
 class ChatProvider with ChangeNotifier {
+  ChatProvider({
+    required this.userId,
+    required AuthProvider auth,
+    required PersonaResolver persona,
+    Future<void> Function()? onConversationsChanged,
+  }) : _auth = auth,
+       _onConversationsChanged = onConversationsChanged,
+       _geminiService = GeminiService(persona: persona);
+
   final FirestoreService _firestoreService = FirestoreService();
   final List<ChatMessage> _messages = [];
   final String userId;
-  final BuildContext context;
-  late final GeminiService _geminiService;
+  final AuthProvider _auth;
+  final GeminiService _geminiService;
+
+  /// Lets the conversation list refresh after a title is generated, without
+  /// this class reaching for another provider through a context.
+  final Future<void> Function()? _onConversationsChanged;
 
   String? _conversationId;
   String? get conversationId => _conversationId;
   bool _titleGenerated = false;
 
-  ChatProvider({required this.userId, required this.context}) {
-    _geminiService = GeminiService(context);
-  }
-
   List<ChatMessage> get messages => _messages;
   bool _isTyping = false;
   bool get isTyping => _isTyping;
+
+  /// Set when an action was refused for quota, naming what was blocked
+  /// ('message', 'voice', …). The UI watches this and decides what to show.
+  ///
+  /// State signals an event; the widget layer renders it. Previously this
+  /// class built the paywall dialog itself, which meant a state class chose
+  /// the copy, the colours, and the navigation target — and made R8.3's
+  /// "paywall appears at exactly two moments" impossible to enforce or test.
+  String? _quotaBlockedFor;
+  String? get quotaBlockedFor => _quotaBlockedFor;
+
+  void _blockOnQuota(String limitType) {
+    _quotaBlockedFor = limitType;
+    notifyListeners();
+  }
+
+  /// Called by the UI once it has shown whatever the block warrants.
+  void acknowledgeQuotaBlock() {
+    if (_quotaBlockedFor == null) return;
+    _quotaBlockedFor = null;
+    notifyListeners();
+  }
 
   void _setTyping(bool value) {
     _isTyping = value;
     notifyListeners();
   }
 
+  /// Persona is resolved per call inside [GeminiService], so switching persona
+  /// needs no rebuild. This only nudges listeners so the UI reflects the
+  /// change immediately.
   void updatePersona() {
-    _geminiService = GeminiService(context);
-    Log.d('ChatProvider: GeminiService updated with new persona');
+    Log.d('ChatProvider: persona changed');
     notifyListeners();
   }
 
@@ -43,6 +83,7 @@ class ChatProvider with ChangeNotifier {
     if (text.length <= 30) return text;
     return '${text.substring(0, 30).split('\n').first}...';
   }
+
   Future<void> startNewConversation() async {
     _conversationId = await _firestoreService.createConversation(userId);
     _messages.clear();
@@ -86,13 +127,9 @@ class ChatProvider with ChangeNotifier {
       );
 
       try {
-        if (!context.mounted) return;
-        await Provider.of<ConversationsProvider>(
-          context,
-          listen: false,
-        ).loadConversations();
+        await _onConversationsChanged?.call();
       } catch (e) {
-        Log.d('Could not refresh sidebar: $e');
+        Log.d('Could not refresh conversation list: $e');
       }
 
       _titleGenerated = true;
@@ -104,209 +141,86 @@ class ChatProvider with ChangeNotifier {
   /// Check if user can send a message (usage limits)
   Future<bool> _canSendMessage() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      return await authProvider.canSendMessage();
+      return await _auth.canSendMessage();
     } catch (e) {
       Log.d('Error checking message limit: $e');
       return true; // Default to allowing if check fails
     }
   }
 
-  /// Show usage limit dialog
-  Future<void> _showUsageLimitDialog(String limitType) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Daily Limit Reached',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'You\'ve reached your daily $limitType limit for free users.',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Upgrade to Premium for:',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '• Unlimited messages\n• All personas\n• Unlimited images & voice\n• Priority support',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                'Later',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SubscriptionScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Upgrade',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-Future<void> sendMessage(String userInput) async {
-  // Resolved before any await. Reading a provider off a stored BuildContext
-  // after an async gap is unsafe, and hoisting preserves behaviour where a
-  // `mounted` guard would silently abandon the send. That this class holds a
-  // BuildContext at all is F3, removed by the Riverpod migration.
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-  // Check usage limits before sending
-  final canSend = await _canSendMessage();
-  if (!canSend) {
-    await _showUsageLimitDialog('message');
-    return;
-  }
-  // Continue with normal text message flow
-  if (_conversationId == null) {
-    _conversationId = await _firestoreService.createConversationWithTitle(
-      userId,
-      'New Chat',
-    );
-    _messages.clear();
-    _titleGenerated = false;
-    notifyListeners();
-  }
-
-  final userMessage = ChatMessage.text(text: userInput, sender: 'user');
-  _messages.add(userMessage);
-  _setTyping(true);
-  notifyListeners();
-  Log.d('User message added: ${userMessage.text}');
-
-  try {
-    // Increment message usage (authProvider resolved at method entry)
-    await authProvider.incrementMessageUsage();
-
-    await _firestoreService.saveMessage(
-      userId,
-      _conversationId!,
-      userMessage,
-    );
-
-    // Send to Gemini with conversation history
-    final aiReply = await _geminiService.sendMessageWithHistory(_messages);
-
-    final botReply = ChatMessage.text(
-      text: aiReply ?? "Sorry, I couldn't understand that.",
-      sender: 'bot',
-    );
-
-    _messages.add(botReply);
-    notifyListeners();
-    Log.d('Gemini reply: ${botReply.text}');
-
-    await _firestoreService.saveMessage(userId, _conversationId!, botReply);
-
-    // Generate AI title after 2nd bot response (4 total messages)
-    if (!_titleGenerated && _messages.length >= 4) {
-      await _generateConversationTitle();
+  Future<void> sendMessage(String userInput) async {
+    // Check usage limits before sending
+    final canSend = await _canSendMessage();
+    if (!canSend) {
+      _blockOnQuota('message');
+      return;
     }
-  } catch (e) {
-    Log.d('Error in sendMessage: $e');
+    // Continue with normal text message flow
+    if (_conversationId == null) {
+      _conversationId = await _firestoreService.createConversationWithTitle(
+        userId,
+        'New Chat',
+      );
+      _messages.clear();
+      _titleGenerated = false;
+      notifyListeners();
+    }
 
-    // If Gemini fails, still show an error message
-    final errorMessage = ChatMessage.text(
-      text: "Sorry, I'm having trouble responding right now. Please try again.",
-      sender: 'bot',
-    );
-
-    _messages.add(errorMessage);
+    final userMessage = ChatMessage.text(text: userInput, sender: 'user');
+    _messages.add(userMessage);
+    _setTyping(true);
     notifyListeners();
-  } finally {
-    _setTyping(false);
+    Log.d('User message added: ${userMessage.text}');
+
+    try {
+      // Increment message usage (authProvider resolved at method entry)
+      await _auth.incrementMessageUsage();
+
+      await _firestoreService.saveMessage(
+        userId,
+        _conversationId!,
+        userMessage,
+      );
+
+      // Send to Gemini with conversation history
+      final aiReply = await _geminiService.sendMessageWithHistory(_messages);
+
+      final botReply = ChatMessage.text(
+        text: aiReply ?? "Sorry, I couldn't understand that.",
+        sender: 'bot',
+      );
+
+      _messages.add(botReply);
+      notifyListeners();
+      Log.d('Gemini reply: ${botReply.text}');
+
+      await _firestoreService.saveMessage(userId, _conversationId!, botReply);
+
+      // Generate AI title after 2nd bot response (4 total messages)
+      if (!_titleGenerated && _messages.length >= 4) {
+        await _generateConversationTitle();
+      }
+    } catch (e) {
+      Log.d('Error in sendMessage: $e');
+
+      // If Gemini fails, still show an error message
+      final errorMessage = ChatMessage.text(
+        text:
+            "Sorry, I'm having trouble responding right now. Please try again.",
+        sender: 'bot',
+      );
+
+      _messages.add(errorMessage);
+      notifyListeners();
+    } finally {
+      _setTyping(false);
+    }
   }
-}
+
   /// Check if user can upload images
   Future<bool> canUploadImage() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      return await authProvider.canUploadImage();
+      return await _auth.canUploadImage();
     } catch (e) {
       Log.d('Error checking image upload limit: $e');
       return true;
@@ -316,8 +230,7 @@ Future<void> sendMessage(String userInput) async {
   /// Check if user can send voice messages
   Future<bool> canSendVoice() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      return await authProvider.canSendVoice();
+      return await _auth.canSendVoice();
     } catch (e) {
       Log.d('Error checking voice limit: $e');
       return true;
@@ -327,8 +240,7 @@ Future<void> sendMessage(String userInput) async {
   /// Increment image usage
   Future<void> incrementImageUsage() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.incrementImageUsage();
+      await _auth.incrementImageUsage();
     } catch (e) {
       Log.d('Error incrementing image usage: $e');
     }
@@ -337,8 +249,7 @@ Future<void> sendMessage(String userInput) async {
   /// Increment voice usage
   Future<void> incrementVoiceUsage() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.incrementVoiceUsage();
+      await _auth.incrementVoiceUsage();
     } catch (e) {
       Log.d('Error incrementing voice usage: $e');
     }
@@ -348,7 +259,7 @@ Future<void> sendMessage(String userInput) async {
   Future<void> handleImageUpload() async {
     final canUpload = await canUploadImage();
     if (!canUpload) {
-      await _showUsageLimitDialog('image');
+      _blockOnQuota('image');
       return;
     }
 
@@ -362,7 +273,7 @@ Future<void> sendMessage(String userInput) async {
   Future<void> handleVoiceMessage() async {
     final canSend = await canSendVoice();
     if (!canSend) {
-      await _showUsageLimitDialog('voice');
+      _blockOnQuota('voice');
       return;
     }
 
@@ -394,13 +305,12 @@ Future<void> sendMessage(String userInput) async {
   /// Get usage statistics for UI
   Map<String, dynamic> getUsageStats() {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       return {
-        'isPremium': authProvider.isPremium,
-        'remainingMessages': authProvider.paymentService.remainingMessages,
-        'remainingImages': authProvider.paymentService.remainingImages,
-        'remainingVoice': authProvider.paymentService.remainingVoice,
-        'subscriptionStatus': authProvider.subscriptionStatus,
+        'isPremium': _auth.isPremium,
+        'remainingMessages': _auth.paymentService.remainingMessages,
+        'remainingImages': _auth.paymentService.remainingImages,
+        'remainingVoice': _auth.paymentService.remainingVoice,
+        'subscriptionStatus': _auth.subscriptionStatus,
       };
     } catch (e) {
       Log.d('Error getting usage stats: $e');

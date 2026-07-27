@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:ai_chatbot_app/widgets/user_drawer_tile.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
-import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class ConversationDrawer extends StatefulWidget {
+class ConversationDrawer extends ConsumerStatefulWidget {
   final Future<String?> Function(BuildContext, String) onRenameDialog;
   final VoidCallback? onDrawerClosed;
 
@@ -18,10 +18,10 @@ class ConversationDrawer extends StatefulWidget {
   });
 
   @override
-  State<ConversationDrawer> createState() => _ConversationDrawerState();
+  ConsumerState<ConversationDrawer> createState() => _ConversationDrawerState();
 }
 
-class _ConversationDrawerState extends State<ConversationDrawer>
+class _ConversationDrawerState extends ConsumerState<ConversationDrawer>
     with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -131,10 +131,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
       return;
     }
 
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final convoProvider = ref.read(conversationsNotifierProvider);
     
     // Simulate network delay for better UX (remove in production if not needed)
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -156,10 +153,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   }
 
   void _clearSearchImmediate() {
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final convoProvider = ref.read(conversationsNotifierProvider);
     convoProvider.clearSearch();
     setState(() {
       _isSearching = false;
@@ -178,8 +172,12 @@ class _ConversationDrawerState extends State<ConversationDrawer>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<ChatProvider, ConversationsProvider, ThemeProvider>(
-      builder: (context, chatProvider, convoProvider, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final chatProvider = ref.watch(chatNotifierProvider);
+        final convoProvider = ref.watch(conversationsNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Drawer(

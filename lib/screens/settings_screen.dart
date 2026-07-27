@@ -1,21 +1,21 @@
 import 'package:ai_chatbot_app/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Add this import
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/themes_provider.dart'; // Add theme provider import
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import 'personas_screen.dart';
 import 'welcome_screen.dart';
+import '../app/providers.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context); // Add theme provider
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authProvider = ref.watch(authNotifierProvider);
+    final themeProvider = ref.watch(themeNotifierProvider); // Add theme provider
     final userName = authProvider.displayName;
     final userEmail = authProvider.email;
     final photoUrl = authProvider.userPhotoUrl;

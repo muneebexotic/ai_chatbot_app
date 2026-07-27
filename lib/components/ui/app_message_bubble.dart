@@ -8,11 +8,11 @@ import 'package:flutter_highlight/themes/agate.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/chat_message.dart';
+import '../../app/providers.dart';
 
-class UserMessageBubble extends StatelessWidget {
+class UserMessageBubble extends ConsumerWidget {
   final ChatMessage message; // Changed from String to ChatMessage
 
   const UserMessageBubble({
@@ -91,8 +91,8 @@ class UserMessageBubble extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final avatarUrl = ref.watch(authNotifierProvider).userPhotoUrl;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -148,7 +148,7 @@ class UserMessageBubble extends StatelessWidget {
   }
 }
 
-class BotMessageBubble extends StatefulWidget {
+class BotMessageBubble extends ConsumerStatefulWidget {
   final ChatMessage message; // Changed from String to ChatMessage
   final VoidCallback onSpeak;
   final VoidCallback onCopy;
@@ -161,10 +161,10 @@ class BotMessageBubble extends StatefulWidget {
   });
 
   @override
-  State<BotMessageBubble> createState() => _BotMessageBubbleState();
+  ConsumerState<BotMessageBubble> createState() => _BotMessageBubbleState();
 }
 
-class _BotMessageBubbleState extends State<BotMessageBubble>
+class _BotMessageBubbleState extends ConsumerState<BotMessageBubble>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;

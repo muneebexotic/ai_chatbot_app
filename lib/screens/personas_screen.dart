@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../screens/subscription_screen.dart';
-import '../providers/chat_provider.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
+import '../app/providers.dart';
 
-class PersonaScreen extends StatelessWidget {
+class PersonaScreen extends ConsumerWidget {
   const PersonaScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer3<SettingsProvider, AuthProvider, ThemeProvider>(
-      builder: (context, settingsProvider, authProvider, themeProvider, child) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final settingsProvider = ref.watch(settingsNotifierProvider);
+        final authProvider = ref.watch(authNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isPremium = authProvider.isPremium;
         final isDark = themeProvider.isDark;
         final availablePersonas = settingsProvider.getAvailablePersonas(
@@ -171,6 +174,7 @@ class PersonaScreen extends StatelessWidget {
                                 settingsProvider,
                                 authProvider,
                                 context,
+                                ref,
                                 isDark,
                               ),
                             )
@@ -379,6 +383,9 @@ class PersonaScreen extends StatelessWidget {
     SettingsProvider settingsProvider,
     AuthProvider authProvider,
     BuildContext context,
+    // Passed explicitly: a helper method on a ConsumerWidget is outside build,
+    // so it has no `ref` of its own.
+    WidgetRef ref,
     bool isDark,
   ) {
     final bool isSelected = currentPersona == value;
@@ -403,10 +410,7 @@ class PersonaScreen extends StatelessWidget {
               // Update ChatProvider with new persona
               if (!context.mounted) return;
               try {
-                final chatProvider = Provider.of<ChatProvider>(
-                  context,
-                  listen: false,
-                );
+                final chatProvider = ref.read(chatNotifierProvider);
                 chatProvider.updatePersona();
                 Log.d(
                   'PersonaScreen: Updated ChatProvider with new persona: $value',

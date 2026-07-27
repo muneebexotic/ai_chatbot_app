@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
 import '../components/ui/app_text.dart';
+import '../app/providers.dart';
 
-class ImagePromptSuggestions extends StatefulWidget {
+class ImagePromptSuggestions extends ConsumerStatefulWidget {
   const ImagePromptSuggestions({super.key});
 
   @override
-  State<ImagePromptSuggestions> createState() => _ImagePromptSuggestionsState();
+  ConsumerState<ImagePromptSuggestions> createState() => _ImagePromptSuggestionsState();
 }
 
-class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
+class _ImagePromptSuggestionsState extends ConsumerState<ImagePromptSuggestions>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
@@ -253,8 +253,10 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Container(

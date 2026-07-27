@@ -12,11 +12,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # State and DI. Riverpod is the target (PRD F5); provider remains only until
-  # the screen-by-screen migration finishes in this milestone.
+  # State and DI (PRD F5). package:provider is gone -- the migration is
+  # complete, so nothing should reintroduce it.
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
-  provider: ^6.1.2
 
   # Backend. Firebase is removed in Milestone 2 (PRD §2.2, DECISIONS.md D0).
   firebase_core: ^4.0.0

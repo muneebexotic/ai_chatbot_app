@@ -8,6 +8,43 @@ would reverse it.
 
 ---
 
+## D5 — Riverpod migration keeps `ChangeNotifier` for now
+
+**Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Implements:** PRD F5
+
+**What.** `package:provider` is removed entirely — no `MultiProvider`, no
+`Provider.of`, no `context.read`. The graph is Riverpod, rooted in a
+`ProviderScope`, declared in `lib/app/providers.dart`. But the six state
+classes behind it are still `ChangeNotifier`, exposed through Riverpod's
+`ChangeNotifierProvider` rather than rewritten as `Notifier`.
+
+**Why.** F5's stated purpose is "what removes F3 cleanly and makes
+quota/entitlement state testable". That comes from the dependency
+*injection*, and that part is done and verified: no service holds a
+`BuildContext`, no provider stores one, and every class in the graph can be
+constructed in a test. Rewriting `AuthProvider` (770 lines), `PaymentService`
+(900+), and four others into `Notifier` at the same time would have been a
+simultaneous rewrite of several thousand lines of code that Milestones 2–5
+are going to replace anyway, with no way to tell a migration bug from a
+rewrite bug.
+
+`ChangeNotifierProvider` is Riverpod's own documented migration path off
+`package:provider`, so this is the intended intermediate state, not a
+workaround.
+
+**Cost.** The state classes do not yet get Riverpod's compile-time safety or
+its `AsyncValue` handling. `ref.watch` on a `ChangeNotifier` rebuilds on any
+`notifyListeners()` rather than on the specific field read.
+
+**Reverses if:** never — each becomes a `Notifier` as its feature is rebuilt
+(auth in Milestone 2, chat in Milestone 3, entitlements in Milestone 6), at
+which point it is a rewrite of code already being rewritten.
+
+**Guarded by:** `test/architecture_test.dart` fails if `package:provider`,
+`Provider.of`, `context.read`, or `context.watch` reappears anywhere in `lib/`.
+
+---
+
 ## D4 — Three markdown renderers survive Milestone 1
 
 **Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Defers:** PRD §2.2

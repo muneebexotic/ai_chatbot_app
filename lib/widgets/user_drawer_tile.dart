@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class UserDrawerTile extends StatelessWidget {
+class UserDrawerTile extends ConsumerWidget {
   const UserDrawerTile({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final avatarUrl = Provider.of<AuthProvider>(context).userPhotoUrl;
-    final username = Provider.of<AuthProvider>(context).displayName;
-    final isDark = Provider.of<ThemeProvider>(context).isDark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final avatarUrl = ref.watch(authNotifierProvider).userPhotoUrl;
+    final username = ref.watch(authNotifierProvider).displayName;
+    final isDark = ref.watch(themeNotifierProvider).isDark;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 24, top: 12),

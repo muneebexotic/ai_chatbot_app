@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/forgot_password_controller.dart';
 import '../mixins/forgot_password_animations_mixin.dart';
 import '../components/ui/app_text.dart';
@@ -8,16 +8,16 @@ import '../components/ui/app_input.dart';
 import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
 import '../utils/validation_utils.dart';
-import '../providers/themes_provider.dart';
+import '../app/providers.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin, ForgotPasswordAnimationsMixin {
   
   @override
@@ -46,9 +46,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
-        final controller = context.watch<ForgotPasswordController>();
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
+        final controller = ref.watch(forgotPasswordControllerProvider);
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
         final isDark = themeProvider.isDark;
@@ -188,7 +190,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             : 'Send Reset Email',
         onPressed: controller.emailSent
             ? null
-            : () => controller.resetPassword(context),
+            : () => controller.resetPassword(
+                context,
+                ref.read(authNotifierProvider),
+              ),
         isFullWidth: true,
         isLoading: controller.isLoading,
         size: AppButtonSize.large,

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../components/ui/app_text.dart';
 import '../../models/subscription_models.dart';
 import '../../utils/app_theme.dart';
-import '../../providers/themes_provider.dart';
+import '../../app/providers.dart';
 
 /// Purchase confirmation dialog widget
-class PurchaseConfirmationDialog extends StatelessWidget {
+class PurchaseConfirmationDialog extends ConsumerWidget {
   final SubscriptionProduct product;
   final String? yearlySavingsText;
 
@@ -17,8 +17,8 @@ class PurchaseConfirmationDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Provider.of<ThemeProvider>(context).isDark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(themeNotifierProvider).isDark;
     
     return AlertDialog(
       backgroundColor: AppColors.getSurface(isDark),

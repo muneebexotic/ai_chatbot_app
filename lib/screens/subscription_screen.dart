@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/ui/app_text.dart';
 import '../components/ui/app_button.dart';
@@ -11,15 +11,16 @@ import '../utils/app_theme.dart';
 import '../utils/subscription_utils.dart';
 import '../widgets/subscription/purchase_confirmation_dialog.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
+import '../app/providers.dart';
 
-class SubscriptionScreen extends StatefulWidget {
+class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
 
   @override
-  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+  ConsumerState<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState extends State<SubscriptionScreen>
+class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     with TickerProviderStateMixin {
   bool _isRestoreLoading = false;
   bool _isInitializing = false;
@@ -64,7 +65,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     try {
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
-      final subscriptionProvider = context.read<SubscriptionProvider>();
+      final subscriptionProvider = ref.read(subscriptionNotifierProvider);
       await subscriptionProvider.initialize();
       Log.d('Subscription initialization completed');
     } catch (e) {
@@ -83,8 +84,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   }
 
   Future<void> _handlePurchase() async {
-    final authProvider = context.read<AuthProvider>();
-    final subscriptionProvider = context.read<SubscriptionProvider>();
+    final authProvider = ref.read(authNotifierProvider);
+    final subscriptionProvider = ref.read(subscriptionNotifierProvider);
 
     if (!authProvider.isLoggedIn) {
       SubscriptionUtils.showErrorSnackBar(
@@ -131,7 +132,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     setState(() => _isRestoreLoading = true);
 
     try {
-      final subscriptionProvider = context.read<SubscriptionProvider>();
+      final subscriptionProvider = ref.read(subscriptionNotifierProvider);
       await subscriptionProvider.restorePurchases();
       if (mounted) {
         SubscriptionUtils.showSuccessSnackBar(
@@ -153,8 +154,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<AuthProvider, SubscriptionProvider, ThemeProvider>(
-      builder: (context, authProvider, subscriptionProvider, themeProvider, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final authProvider = ref.watch(authNotifierProvider);
+        final subscriptionProvider = ref.watch(subscriptionNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         return Scaffold(
           backgroundColor: themeProvider.isDark ? AppColors.background : Colors.grey[50],
           body: AnimatedBuilder(

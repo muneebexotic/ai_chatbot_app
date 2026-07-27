@@ -1,22 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/photo_service.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../components/ui/app_button.dart';
 import '../utils/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
+import '../app/providers.dart';
 
-class PhotoUploadScreen extends StatefulWidget {
+class PhotoUploadScreen extends ConsumerStatefulWidget {
   const PhotoUploadScreen({super.key});
 
   @override
-  State<PhotoUploadScreen> createState() => _PhotoUploadScreenState();
+  ConsumerState<PhotoUploadScreen> createState() => _PhotoUploadScreenState();
 }
 
-class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
+class _PhotoUploadScreenState extends ConsumerState<PhotoUploadScreen> {
   final PhotoService _photoService = PhotoService();
   File? _selectedImage;
   String? _avatarUrl;
@@ -25,8 +24,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return PopScope(
@@ -547,7 +548,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
   Future<void> _continueToChat() async {
     setState(() => _isUploading = true);
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = ref.read(authNotifierProvider);
 
       // Check if user is authenticated
       if (authProvider.currentUser?.uid == null || authProvider.currentUser!.uid.isEmpty) {
@@ -590,7 +591,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     try {
       final avatarUrl = await _photoService.generateRandomAvatar();
       if (!mounted) return;
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = ref.read(authNotifierProvider);
       await authProvider.setUserAvatar(avatarUrl);
       if (mounted) {
         // Use named route instead of direct MaterialPageRoute

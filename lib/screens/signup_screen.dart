@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/signup_controller.dart';
 import '../mixins/signup_animations_mixin.dart';
 import '../constants/signup_constants.dart';
@@ -9,7 +9,7 @@ import '../components/ui/app_input.dart';
 import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
-import '../providers/themes_provider.dart';
+import '../app/providers.dart';
 
 /// Enhanced SignUp Screen with improved architecture, performance, and theming
 ///
@@ -20,14 +20,14 @@ import '../providers/themes_provider.dart';
 /// - Accessibility improvements
 /// - Performance optimizations
 /// - Theme-aware design supporting light/dark modes
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen>
+class _SignUpScreenState extends ConsumerState<SignUpScreen>
     with
         TickerProviderStateMixin,
         SignUpAnimationsMixin,
@@ -38,7 +38,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _controller = SignUpController();
+    _controller = SignUpController(auth: ref.read(authNotifierProvider));
     initializeAnimations();
     startAnimations();
   }
@@ -110,8 +110,10 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
         final isDark = themeProvider.isDark;
@@ -128,16 +130,14 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
             child: SafeArea(
-              child: ChangeNotifierProvider.value(
-                value: _controller,
-                child: Consumer<SignUpController>(
-                  builder: (context, controller, _) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(SignUpConstants.screenPadding),
-                      child: _buildForm(controller, theme, isDark),
-                    );
-                  },
-                ),
+              child: ListenableBuilder(
+                listenable: _controller,
+                builder: (context, _) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(SignUpConstants.screenPadding),
+                    child: _buildForm(_controller, theme, isDark),
+                  );
+                },
               ),
             ),
           ),
@@ -238,8 +238,10 @@ class _SignUpScreenState extends State<SignUpScreen>
         _buildAnimatedInput(
           controller: controller.passwordController,
           animation: inputAnimation3,
-          inputWidget: Consumer<SignUpController>(
-            builder: (context, ctrl, _) {
+          inputWidget: ListenableBuilder(
+            listenable: _controller,
+            builder: (context, _) {
+              final ctrl = _controller;
               return AppInput.password(
                 controller: ctrl.passwordController,
                 label: SignUpConstants.passwordLabel,

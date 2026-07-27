@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
 import 'dart:math' as math;
+import '../app/providers.dart';
 
 // Main modern typing indicator with sophisticated animations
-class ModernTypingIndicator extends StatefulWidget {
+class ModernTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final bool showAvatar;
   final Widget? customAvatar;
@@ -18,10 +18,10 @@ class ModernTypingIndicator extends StatefulWidget {
   });
 
   @override
-  State<ModernTypingIndicator> createState() => _ModernTypingIndicatorState();
+  ConsumerState<ModernTypingIndicator> createState() => _ModernTypingIndicatorState();
 }
 
-class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
+class _ModernTypingIndicatorState extends ConsumerState<ModernTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _dotsController;
@@ -214,8 +214,10 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return FadeTransition(
@@ -287,7 +289,7 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
 }
 
 // Wave-based typing indicator with modern aesthetics
-class WaveTypingIndicator extends StatefulWidget {
+class WaveTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final Color? primaryColor;
   final bool showAvatar;
@@ -300,10 +302,10 @@ class WaveTypingIndicator extends StatefulWidget {
   });
 
   @override
-  State<WaveTypingIndicator> createState() => _WaveTypingIndicatorState();
+  ConsumerState<WaveTypingIndicator> createState() => _WaveTypingIndicatorState();
 }
 
-class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
+class _WaveTypingIndicatorState extends ConsumerState<WaveTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late AnimationController _containerController;
@@ -358,8 +360,10 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         final primaryColor = widget.primaryColor ?? AppColors.primary;
         
@@ -482,7 +486,7 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
 }
 
 // Pulse typing indicator with breathing effect
-class PulseTypingIndicator extends StatefulWidget {
+class PulseTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final bool showAvatar;
   
@@ -493,10 +497,10 @@ class PulseTypingIndicator extends StatefulWidget {
   });
 
   @override
-  State<PulseTypingIndicator> createState() => _PulseTypingIndicatorState();
+  ConsumerState<PulseTypingIndicator> createState() => _PulseTypingIndicatorState();
 }
 
-class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
+class _PulseTypingIndicatorState extends ConsumerState<PulseTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _glowController;
@@ -546,8 +550,10 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Container(

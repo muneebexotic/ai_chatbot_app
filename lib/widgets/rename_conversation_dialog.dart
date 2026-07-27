@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
+import '../app/providers.dart';
 
-class RenameConversationDialog extends StatefulWidget {
+class RenameConversationDialog extends ConsumerStatefulWidget {
   final String currentTitle;
 
   const RenameConversationDialog({
@@ -13,10 +13,10 @@ class RenameConversationDialog extends StatefulWidget {
   });
 
   @override
-  State<RenameConversationDialog> createState() => _RenameConversationDialogState();
+  ConsumerState<RenameConversationDialog> createState() => _RenameConversationDialogState();
 }
 
-class _RenameConversationDialogState extends State<RenameConversationDialog> {
+class _RenameConversationDialogState extends ConsumerState<RenameConversationDialog> {
   late TextEditingController _controller;
   final _focusNode = FocusNode();
   bool _isValid = true;
@@ -60,8 +60,10 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return AlertDialog(

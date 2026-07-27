@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/validation_utils.dart'; // Changed from validation_service
 import '../constants/signup_constants.dart';
@@ -21,6 +20,9 @@ import 'package:ai_chatbot_app/core/logging/log.dart';
 /// - Memory leak prevention
 /// - Testable business logic
 class SignUpController extends ChangeNotifier {
+  /// Injected rather than looked up from a context (F3).
+  final AuthProvider _auth;
+
   
   // Form controllers
   late final TextEditingController _fullNameController;
@@ -41,7 +43,7 @@ class SignUpController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get obscurePassword => _obscurePassword;
 
-  SignUpController() {
+  SignUpController({required AuthProvider auth}) : _auth = auth {
     _initializeControllers();
     _logControllerCreation();
   }
@@ -158,7 +160,7 @@ class SignUpController extends ChangeNotifier {
         throw Exception('Context not available');
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = _auth;
       
       final fullName = _fullNameController.text.trim();
       final email = _emailController.text.trim();
@@ -201,7 +203,7 @@ class SignUpController extends ChangeNotifier {
         throw Exception('Context not available');
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = _auth;
       
       _logGoogleSignUpAttempt();
 

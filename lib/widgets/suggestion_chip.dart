@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class SuggestionChip extends StatefulWidget {
+class SuggestionChip extends ConsumerStatefulWidget {
   final String label;
   final IconData icon;
   final List<String> suggestions;
@@ -19,10 +19,10 @@ class SuggestionChip extends StatefulWidget {
   });
 
   @override
-  State<SuggestionChip> createState() => _SuggestionChipState();
+  ConsumerState<SuggestionChip> createState() => _SuggestionChipState();
 }
 
-class _SuggestionChipState extends State<SuggestionChip>
+class _SuggestionChipState extends ConsumerState<SuggestionChip>
     with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
@@ -71,8 +71,10 @@ class _SuggestionChipState extends State<SuggestionChip>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return AnimatedBuilder(

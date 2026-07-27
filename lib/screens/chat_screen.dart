@@ -5,11 +5,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../widgets/typing_indicator.dart';
@@ -25,15 +24,16 @@ import '../widgets/rename_conversation_dialog.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
+import '../app/providers.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<bool> _onWillPop() async {
     try {
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final chatProvider = ref.read(chatNotifierProvider);
       if (chatProvider.isTyping) {
         return false;
       }
@@ -76,7 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<bool?> _showExitDialog() async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     try {
@@ -180,7 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _startListening() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
 
     if (!await authProvider.canSendVoice()) {
       _showUpgradeDialog(
@@ -242,7 +242,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final message = _controller.text.trim();
     if (message.isEmpty) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
 
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
@@ -259,10 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (!mounted) return;
     try {
-      await Provider.of<ChatProvider>(
-        context,
-        listen: false,
-      ).sendMessage(message);
+      await ref.read(chatNotifierProvider).sendMessage(message);
       await authProvider.incrementMessageUsage();
       _scrollToTop();
     } catch (e) {
@@ -274,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // Add this new safer scroll method:
 
   void _showUpgradeDialog(String title, String description, String benefits) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showDialog(
@@ -334,8 +331,10 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Consumer<AuthProvider>(
-              builder: (context, auth, child) {
+            Consumer(
+      builder: (context, ref, child) {
+        final auth = ref.watch(authNotifierProvider);
+
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -437,7 +436,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showSuggestionModal(List<String> suggestions) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showModalBottomSheet(
@@ -519,8 +518,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Center(
@@ -583,8 +584,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 const SizedBox(height: 32),
 
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
+                Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+
                     if (authProvider.isPremium) return const SizedBox.shrink();
 
                     return Container(
@@ -692,8 +695,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildAppBar(String title) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Container(
@@ -719,8 +724,10 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             centerTitle: true,
             actions: [
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
+              Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+
                   if (authProvider.isPremium) {
                     return IconButton(
                       icon: Icon(
@@ -797,7 +804,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showUsageDialog(AuthProvider authProvider) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showDialog(
@@ -903,11 +910,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _handleMenuSelection(String value) async {
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final chatProvider = ref.read(chatNotifierProvider);
+    final convoProvider = ref.read(conversationsNotifierProvider);
 
     switch (value) {
       case 'clear':
@@ -949,7 +953,7 @@ class _ChatScreenState extends State<ChatScreen> {
     ChatProvider chatProvider,
     ConversationsProvider convoProvider,
   ) async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     final confirmed = await showDialog<bool>(
@@ -1007,8 +1011,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
-    final convoProvider = Provider.of<ConversationsProvider>(context);
+    final chatProvider = ref.watch(chatNotifierProvider);
+    final convoProvider = ref.watch(conversationsNotifierProvider);
 
     final currentTitle = convoProvider.conversations
         .firstWhere(
@@ -1021,8 +1025,10 @@ class _ChatScreenState extends State<ChatScreen> {
         )
         .title;
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         // PopScope replaces the deprecated WillPopScope. WillPopScope breaks
@@ -1050,10 +1056,7 @@ class _ChatScreenState extends State<ChatScreen> {
               drawer: ConversationDrawer(
                 onRenameDialog: _showRenameDialog,
                 onDrawerClosed: () {
-                  Provider.of<ConversationsProvider>(
-                    context,
-                    listen: false,
-                  ).clearSearch();
+                  ref.read(conversationsNotifierProvider).clearSearch();
                 },
               ),
               body: Container(
