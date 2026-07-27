@@ -1,32 +1,40 @@
 # Canonical authorship for this repository.
 #
-# The correct identity is:
 #     muneebexotic <muneebusman112233@gmail.com>
 #
-# Early commits — including the whole of the pushed
-# milestone-0-security-remediation branch — were made under a machine-global
-# git identity that belongs to different accounts:
+# The history carries five distinct author identities. Four of them are the
+# same person under different names, machines, or typos:
 #
-#     muneebexotic3 <musman@innovative-pk.com>
+#   43  muneebexotic <muneebusman112233@gmail.com>      correct
+#   33  Muneeb Usman <muneebusman112233@gmail.com>      right email, other name
+#   21  Muneeb U. <...@users.noreply.github.com>        commits made on github.com
+#   15  muneebexotic3 <musman@innovative-pk.com>        a work account, wrong entirely
+#    1  Muneeb Usman <muneebusma112233@gmail.com>       typo: "muneebusma", missing an n
 #
-# Those commits are already on the remote, and rewriting them would need a
-# force push, which is out of scope here. A mailmap fixes the attribution
-# **without touching history**: `git log`, `git blame`, and `git shortlog`
-# all honour it, and it costs nothing to carry.
+# The `musman@innovative-pk.com` commits came from this machine's GLOBAL git
+# identity, which belongs to a different account. The single typo'd address
+# (commit 2036c90, 2025-07-11) is a plain slip that has been sitting in the
+# history for a year.
 #
-# Two things it does NOT do:
-#   1. GitHub links a commit to an account by the raw author email, so the
-#      web UI will still show those commits as unattributed until history is
+# A mailmap fixes attribution for `git log --use-mailmap`, `git blame` and
+# `git shortlog` **without rewriting anything**. Two things it does not do,
+# stated so it is not mistaken for more than it is:
+#
+#   1. GitHub links a commit to an account by the raw author email, so its
+#      web UI keeps showing the wrong ones until history is actually
 #      rewritten.
-#   2. It does not stop a wrong identity being used again — the pre-commit
+#   2. It does not prevent a wrong identity being used again. The pre-commit
 #      hook does that.
 #
-# To make it permanent, the history purge in SECURITY-REMEDIATION.md §2.5
-# should pass `--mailmap ../.mailmap` to git-filter-repo. That rewrite is
-# already planned, so the correction is free if it happens then.
+# To make it permanent, SECURITY-REMEDIATION.md §2.5 passes `--mailmap` to
+# git-filter-repo during the history purge that is already planned. The
+# rewrite is happening regardless, so this correction rides along for free.
 #
-# Format: <canonical name> <canonical email> <wrong name> <wrong email>
+# Format:  <canonical name> <canonical email> <commit name> <commit email>
 
 muneebexotic <muneebusman112233@gmail.com> muneebexotic3 <musman@innovative-pk.com>
 muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <musman@innovative-pk.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <muneebusman112233@gmail.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <muneebusma112233@gmail.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb U. <129713618+muneebexotic@users.noreply.github.com>
 muneebexotic <muneebusman112233@gmail.com> <muneebexotic3@gmail.com>
