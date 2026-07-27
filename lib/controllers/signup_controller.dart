@@ -5,6 +5,8 @@ import '../providers/auth_provider.dart';
 import '../utils/validation_utils.dart'; // Changed from validation_service
 import '../constants/signup_constants.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:ai_chatbot_app/core/result/result.dart';
+import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
 
 /// Controller for SignUp screen following clean architecture principles
 /// 
@@ -168,18 +170,33 @@ class SignUpController extends ChangeNotifier {
 
       _logSignUpAttempt(email);
 
-      final isNewUser = await authProvider.signUp(email, password, fullName);
-      
+      final result = await authProvider.signUp(email, password, fullName);
+
+      // Typed now (F4). The old call returned a bare bool, so "email already
+      // registered" and "you are offline" arrived at the UI as the same
+      // failure and got the same generic message — which §7.6 forbids, since
+      // an error has to state its cause and its fix.
+      switch (result) {
+        case Err(:final failure):
+          _logSignUpError(failure);
+          onError(authFailureMessage(failure));
+          return;
+        case Ok():
+          break;
+      }
+
       // Wait for auth state to be ready
       await _waitForAuthReady(authProvider);
 
       if (authProvider.isLoggedIn && authProvider.currentUser != null) {
         _logSignUpSuccess(email);
-        onSuccess(isNewUser);
+        // Sign-up always produces a new account; the old `isNewUser` flag came
+        // from Firebase's additionalUserInfo and was always true here.
+        onSuccess(true);
       } else {
         throw Exception('Authentication succeeded but user state is incomplete');
       }
-      
+
     } catch (e) {
       _logSignUpError(e);
       onError(_formatErrorMessage(e));

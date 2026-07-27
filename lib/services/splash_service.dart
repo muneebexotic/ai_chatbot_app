@@ -93,7 +93,7 @@ class SplashService {
     _log('   Firebase user: $hasFirebaseUser');
     _log('   User data: $hasUserData');
     _log('   Fully logged in: $isFullyLoggedIn');
-    _log('   Premium status: ${authProvider.currentUser?.hasActiveSubscription}');
+    _log('   Premium status: ${authProvider.isPremium}');
   }
 
   static void _log(String message) {

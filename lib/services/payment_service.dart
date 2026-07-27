@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
@@ -19,7 +18,9 @@ class PaymentService {
 
   // Stream subscriptions for proper cleanup
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
-  StreamSubscription<User?>? _authSubscription;
+  /// Always null since Milestone 2 — see [_setupAuthStateListener]. Retained
+  /// only so the existing cancel-on-dispose path stays intact.
+  StreamSubscription<void>? _authSubscription;
 
   // Product configurations
   static const String monthlySubscriptionId =
@@ -179,32 +180,23 @@ class PaymentService {
     );
   }
 
-  /// Set up auth state listener for user changes
+  /// No longer listens for authentication changes.
+  ///
+  /// This used to subscribe to `FirebaseAuth.authStateChanges()`. Nothing
+  /// signs into Firebase any more (Milestone 2), so that stream can never
+  /// emit — the subscription would sit there looking like user-scoping while
+  /// doing nothing at all, which is worse than no mechanism because it reads
+  /// as one.
+  ///
+  /// `AuthProvider` now drives this class explicitly, calling
+  /// [initializeForUser] on sign-in and [clearUserData] on sign-out. Being
+  /// pushed to rather than listening also means there is exactly one place
+  /// that decides what "the current user changed" means.
   void _setupAuthStateListener() {
     _authSubscription?.cancel();
-
-    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((
-      User? user,
-    ) async {
-      if (user?.uid != _currentUserId) {
-        Log.d('User changed: ${user?.uid}');
-        await _handleUserChange(user);
-      }
-    }, onError: (error) => Log.d('Auth state listener error: $error'));
+    _authSubscription = null;
   }
 
-  /// Handle user authentication changes
-  Future<void> _handleUserChange(User? user) async {
-    try {
-      if (user == null) {
-        await clearUserData();
-      } else if (user.uid != _currentUserId) {
-        await initializeForUser(user.uid);
-      }
-    } catch (e) {
-      Log.d('Error handling user change: $e');
-    }
-  }
 
   /// Initialize for a specific user
   Future<void> initializeForUser(String userId) async {
