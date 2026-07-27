@@ -8,6 +8,45 @@ would reverse it.
 
 ---
 
+## D7 — `abuse_events` is service-role write and no client read
+
+**Date:** 2026-07-27 · **Status:** accepted · **Interprets:** PRD R9.5.1, §10
+
+**What.** `abuse_events` has RLS enabled and **no policy at all** for the
+`authenticated` role — no select, no insert, no update, no delete. Only the
+service role touches it.
+
+**Why this is an interpretation, not the letter.** R9.5.1 says a user may read
+and write their own rows, and names only `entitlements` and `usage_daily` as
+service-role write. Read literally, a user would be able to insert, edit, and
+delete rows in `abuse_events` — the table that exists to record that user's
+abuse. That would let the party being detected rewrite the detection, which
+defeats §10 entirely and cannot be what the requirement intends.
+
+Read access is withheld as well, which goes one step further than the write
+restriction. `detail` describes what the detector matched on; exposing it to the
+account being measured is free reconnaissance for anyone probing the limits.
+
+**Cost.** No in-app path can ever show a user their own abuse history. If that
+becomes a transparency requirement — a GDPR access request would be the obvious
+trigger — it is served by an Edge Function under service role that returns a
+redacted view, not by relaxing this policy.
+
+**The absence of a policy is the mechanism.** RLS denies by default: a table
+with RLS enabled and no matching policy rejects the statement. Someone reading
+this migration may see a table with no policies and conclude it was forgotten.
+It was not, and the migration says so at the table.
+
+**Verified:** an anon insert into every one of the ten tables returns `42501`
+(row-level security violation) rather than a constraint error, confirming RLS is
+enabled and denying rather than merely declared.
+
+**Reverses if:** a regulator or Play policy requires user-visible abuse records,
+which is handled by the redacted-view function above rather than by a policy
+change.
+
+---
+
 ## D6 — A debug-only launcher stands in for sign-in until Milestone 2
 
 **Date:** 2026-07-27 · **Status:** accepted, expires with Milestone 2 ·
