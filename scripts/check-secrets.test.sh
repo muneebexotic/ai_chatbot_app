@@ -124,6 +124,18 @@ run_case ".env.example template"         pass .env.example \
   "GEMINI_API_KEY="
 run_case "env var reference in CI"       pass ci.yml \
   "api_key: \${{ secrets.GEMINI_API_KEY }}"
+# supabase/config.toml ships three of these by default. Flagging them would
+# mean every config change fights the hook, and a hook people fight is a hook
+# people bypass — the failure mode CRITIQUE W0.2 describes.
+run_case "supabase env() reference"      pass supabase/config.toml \
+  "openai_api_key = \"env(OPENAI_API_KEY)\""
+run_case "supabase env() smtp secret"    pass supabase/config.toml \
+  "auth_token = \"env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)\""
+# The allowlist above must not become a way to smuggle a real value: Tier 1
+# credential shapes are matched before it is consulted, so a literal key on a
+# line that also mentions env() is still caught.
+run_case "real key beside env() marker"  catch supabase/config.toml \
+  "openai_api_key = \"sk-proj-Ab3dEf6hIj9lMn2pQr5tUv8xYz1aBc4dEf7hIj0lMn3pQr6t\" # env(X)"
 
 echo
 echo "== MUST CATCH: encoding damage =="

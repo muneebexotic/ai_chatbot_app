@@ -166,7 +166,7 @@ TIER2_KEYS='api_?key|apikey|secret|client_secret|password|passwd|access_token|au
 TIER2_RE="(${TIER2_KEYS})[\"']?[[:space:]]*[:=]+[[:space:]]*[\"'][^\"']{8,}[\"']"
 
 # Values that are obviously not live credentials.
-TIER2_ALLOW='your_|_here|YOUR_|placeholder|example|EXAMPLE|changeme|CHANGEME|xxxx|XXXX|<[^>]*>|\$\{|\$[A-Za-z_]|String\.fromEnvironment|dotenv|process\.env|Deno\.env|TODO|FIXME|\*\*\*|\.\.\.'
+TIER2_ALLOW='your_|_here|YOUR_|placeholder|example|EXAMPLE|changeme|CHANGEME|xxxx|XXXX|<[^>]*>|\$\{|\$[A-Za-z_]|String\.fromEnvironment|dotenv|process\.env|Deno\.env|=[[:space:]]*"env\([A-Za-z0-9_]+\)"[[:space:]]*(#.*)?$|TODO|FIXME|\*\*\*|\.\.\.'
 
 # Combine Tier 1 into one alternation. Running 17 greps per file spawns
 # thousands of processes and takes minutes on Windows; one bulk grep over the
