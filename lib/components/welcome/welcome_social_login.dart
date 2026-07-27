@@ -64,7 +64,7 @@ class WelcomeSocialLogin extends StatelessWidget {
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: colorScheme.outline.withOpacity(
+            color: colorScheme.outline.withValues(alpha: 
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),
@@ -75,13 +75,13 @@ class WelcomeSocialLogin extends StatelessWidget {
           ),
           child: AppText.bodyMedium(
             WelcomeScreenConstants.dividerText,
-            color: colorScheme.onBackground.withOpacity(0.6),
+            color: colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: colorScheme.outline.withOpacity(
+            color: colorScheme.outline.withValues(alpha: 
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),

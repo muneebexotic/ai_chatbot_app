@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Enhanced AppUser model with improved validation, timezone handling, and error management
 class AppUser {
@@ -117,10 +118,10 @@ class AppUser {
       
       if (isPremium) {
         if (subscriptionType == null || !VALID_SUBSCRIPTION_TYPES.contains(subscriptionType)) {
-          print('⚠️ Premium user has invalid subscription type: $subscriptionType');
+          Log.d('Premium user has invalid subscription type: $subscriptionType');
         }
         if (subscriptionExpiryDate == null) {
-          print('⚠️ Premium user missing expiry date');
+          Log.d('Premium user missing expiry date');
         }
       }
 
@@ -153,7 +154,7 @@ class AppUser {
       // Run comprehensive validation
       final validationErrors = user._runFullValidation();
       if (validationErrors.isNotEmpty) {
-        print('⚠️ User validation errors for $uid: ${validationErrors.join(', ')}');
+        Log.d('User validation errors for $uid: ${validationErrors.join(', ')}');
         
         // Return null for critical errors, user for warnings
         final hasCriticalError = validationErrors.any((error) => 
@@ -168,7 +169,7 @@ class AppUser {
       
       return user;
     } catch (e) {
-      print('❌ Error creating AppUser with validation: $e');
+      Log.d('Error creating AppUser with validation: $e');
       return null;
     }
   }
@@ -186,7 +187,7 @@ class AppUser {
         return DateTime.fromMillisecondsSinceEpoch(timestamp);
       }
     } catch (e) {
-      print('⚠️ Failed to parse timestamp: $timestamp, error: $e');
+      Log.d('Failed to parse timestamp: $timestamp, error: $e');
     }
     
     return null;
@@ -372,7 +373,7 @@ class AppUser {
     if (hasActiveSubscription) return this; // Premium users have unlimited usage
     
     if (amount <= 0 || amount > 100) {
-      print('⚠️ Invalid usage increment amount: $amount');
+      Log.d('Invalid usage increment amount: $amount');
       return this;
     }
 
@@ -545,7 +546,7 @@ class AppUser {
       validated[entry.key] = sanitizedValue;
       
       if (sanitizedValue != entry.value) {
-        print('⚠️ Sanitized usage value for ${entry.key}: ${entry.value} -> $sanitizedValue');
+        Log.d('Sanitized usage value for ${entry.key}: ${entry.value} -> $sanitizedValue');
       }
     }
     

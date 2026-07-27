@@ -3,11 +3,11 @@ import 'package:ai_chatbot_app/providers/image_generation_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
-import '../models/generated_image.dart';
 import '../services/firestore_service.dart';
 import '../services/gemini_service.dart';
 import '../providers/auth_provider.dart';
 import '../screens/subscription_screen.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ChatProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -35,14 +35,14 @@ class ChatProvider with ChangeNotifier {
 
   void updatePersona() {
     _geminiService = GeminiService(context);
-    print('🎭 ChatProvider: GeminiService updated with new persona');
+    Log.d('ChatProvider: GeminiService updated with new persona');
     notifyListeners();
   }
 
   String _generateFallbackTitle(String text) {
     text = text.trim();
     if (text.length <= 30) return text;
-    return text.substring(0, 30).split('\n').first + '...';
+    return '${text.substring(0, 30).split('\n').first}...';
   }
 
   /// Detect if user input is requesting image generation
@@ -178,7 +178,7 @@ String _extractImagePrompt(String input) {
           ? aiTitle.trim()
           : _generateFallbackTitle(_messages.first.displayText);
 
-      print('🧠 AI-generated title: $generatedTitle');
+      Log.d('AI-generated title: $generatedTitle');
 
       await _firestoreService.updateConversationTitle(
         userId,
@@ -192,12 +192,12 @@ String _extractImagePrompt(String input) {
           listen: false,
         ).loadConversations();
       } catch (e) {
-        debugPrint('⚠️ Could not refresh sidebar: $e');
+        Log.d('Could not refresh sidebar: $e');
       }
 
       _titleGenerated = true;
     } catch (e) {
-      debugPrint('❌ Error generating title: $e');
+      Log.d('Error generating title: $e');
     }
   }
 
@@ -207,7 +207,7 @@ String _extractImagePrompt(String input) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       return await authProvider.canSendMessage();
     } catch (e) {
-      debugPrint('❌ Error checking message limit: $e');
+      Log.d('Error checking message limit: $e');
       return true; // Default to allowing if check fails
     }
   }
@@ -250,7 +250,7 @@ String _extractImagePrompt(String input) {
                 style: TextStyle(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.7),
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -258,7 +258,7 @@ String _extractImagePrompt(String input) {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -278,7 +278,7 @@ String _extractImagePrompt(String input) {
                       style: TextStyle(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.8),
+                        ).colorScheme.onSurface.withValues(alpha: 0.8),
                         fontSize: 13,
                       ),
                     ),
@@ -295,7 +295,7 @@ String _extractImagePrompt(String input) {
                 style: TextStyle(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -340,7 +340,7 @@ Future<void> sendMessage(String userInput) async {
   // NEW: Check if this is an image generation request
   if (_isImageGenerationRequest(userInput)) {
     final imagePrompt = _extractImagePrompt(userInput);
-    print('🖼️ Detected image generation request: "$imagePrompt"');
+    Log.d('Detected image generation request: "$imagePrompt"');
     await generateImageMessage(imagePrompt);
     return; // Exit early, don't process as text message
   }
@@ -360,7 +360,7 @@ Future<void> sendMessage(String userInput) async {
   _messages.add(userMessage);
   _setTyping(true);
   notifyListeners();
-  print('✅ User message added: ${userMessage.text}');
+  Log.d('User message added: ${userMessage.text}');
 
   try {
     // Increment message usage
@@ -383,7 +383,7 @@ Future<void> sendMessage(String userInput) async {
 
     _messages.add(botReply);
     notifyListeners();
-    print('🤖 Gemini reply: ${botReply.text}');
+    Log.d('Gemini reply: ${botReply.text}');
 
     await _firestoreService.saveMessage(userId, _conversationId!, botReply);
 
@@ -392,7 +392,7 @@ Future<void> sendMessage(String userInput) async {
       await _generateConversationTitle();
     }
   } catch (e) {
-    print('❌ Error in sendMessage: $e');
+    Log.d('Error in sendMessage: $e');
 
     // If Gemini fails, still show an error message
     final errorMessage = ChatMessage.text(
@@ -458,7 +458,7 @@ Future<void> sendMessage(String userInput) async {
         // Save image message
         await _firestoreService.saveMessage(userId, _conversationId!, imageMessage);
 
-        print('🖼️ Image generated successfully: ${generatedImage.id}');
+        Log.d('Image generated successfully: ${generatedImage.id}');
       } else {
         // Add error message if image generation failed
         final errorMessage = ChatMessage.text(
@@ -474,7 +474,7 @@ Future<void> sendMessage(String userInput) async {
         await _generateConversationTitle();
       }
     } catch (e) {
-      debugPrint('❌ Error generating image: $e');
+      Log.d('Error generating image: $e');
       
       final errorMessage = ChatMessage.text(
         text: "Sorry, there was an error generating the image. Please try again later.",
@@ -493,7 +493,7 @@ Future<void> sendMessage(String userInput) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       return await authProvider.canUploadImage(); // Reuse image limit for generation
     } catch (e) {
-      debugPrint('❌ Error checking image generation limit: $e');
+      Log.d('Error checking image generation limit: $e');
       return true;
     }
   }
@@ -504,7 +504,7 @@ Future<void> sendMessage(String userInput) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       return await authProvider.canUploadImage();
     } catch (e) {
-      debugPrint('❌ Error checking image upload limit: $e');
+      Log.d('Error checking image upload limit: $e');
       return true;
     }
   }
@@ -515,7 +515,7 @@ Future<void> sendMessage(String userInput) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       return await authProvider.canSendVoice();
     } catch (e) {
-      debugPrint('❌ Error checking voice limit: $e');
+      Log.d('Error checking voice limit: $e');
       return true;
     }
   }
@@ -526,7 +526,7 @@ Future<void> sendMessage(String userInput) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.incrementImageUsage();
     } catch (e) {
-      debugPrint('❌ Error incrementing image usage: $e');
+      Log.d('Error incrementing image usage: $e');
     }
   }
 
@@ -536,7 +536,7 @@ Future<void> sendMessage(String userInput) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.incrementVoiceUsage();
     } catch (e) {
-      debugPrint('❌ Error incrementing voice usage: $e');
+      Log.d('Error incrementing voice usage: $e');
     }
   }
 
@@ -576,9 +576,9 @@ Future<void> sendMessage(String userInput) async {
       _conversationId = null;
       _titleGenerated = false;
       notifyListeners();
-      print('🗑️ Conversation deleted');
+      Log.d('Conversation deleted');
     } catch (e) {
-      print('❌ Error deleting conversation: $e');
+      Log.d('Error deleting conversation: $e');
     }
   }
 
@@ -599,7 +599,7 @@ Future<void> sendMessage(String userInput) async {
         'subscriptionStatus': authProvider.subscriptionStatus,
       };
     } catch (e) {
-      debugPrint('❌ Error getting usage stats: $e');
+      Log.d('Error getting usage stats: $e');
       return {
         'isPremium': false,
         'remainingMessages': 0,

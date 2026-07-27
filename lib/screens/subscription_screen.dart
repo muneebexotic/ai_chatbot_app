@@ -10,6 +10,7 @@ import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/subscription_utils.dart';
 import '../widgets/subscription/purchase_confirmation_dialog.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -64,9 +65,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       await Future.delayed(const Duration(milliseconds: 100));
       final subscriptionProvider = context.read<SubscriptionProvider>();
       await subscriptionProvider.initialize();
-      debugPrint('✅ Subscription initialization completed');
+      Log.d('Subscription initialization completed');
     } catch (e) {
-      debugPrint('❌ Subscription initialization failed: $e');
+      Log.d('Subscription initialization failed: $e');
       if (mounted) {
         SubscriptionUtils.showErrorSnackBar(
           context,
@@ -288,7 +289,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               color: cardColor,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
@@ -297,7 +298,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -346,10 +347,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.warning.withOpacity(0.3),
+                color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -446,7 +447,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: isSelected 
             ? Border.all(color: AppColors.primary, width: 2)
@@ -503,17 +504,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           end: Alignment.bottomRight,
           colors: [
             cardColor,
-            (isDark ? AppColors.primary.withOpacity(0.05) : AppColors.primary.withOpacity(0.02)),
+            (isDark ? AppColors.primary.withValues(alpha: 0.05) : AppColors.primary.withValues(alpha: 0.02)),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primary.withValues(alpha: 0.2),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.primary).withOpacity(0.1),
+            color: (isDark ? Colors.black : AppColors.primary).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -527,7 +528,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
               ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(22),
@@ -559,12 +560,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 const SizedBox(height: 8),
                 AppText.bodyLarge(
                   subscriptionProvider.selectedProduct?.price ?? '...',
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w500,
                 ),
                 AppText.bodySmall(
                   isYearly ? 'per year' : 'per month',
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ],
             ),
@@ -655,7 +656,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.error.withOpacity(0.3),
+          color: AppColors.error.withValues(alpha: 0.3),
         ),
       ),
       child: Column(

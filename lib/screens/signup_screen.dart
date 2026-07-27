@@ -117,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen>
         final isDark = themeProvider.isDark;
 
         return Scaffold(
-          backgroundColor: colorScheme.background,
+          backgroundColor: colorScheme.surface,
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

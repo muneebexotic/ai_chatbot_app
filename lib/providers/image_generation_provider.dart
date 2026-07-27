@@ -9,6 +9,7 @@ import '../models/generated_image.dart';
 import '../services/image_generation_service.dart';
 import '../services/image_storage_service.dart';
 import '../constants/image_generation_constants.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ImageGenerationProvider with ChangeNotifier {
   final ImageGenerationService _generationService = ImageGenerationService();
@@ -104,7 +105,7 @@ class ImageGenerationProvider with ChangeNotifier {
     String? hfModel, // Added optional hfModel param
   }) async {
     if (_isGenerating) {
-      debugPrint('⚠️ Image generation already in progress');
+      Log.d('Image generation already in progress');
       return null;
     }
 
@@ -163,7 +164,7 @@ class ImageGenerationProvider with ChangeNotifier {
           // Optional: Clean up local bytes to save memory, since we have URL
           updatedImage = updatedImage.copyWith(imageData: Uint8List(0));
         } else {
-          debugPrint('⚠️ Cloud upload failed, falling back to local only');
+          Log.d('Cloud upload failed, falling back to local only');
         }
 
         // Save to local cache as fallback
@@ -179,21 +180,21 @@ class ImageGenerationProvider with ChangeNotifier {
         try {
           await _storageService.saveImageToCache(updatedImage);
         } catch (e) {
-          debugPrint('⚠️ Failed to save image locally: $e');
+          Log.d('Failed to save image locally: $e');
           // Don't fail the whole operation if local save fails
         }
         
         _setStatus(ImageGenerationMessages.generationCompleted);
         _setProgress(1.0);
         
-        debugPrint('✅ Image generated successfully: ${updatedImage.id}');
+        Log.d('Image generated successfully: ${updatedImage.id}');
         return updatedImage;
       } else {
         _setError(ImageGenerationErrors.apiError);
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Image generation failed: $e');
+      Log.d('Image generation failed: $e');
       _setError(_getErrorMessage(e));
       return null;
     } finally {
@@ -279,7 +280,7 @@ class ImageGenerationProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Failed to save image to gallery: $e');
+      Log.d('Failed to save image to gallery: $e');
       _setError(ImageGenerationErrors.storageError);
       return false;
     }
@@ -297,7 +298,7 @@ class ImageGenerationProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      debugPrint('❌ Failed to share image: $e');
+      Log.d('Failed to share image: $e');
       return false;
     }
   }
@@ -310,7 +311,7 @@ class ImageGenerationProvider with ChangeNotifier {
       _setStatus(ImageGenerationMessages.imageCopied);
       return true;
     } catch (e) {
-      debugPrint('❌ Failed to copy image: $e');
+      Log.d('Failed to copy image: $e');
       return false;
     }
   }
@@ -328,7 +329,7 @@ class ImageGenerationProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('❌ Failed to delete image: $e');
+      Log.d('Failed to delete image: $e');
       return false;
     }
   }
@@ -354,9 +355,9 @@ class ImageGenerationProvider with ChangeNotifier {
       final cachedPaths = await _storageService.getCachedImagePaths();
       // Load images from cache paths
       // This is a simplified implementation
-      debugPrint('Loaded ${cachedPaths.length} cached images');
+      Log.d('Loaded ${cachedPaths.length} cached images');
     } catch (e) {
-      debugPrint('❌ Failed to load saved images: $e');
+      Log.d('Failed to load saved images: $e');
     }
   }
 
@@ -368,7 +369,7 @@ class ImageGenerationProvider with ChangeNotifier {
       _currentImage = null;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Failed to clear images: $e');
+      Log.d('Failed to clear images: $e');
     }
   }
 

@@ -74,7 +74,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -104,12 +104,12 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.getSurfaceVariant(isDark).withOpacity(0.3),
+                  color: AppColors.getSurfaceVariant(isDark).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isValid 
-                        ? AppColors.primary.withOpacity(0.3)
-                        : AppColors.error.withOpacity(0.3),
+                        ? AppColors.primary.withValues(alpha: 0.3)
+                        : AppColors.error.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -117,7 +117,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
                   controller: _controller,
                   focusNode: _focusNode,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'GeneralSans',
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColors.getTextPrimary(isDark),
@@ -125,7 +125,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
                   decoration: InputDecoration(
                     hintText: 'Enter conversation title',
                     hintStyle: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'GeneralSans',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: AppColors.getTextTertiary(isDark),
@@ -202,8 +202,8 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isValid 
                     ? AppColors.primary 
-                    : AppColors.getTextTertiary(isDark).withOpacity(0.3),
-                disabledBackgroundColor: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                    : AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
+                disabledBackgroundColor: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

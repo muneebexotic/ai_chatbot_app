@@ -22,8 +22,8 @@ class UserDrawerTile extends StatelessWidget {
           Navigator.pushNamed(context, '/settings');
         },
         borderRadius: BorderRadius.circular(24),
-        splashColor: AppColors.primary.withOpacity(0.1),
-        highlightColor: AppColors.primary.withOpacity(0.05),
+        splashColor: AppColors.primary.withValues(alpha: 0.1),
+        highlightColor: AppColors.primary.withValues(alpha: 0.05),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -71,7 +71,7 @@ class UserDrawerTile extends StatelessWidget {
                     color: AppColors.getTextPrimary(isDark),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'GeneralSans',
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

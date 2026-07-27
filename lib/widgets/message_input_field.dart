@@ -197,7 +197,7 @@ class _MessageInputFieldState extends State<MessageInputField>
       text: TextSpan(
         text: widget.controller.text,
         style: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'GeneralSans',
           fontWeight: FontWeight.w400,
           fontSize: 16,
         ),
@@ -321,7 +321,7 @@ class _MessageInputFieldState extends State<MessageInputField>
         content: const Text(
           'Image upload coming soon!',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'GeneralSans',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -382,7 +382,7 @@ class _MessageInputFieldState extends State<MessageInputField>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -478,20 +478,20 @@ class _MessageInputFieldState extends State<MessageInputField>
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
                             color: _isFocused
-                                ? AppColors.primary.withOpacity(0.5)
-                                : AppColors.getTextPrimary(isDark).withOpacity(0.08),
+                                ? AppColors.primary.withValues(alpha: 0.5)
+                                : AppColors.getTextPrimary(isDark).withValues(alpha: 0.08),
                             width: _isFocused ? 2 : 1,
                           ),
                           boxShadow: _isFocused
                               ? [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.1),
+                                    color: AppColors.primary.withValues(alpha: 0.1),
                                     blurRadius: 20,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 4),
                                   ),
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -499,7 +499,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -517,7 +517,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 focusNode: widget.focusNode,
                                 enabled: authProvider.isPremium || authProvider.paymentService.remainingMessages > 0,
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'GeneralSans',
                                   fontWeight: FontWeight.w400,
                                   fontSize: 16,
                                   color: AppColors.getTextPrimary(isDark),
@@ -529,7 +529,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                       : 'Daily message limit reached',
                                   filled: false,
                                   hintStyle: TextStyle(
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'GeneralSans',
                                     fontWeight: FontWeight.w400,
                                     fontSize: 16,
                                     color: AppColors.getTextTertiary(isDark),
@@ -666,20 +666,20 @@ AnimatedBuilder(
                             colors: _hasText || widget.isListening
                                 ? (isEnabled 
                                     ? [AppColors.primary, AppColors.secondary]
-                                    : [AppColors.getTextTertiary(isDark).withOpacity(0.5), AppColors.getTextTertiary(isDark).withOpacity(0.3)])
+                                    : [AppColors.getTextTertiary(isDark).withValues(alpha: 0.5), AppColors.getTextTertiary(isDark).withValues(alpha: 0.3)])
                                 : [AppColors.getSurface(isDark), AppColors.getSurfaceVariant(isDark)],
                           ),
                           shape: BoxShape.circle,
                           border: !_hasText && !widget.isListening
                               ? Border.all(
-                                  color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                                  color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                                   width: 1,
                                 )
                               : null,
                           boxShadow: (_hasText || widget.isListening) && isEnabled
                               ? [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.3),
+                                    color: AppColors.primary.withValues(alpha: 0.3),
                                     blurRadius: 12,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 4),
@@ -687,7 +687,7 @@ AnimatedBuilder(
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -706,7 +706,7 @@ AnimatedBuilder(
                                 ? (_hasText || widget.isListening
                                     ? Colors.white
                                     : AppColors.getTextSecondary(isDark))
-                                : AppColors.getTextTertiary(isDark).withOpacity(0.5),
+                                : AppColors.getTextTertiary(isDark).withValues(alpha: 0.5),
                             size: 26, // Larger icon
                           ),
                           tooltip: _hasText 

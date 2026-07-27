@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
 import '../components/ui/app_text.dart';
-import '../models/image_generation_request.dart';
 
 class ImagePromptSuggestions extends StatefulWidget {
   const ImagePromptSuggestions({super.key});
@@ -264,7 +263,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
             color: AppColors.getSurface(isDark),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               width: 2,
             ),
           ),
@@ -287,7 +286,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -296,7 +295,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -364,13 +363,13 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -388,7 +387,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -443,7 +442,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
         color: AppColors.getBackground(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+          color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
         ),
       ),
       child: Material(
@@ -464,7 +463,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: AppText.bodySmall(
@@ -528,7 +527,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

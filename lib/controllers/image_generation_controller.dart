@@ -9,6 +9,7 @@ import '../constants/image_generation_constants.dart';
 import '../widgets/image_generation_dialog.dart';
 import '../widgets/generated_image_viewer.dart';
 import '../screens/subscription_screen.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ImageGenerationController {
   final BuildContext context;
@@ -84,7 +85,7 @@ class ImageGenerationController {
 
       return result;
     } catch (e) {
-      debugPrint('❌ Image generation error: $e');
+      Log.d('Image generation error: $e');
       _showSnackBar(
         ImageGenerationErrors.unknownError,
         isSuccess: false,
@@ -137,7 +138,7 @@ class ImageGenerationController {
         );
       }
     } catch (e) {
-      debugPrint('❌ Regeneration error: $e');
+      Log.d('Regeneration error: $e');
       _showSnackBar('Failed to regenerate image', isSuccess: false);
     }
   }
@@ -154,7 +155,7 @@ class ImageGenerationController {
         isSuccess: success,
       );
     } catch (e) {
-      debugPrint('❌ Save error: $e');
+      Log.d('Save error: $e');
       _showSnackBar(ImageGenerationErrors.storageError, isSuccess: false);
     }
   }
@@ -170,7 +171,7 @@ class ImageGenerationController {
         _showSnackBar(ImageGenerationMessages.imageShared, isSuccess: true);
       }
     } catch (e) {
-      debugPrint('❌ Share error: $e');
+      Log.d('Share error: $e');
       _showSnackBar('Failed to share image', isSuccess: false);
     }
   }
@@ -187,7 +188,7 @@ class ImageGenerationController {
         isSuccess: success,
       );
     } catch (e) {
-      debugPrint('❌ Copy error: $e');
+      Log.d('Copy error: $e');
       _showSnackBar('Failed to copy image', isSuccess: false);
     }
   }
@@ -209,7 +210,7 @@ class ImageGenerationController {
       
       return success;
     } catch (e) {
-      debugPrint('❌ Delete error: $e');
+      Log.d('Delete error: $e');
       _showSnackBar('Failed to delete image', isSuccess: false);
       return false;
     }
@@ -228,7 +229,7 @@ class ImageGenerationController {
           
       _showSnackBar(message, isSuccess: true);
     } catch (e) {
-      debugPrint('❌ Toggle favorite error: $e');
+      Log.d('Toggle favorite error: $e');
       _showSnackBar('Failed to update favorites', isSuccess: false);
     }
   }
@@ -301,7 +302,7 @@ class ImageGenerationController {
     try {
       await imageProvider.loadSavedImages();
     } catch (e) {
-      debugPrint('❌ Load images error: $e');
+      Log.d('Load images error: $e');
       _showSnackBar('Failed to load saved images', isSuccess: false);
     }
   }
@@ -317,7 +318,7 @@ class ImageGenerationController {
       await imageProvider.clearAllImages();
       _showSnackBar('All images cleared successfully', isSuccess: true);
     } catch (e) {
-      debugPrint('❌ Clear all error: $e');
+      Log.d('Clear all error: $e');
       _showSnackBar('Failed to clear images', isSuccess: false);
     }
   }
@@ -346,7 +347,7 @@ class ImageGenerationController {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Column(
@@ -489,7 +490,7 @@ class ImageGenerationController {
         content: Text(
           message,
           style: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'GeneralSans',
             fontWeight: FontWeight.w500,
           ),
         ),

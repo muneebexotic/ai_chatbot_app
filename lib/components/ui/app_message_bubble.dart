@@ -44,7 +44,7 @@ class UserMessageBubble extends StatelessWidget {
             ),
             shape: BoxShape.circle,
             border: Border.all(
-              color: colorScheme.onSurface.withOpacity(0.2),
+              color: colorScheme.onSurface.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
@@ -63,7 +63,7 @@ class UserMessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: colorScheme.onSurface.withOpacity(0.2),
+            color: colorScheme.onSurface.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
@@ -82,7 +82,7 @@ class UserMessageBubble extends StatelessWidget {
           ),
           shape: BoxShape.circle,
           border: Border.all(
-            color: colorScheme.onSurface.withOpacity(0.2),
+            color: colorScheme.onSurface.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
@@ -127,7 +127,7 @@ class UserMessageBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.primaryColor.withOpacity(0.2),
+                    color: theme.primaryColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -241,12 +241,12 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           end: Alignment.bottomRight,
           colors: [
             colorScheme.surface,
-            colorScheme.surfaceVariant ?? colorScheme.surface,
+            colorScheme.surfaceContainerHighest ?? colorScheme.surface,
           ],
         ),
         shape: BoxShape.circle,
         border: Border.all(
-          color: theme.primaryColor.withOpacity(0.3),
+          color: theme.primaryColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -284,9 +284,9 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
               child: Text(
                 'Generated image: "${widget.message.imageData!.prompt}"',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
+                  fontFamily: 'GeneralSans',
                   fontSize: 14,
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -315,7 +315,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -371,11 +371,11 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant?.withOpacity(0.5) ?? 
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) ?? 
                      colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: theme.primaryColor.withOpacity(0.1),
+                color: theme.primaryColor.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -385,7 +385,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                 Text(
                   'Image Details',
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'GeneralSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: colorScheme.onSurface,
@@ -395,9 +395,9 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                 Text(
                   widget.message.imageData!.getDescription(),
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'GeneralSans',
                     fontSize: 11,
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -445,7 +445,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
           Text(
             'Loading image...',
             style: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),
@@ -453,7 +453,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
             Text(
               '${(progress * 100).toInt()}%',
               style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.5),
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
                 fontSize: 12,
               ),
             ),
@@ -473,7 +473,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.error.withOpacity(0.3),
+          color: AppColors.error.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -500,7 +500,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                 ? 'Please check your connection and try again' 
                 : 'The image may have been corrupted or deleted',
             style: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.5),
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 14,
             ),
           ),
@@ -542,12 +542,12 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
                         bottomRight: Radius.circular(20),
                       ),
                       border: Border.all(
-                        color: theme.primaryColor.withOpacity(0.1),
+                        color: theme.primaryColor.withValues(alpha: 0.1),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.shadow.withOpacity(0.1),
+                          color: colorScheme.shadow.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -608,10 +608,10 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: theme.primaryColor.withOpacity(0.1),
+          color: theme.primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: theme.primaryColor.withOpacity(0.2),
+            color: theme.primaryColor.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -638,29 +638,29 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
     
     return MarkdownStyleSheet(
       p: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontWeight: FontWeight.w400,
         fontSize: 15,
-        color: colorScheme.onSurface.withOpacity(0.8),
+        color: colorScheme.onSurface.withValues(alpha: 0.8),
         height: 1.5,
       ),
       
       h1: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontWeight: FontWeight.w600,
         fontSize: 22,
         color: colorScheme.onSurface,
         height: 1.3,
       ),
       h2: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontWeight: FontWeight.w600,
         fontSize: 19,
         color: colorScheme.onSurface,
         height: 1.3,
       ),
       h3: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontWeight: FontWeight.w500,
         fontSize: 17,
         color: colorScheme.onSurface,
@@ -671,52 +671,52 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         fontFamily: 'JetBrains Mono',
         fontSize: 13,
         color: theme.primaryColor,
-        backgroundColor: (colorScheme.surfaceVariant ?? colorScheme.surface).withOpacity(0.5),
+        backgroundColor: (colorScheme.surfaceContainerHighest ?? colorScheme.surface).withValues(alpha: 0.5),
       ),
       codeblockDecoration: BoxDecoration(
-        color: colorScheme.surfaceVariant ?? colorScheme.surface,
+        color: colorScheme.surfaceContainerHighest ?? colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
         ),
       ),
       codeblockPadding: const EdgeInsets.all(16),
       
       strong: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontWeight: FontWeight.w600,
         fontSize: 15,
         color: colorScheme.onSurface,
       ),
       em: TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'GeneralSans',
         fontStyle: FontStyle.italic,
         fontWeight: FontWeight.w400,
         fontSize: 15,
-        color: colorScheme.onSurface.withOpacity(0.8),
+        color: colorScheme.onSurface.withValues(alpha: 0.8),
       ),
       
       a: TextStyle(
         color: theme.primaryColor,
         decoration: TextDecoration.underline,
-        decorationColor: theme.primaryColor.withOpacity(0.6),
+        decorationColor: theme.primaryColor.withValues(alpha: 0.6),
         fontSize: 15,
       ),
       
       listBullet: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.8),
+        color: colorScheme.onSurface.withValues(alpha: 0.8),
         fontSize: 15,
       ),
       listIndent: 20.0,
       
       blockquote: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.6),
+        color: colorScheme.onSurface.withValues(alpha: 0.6),
         fontStyle: FontStyle.italic,
         fontSize: 15,
         height: 1.5,
       ),
       blockquoteDecoration: BoxDecoration(
-        color: (colorScheme.surfaceVariant ?? colorScheme.surface).withOpacity(0.3),
+        color: (colorScheme.surfaceContainerHighest ?? colorScheme.surface).withValues(alpha: 0.3),
         border: Border(
           left: BorderSide(
             color: theme.primaryColor,
@@ -736,11 +736,11 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
         fontSize: 13,
       ),
       tableBody: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.8),
+        color: colorScheme.onSurface.withValues(alpha: 0.8),
         fontSize: 13,
       ),
       tableBorder: TableBorder.all(
-        color: colorScheme.outline.withOpacity(0.1),
+        color: colorScheme.outline.withValues(alpha: 0.1),
         width: 1.0,
         borderRadius: BorderRadius.circular(6),
       ),
@@ -749,7 +749,7 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
       horizontalRuleDecoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: colorScheme.outline.withOpacity(0.1),
+            color: colorScheme.outline.withValues(alpha: 0.1),
             width: 1.0,
           ),
         ),
@@ -774,10 +774,10 @@ class _BotMessageBubbleState extends State<BotMessageBubble>
               width: double.infinity,
               margin: const EdgeInsets.symmetric(vertical: 12.0),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant ?? colorScheme.surface,
+                color: colorScheme.surfaceContainerHighest ?? colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                 ),
               ),
               child: Column(

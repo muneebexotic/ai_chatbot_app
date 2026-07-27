@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../providers/auth_provider.dart';
 import '../constants/login_constants.dart';
 import '../utils/app_theme.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Controller to handle login screen business logic
 class LoginController extends ChangeNotifier {
@@ -111,7 +111,7 @@ class LoginController extends ChangeNotifier {
       await Future.delayed(LoginConstants.checkInterval);
     }
 
-    debugPrint(
+    Log.d(
       '${LoginConstants.userDataTimeoutWarning}. Auth: ${_authProvider.isLoggedIn}, User: ${_authProvider.currentUser != null}',
     );
   }
@@ -184,8 +184,4 @@ class LoginController extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

@@ -52,9 +52,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colorScheme.background,
               colorScheme.surface,
-              colorScheme.background,
+              colorScheme.surface,
+              colorScheme.surface,
             ],
             stops: const [0.0, 0.5, 1.0],
           ),

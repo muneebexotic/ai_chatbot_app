@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
 import '../services/payment_service.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Extensions for PaymentService to support subscription features
 extension PaymentServiceSubscriptionExtensions on PaymentService {
@@ -54,7 +54,7 @@ extension PaymentServiceSubscriptionExtensions on PaymentService {
         
         if (attempts < maxRetries) {
           await Future.delayed(SubscriptionConstants.retryDelay);
-          debugPrint('Purchase attempt $attempts failed, retrying...');
+          Log.d('Purchase attempt $attempts failed, retrying...');
         }
       }
     }
@@ -80,7 +80,7 @@ extension PaymentServiceSubscriptionExtensions on PaymentService {
         
         if (attempts < maxRetries) {
           await Future.delayed(SubscriptionConstants.retryDelay);
-          debugPrint('Restore attempt $attempts failed, retrying...');
+          Log.d('Restore attempt $attempts failed, retrying...');
         }
       }
     }
@@ -97,36 +97,36 @@ class SubscriptionAnalytics {
   /// Track subscription screen view
   static void trackSubscriptionViewed() {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.subscriptionViewedEvent}');
+    Log.d('Analytics: ${SubscriptionConstants.subscriptionViewedEvent}');
   }
 
   /// Track plan selection
   static void trackPlanSelected(SubscriptionPlan plan) {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.planSelectedEvent} - ${plan.name}');
+    Log.d('Analytics: ${SubscriptionConstants.planSelectedEvent} - ${plan.name}');
   }
 
   /// Track purchase initiation
   static void trackPurchaseInitiated(SubscriptionProduct product) {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.purchaseInitiatedEvent} - ${product.id}');
+    Log.d('Analytics: ${SubscriptionConstants.purchaseInitiatedEvent} - ${product.id}');
   }
 
   /// Track purchase completion
   static void trackPurchaseCompleted(SubscriptionProduct product) {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.purchaseCompletedEvent} - ${product.id}');
+    Log.d('Analytics: ${SubscriptionConstants.purchaseCompletedEvent} - ${product.id}');
   }
 
   /// Track purchase failure
   static void trackPurchaseFailed(String productId, String error) {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.purchaseFailedEvent} - $productId: $error');
+    Log.d('Analytics: ${SubscriptionConstants.purchaseFailedEvent} - $productId: $error');
   }
 
   /// Track restore purchases
   static void trackRestorePurchases() {
     // Implement your analytics tracking here
-    debugPrint('Analytics: ${SubscriptionConstants.restorePurchasesEvent}');
+    Log.d('Analytics: ${SubscriptionConstants.restorePurchasesEvent}');
   }
 }

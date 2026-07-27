@@ -12,51 +12,73 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # State and DI. Riverpod is the target (PRD F5); provider remains only until
+  # the screen-by-screen migration finishes in this milestone.
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  provider: ^6.1.2
+
+  # Backend. Firebase is removed in Milestone 2 (PRD §2.2, DECISIONS.md D0).
   firebase_core: ^4.0.0
   firebase_auth: ^6.0.0
   cloud_firestore: ^6.0.0
-  provider: ^6.1.2
-  intl: ^0.20.2
+  google_sign_in: ^7.1.1
+
+  # Voice — on-device, both of them. This is the business model (RESEARCH.md
+  # §5.3): a spoken minute costs zero. Never replace with a cloud service.
   speech_to_text: ^7.1.0
   flutter_tts: ^4.2.3
-  fluttertoast: ^8.2.12
-  clipboard: ^2.0.2
-  google_sign_in: ^7.1.1
-  http: ^1.4.0
+
+  # Model access. Removed in Milestone 3 when the gateway lands (PRD R9.3).
   google_generative_ai: ^0.4.7
+
+  http: ^1.4.0
+  intl: ^0.20.2
   shared_preferences: ^2.5.3
-  image_picker: ^1.1.2  
   path_provider: ^2.1.5
-  permission_handler: ^12.0.1
-  firebase_storage: ^13.0.0
   path: ^1.9.1
-  cloudinary_api: ^1.1.1
-  cloudinary_url_gen: ^1.8.0
+  image_picker: ^1.1.2
+  permission_handler: ^12.0.1
+  connectivity_plus: ^6.1.5
   flutter_svg: ^2.2.0
+  cupertino_icons: ^1.0.8
+  flutter_native_splash: ^2.4.6
+
+  # PRD §2.2 requires exactly one markdown renderer: gpt_markdown.
+  #
+  # The other three are still here on purpose. `app_message_bubble.dart` is 846
+  # lines built on flutter_markdown plus a custom flutter_highlight code-block
+  # builder, and PRD §7.4 replaces that widget wholesale in Milestone 3 — AI
+  # turns stop being bubbles and become full-width Newsreader paragraphs.
+  # Porting it to gpt_markdown now would be work thrown away in one milestone.
+  # Logged as DECISIONS.md D4; §14's "one renderer" is an acceptance criterion
+  # for the finished rebuild, not for this milestone.
   gpt_markdown: ^1.1.2
-  markdown: ^7.3.0
-  flutter_markdown: ^0.7.7+1
+  flutter_markdown: ^0.7.7+1 # REMOVE in Milestone 3
+  flutter_highlight: ^0.7.0 # REMOVE in Milestone 3
+  markdown: ^7.3.0 # REMOVE in Milestone 3
+
   in_app_purchase: ^3.2.3
   in_app_purchase_android: ^0.4.0+1
-
-  cupertino_icons: ^1.0.8
-  markdown_widget: ^2.3.2+8
-  flutter_highlight: ^0.7.0
-  change_app_package_name: ^1.5.0
-  flutter_native_splash: ^2.4.6
-  connectivity_plus: ^6.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+  # Was previously mis-indented at the top level of this file, which made it an
+  # unrecognised key rather than a dependency. The `include:` in
+  # analysis_options.yaml therefore resolved to nothing and NO lint rule has
+  # ever run on this codebase. Keep it here.
+  flutter_lints: ^6.0.0
+  riverpod_generator: ^2.6.3
+  build_runner: ^2.4.13
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.3
 
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/png_icons/app_icon.png" # update path accordingly
-
-flutter_lints: ^6.0.0
 
 # Flutter Native Splash Configuration
 flutter_native_splash:
@@ -99,15 +121,34 @@ flutter:
     - assets/png_icons/copy.png
     - assets/png_icons/three_dot_icon.png
 
+  # PRD §7.2 — three variable families, 717KB total (target: under 900KB).
+  # Poppins and Urbanist are deleted: both are named in the §7 anti-brief and
+  # the §16 never-do list.
+  #
+  # Each family is ONE variable file with no `weight:` key. That is deliberate.
+  # Declaring weights here would make Flutter instantiate fixed cuts and ship
+  # the file once per cut; instead weight is selected at use time via
+  # `fontVariations: [FontVariation('wght', n)]` in AppTypography, which is
+  # what keeps the payload this small.
+  #
+  # No italic files. They cost 594KB of the original 1311KB and would blow the
+  # budget. Flutter synthesises a slant for markdown emphasis. If Milestone 3's
+  # transcript rendering shows that synthesised serif italic looks wrong,
+  # Newsreader-VariableItalic can be added back — and the budget revisited then,
+  # with evidence.
   fonts:
-    - family: Poppins
+    # Display and AI transcript. The typographic signature (§7.2): rendering
+    # the AI's words as a serif reads like an interview in print.
+    - family: Newsreader
       fonts:
-        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
-          weight: 500
+        - asset: assets/fonts/Newsreader/Newsreader-Variable.ttf
 
-    - family: Urbanist
-      fonts: 
-      - asset: assets/fonts/Urbanist/Urbanist-Medium.ttf
-        weight: 500
-      - asset: assets/fonts/Urbanist/Urbanist-Regular.ttf
-        weight: 400
+    # UI and user speech.
+    - family: GeneralSans
+      fonts:
+        - asset: assets/fonts/GeneralSans/GeneralSans-Variable.ttf
+
+    # Data: timers, durations, counts, pace, dates.
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono/GeistMono-Variable.ttf

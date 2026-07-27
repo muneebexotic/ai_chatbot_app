@@ -7,9 +7,7 @@ import '../providers/auth_provider.dart';
 import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../components/ui/app_button.dart';
-import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
-import 'chat_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
 
 class PhotoUploadScreen extends StatefulWidget {
@@ -119,10 +117,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       bottom: false,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.getBackground(isDark).withOpacity(0.9),
+          color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
           border: Border(
             bottom: BorderSide(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -168,10 +166,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -182,7 +180,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           Container(
             padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
             ),
             child: Icon(
@@ -217,12 +215,12 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           width: _getResponsiveBorderWidth(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -300,10 +298,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -345,7 +343,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     return Container(
       height: 1,
       margin: EdgeInsets.symmetric(horizontal: _getResponsivePadding(context) * 0.83),
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withValues(alpha: 0.1),
     );
   }
 
@@ -366,8 +364,8 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           top: isFirst ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
           bottom: isLast ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
         ),
-        splashColor: AppColors.primary.withOpacity(0.1),
-        highlightColor: AppColors.primary.withOpacity(0.05),
+        splashColor: AppColors.primary.withValues(alpha: 0.1),
+        highlightColor: AppColors.primary.withValues(alpha: 0.05),
         child: Container(
           padding: EdgeInsets.all(_getResponsivePadding(context) * 0.83),
           child: Row(
@@ -375,7 +373,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
               Container(
                 padding: EdgeInsets.all(_getResponsivePadding(context) * 0.5),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.5),
                 ),
                 child: Icon(

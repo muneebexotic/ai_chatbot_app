@@ -7,6 +7,7 @@ import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../screens/subscription_screen.dart';
 import '../providers/chat_provider.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class PersonaScreen extends StatelessWidget {
   const PersonaScreen({super.key});
@@ -43,10 +44,10 @@ class PersonaScreen extends StatelessWidget {
                   bottom: false,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.getBackground(isDark).withOpacity(0.9),
+                      color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
                       border: Border(
                         bottom: BorderSide(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                         ),
                       ),
                     ),
@@ -95,11 +96,11 @@ class PersonaScreen extends StatelessWidget {
                           color: AppColors.getSurface(isDark),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 4),
                             ),
@@ -113,7 +114,7 @@ class PersonaScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
+                                    color: AppColors.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
@@ -188,13 +189,13 @@ class PersonaScreen extends StatelessWidget {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                AppColors.primary.withOpacity(0.1),
-                                AppColors.secondary.withOpacity(0.1),
+                                AppColors.primary.withValues(alpha: 0.1),
+                                AppColors.secondary.withValues(alpha: 0.1),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.primary.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Column(
@@ -204,7 +205,7 @@ class PersonaScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.2),
+                                      color: AppColors.primary.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(
@@ -271,10 +272,10 @@ class PersonaScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
+                          color: AppColors.primary.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -282,7 +283,7 @@ class PersonaScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
@@ -360,7 +361,7 @@ class PersonaScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.getSurface(isDark),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
           ),
           child: Column(children: children),
         ),
@@ -406,11 +407,11 @@ class PersonaScreen extends StatelessWidget {
                   listen: false,
                 );
                 chatProvider.updatePersona();
-                print(
+                Log.d(
                   'PersonaScreen: Updated ChatProvider with new persona: $value',
                 );
               } catch (e) {
-                print('PersonaScreen: Could not update ChatProvider: $e');
+                Log.d('PersonaScreen: Could not update ChatProvider: $e');
                 // This is not critical - the persona will still work on next chat
               }
 
@@ -419,7 +420,7 @@ class PersonaScreen extends StatelessWidget {
                 SnackBar(
                   content: Text(
                     'Persona changed to $title',
-                    style: const TextStyle(fontFamily: 'Poppins'),
+                    style: const TextStyle(fontFamily: 'GeneralSans'),
                   ),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
@@ -434,7 +435,7 @@ class PersonaScreen extends StatelessWidget {
                 SnackBar(
                   content: Text(
                     e.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(fontFamily: 'Poppins'),
+                    style: const TextStyle(fontFamily: 'GeneralSans'),
                   ),
                   backgroundColor: AppColors.error,
                 ),
@@ -448,7 +449,7 @@ class PersonaScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.05)
+                  ? AppColors.primary.withValues(alpha: 0.05)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
@@ -460,15 +461,15 @@ class PersonaScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withOpacity(0.2)
-                            : AppColors.primary.withOpacity(0.1),
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         icon,
                         color: isSelected
                             ? AppColors.primary
-                            : AppColors.primary.withOpacity(0.7),
+                            : AppColors.primary.withValues(alpha: 0.7),
                         size: 20,
                       ),
                     ),
@@ -516,7 +517,7 @@ class PersonaScreen extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: AppText.bodySmall(
@@ -603,7 +604,7 @@ class PersonaScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(

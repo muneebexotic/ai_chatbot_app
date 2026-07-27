@@ -1,12 +1,10 @@
 // lib\services\image_generation_service.dart
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/image_generation_request.dart';
 import '../models/generated_image.dart';
 import '../constants/image_generation_constants.dart'; // Added for huggingFaceModels
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 // Extension to add only non-null values
 extension MapExtensions on Map<String, dynamic> {
@@ -91,7 +89,7 @@ class ImageGenerationService {
     Function(double)? onProgress,
   ) async {
     try {
-      debugPrint('🎨 Generating with DALL-E: ${request.prompt}');
+      Log.d('Generating with DALL-E: ${request.prompt}');
       onProgress?.call(0.3);
 
       final response = await http.post(
@@ -144,7 +142,7 @@ class ImageGenerationService {
         throw ImageGenerationException('DALL-E API Error: ${errorData['error']['message'] ?? response.statusCode}');
       }
     } catch (e) {
-      debugPrint('❌ DALL-E generation failed: $e');
+      Log.d('DALL-E generation failed: $e');
       rethrow;
     }
     
@@ -158,7 +156,7 @@ class ImageGenerationService {
   ) async {
     try {
       final model = request.hfModel ?? ImageGenerationConstants.huggingFaceModels[0]; // Default to first if not specified
-      debugPrint('🎨 Generating with Hugging Face model $model: ${request.prompt}');
+      Log.d('Generating with Hugging Face model $model: ${request.prompt}');
       onProgress?.call(0.3);
 
       final dimensions = request.size.getDimensions();
@@ -213,7 +211,7 @@ class ImageGenerationService {
           final jsonResponse = jsonDecode(response.body);
           if (jsonResponse.containsKey('estimated_time')) {
             final waitTime = (jsonResponse['estimated_time'] as num).toInt() + 1; // Buffer
-            debugPrint('Model loading, waiting $waitTime seconds...');
+            Log.d('Model loading, waiting $waitTime seconds...');
             await Future.delayed(Duration(seconds: waitTime));
             retries++;
             continue;
@@ -226,7 +224,7 @@ class ImageGenerationService {
       }
       throw ImageGenerationException('Max retries exceeded while waiting for model to load.');
     } catch (e) {
-      debugPrint('❌ Hugging Face generation failed: $e');
+      Log.d('Hugging Face generation failed: $e');
       rethrow;
     }
   }
@@ -237,7 +235,7 @@ class ImageGenerationService {
     Function(double)? onProgress,
   ) async {
     try {
-      debugPrint('🎨 Generating with Stability AI: ${request.prompt}');
+      Log.d('Generating with Stability AI: ${request.prompt}');
       onProgress?.call(0.3);
 
       final dimensions = request.size.getDimensions();
@@ -299,7 +297,7 @@ class ImageGenerationService {
         throw ImageGenerationException('Stability AI Error: ${errorData['message'] ?? response.statusCode}');
       }
     } catch (e) {
-      debugPrint('❌ Stability AI generation failed: $e');
+      Log.d('Stability AI generation failed: $e');
       rethrow;
     }
   }
@@ -307,7 +305,7 @@ class ImageGenerationService {
   /// Cancel ongoing generation
   void cancelGeneration() {
     _isCancelled = true;
-    debugPrint('🚫 Image generation cancelled');
+    Log.d('Image generation cancelled');
   }
 
   /// Validate prompt for content policy

@@ -290,7 +290,7 @@ mixin ImageGenerationAnimationsMixin<T extends StatefulWidget> on State<T>, Tick
         return LinearProgressIndicator(
           value: value * _progressAnimation.value,
           color: color ?? Theme.of(context).primaryColor,
-          backgroundColor: backgroundColor ?? Colors.grey.withOpacity(0.2),
+          backgroundColor: backgroundColor ?? Colors.grey.withValues(alpha: 0.2),
           minHeight: height,
         );
       },

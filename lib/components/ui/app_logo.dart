@@ -36,7 +36,7 @@ class AppLogo extends StatelessWidget {
     final finalSize = _logoSize > responsiveSize ? responsiveSize : _logoSize;
 
     // Use theme-aware color if no color is provided
-    final effectiveColor = color ?? colorScheme.onBackground;
+    final effectiveColor = color ?? colorScheme.onSurface;
 
     Widget logo = Image.asset(
       'assets/logo.png',
@@ -51,7 +51,7 @@ class AppLogo extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: theme.primaryColor.withOpacity(0.3),
+              color: theme.primaryColor.withValues(alpha: 0.3),
               blurRadius: 30,
               spreadRadius: 5,
             ),

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class PhotoService {
   static final PhotoService _instance = PhotoService._internal();
@@ -33,7 +34,7 @@ class PhotoService {
       }
       return null;
     } catch (e) {
-      print('Error picking image from camera: $e');
+      Log.d('Error picking image from camera: $e');
       rethrow;
     }
   }
@@ -64,7 +65,7 @@ class PhotoService {
       }
       return null;
     } catch (e) {
-      print('Error picking image from gallery: $e');
+      Log.d('Error picking image from gallery: $e');
       rethrow;
     }
   }
@@ -87,7 +88,7 @@ class PhotoService {
         throw Exception('Failed to generate avatar: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error generating random avatar: $e');
+      Log.d('Error generating random avatar: $e');
       // Return a fallback URL
       return 'https://api.dicebear.com/7.x/avataaars/svg?seed=fallback';
     }
@@ -102,7 +103,7 @@ class PhotoService {
       }
       return null;
     } catch (e) {
-      print('Error getting avatar bytes: $e');
+      Log.d('Error getting avatar bytes: $e');
       return null;
     }
   }
@@ -135,7 +136,7 @@ class PhotoService {
 
       return true;
     } catch (e) {
-      print('Image validation error: $e');
+      Log.d('Image validation error: $e');
       return false;
     }
   }
@@ -159,11 +160,11 @@ Future<String?> uploadToCloudinary(File imageFile) async {
       final data = json.decode(resBody);
       return data['secure_url']; // return hosted image URL
     } else {
-      print('Cloudinary upload failed: ${response.statusCode}');
+      Log.d('Cloudinary upload failed: ${response.statusCode}');
       return null;
     }
   } catch (e) {
-    print('Upload error: $e');
+    Log.d('Upload error: $e');
     return null;
   }
 }

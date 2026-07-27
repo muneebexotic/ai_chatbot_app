@@ -66,7 +66,12 @@ class AppInput extends StatefulWidget {
     this.borderRadius,
   }) : _type = null;
 
-  // Old-style constructor for backward compatibility
+  // Old-style constructor for backward compatibility.
+  //
+  // NOTE: `dart fix` will try to delete the seven parameters below under
+  // `unused_element_parameter`, because no current caller passes them. Doing
+  // so is a compile error — every final field must be initialised by every
+  // constructor — so they stay. Re-run `dart fix` with care on this file.
   const AppInput._withType({
     super.key,
     required AppInputType type,
@@ -74,20 +79,20 @@ class AppInput extends StatefulWidget {
     this.label,
     this.hint,
     this.hintText,
+    this.errorText,
+    this.helperText,
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
+    this.enabled = true,
     this.onToggleVisibility,
     this.validator,
     this.onTap,
     this.readOnly = false,
     this.maxLines = 1,
-    this.keyboardType,
-    this.errorText,
-    this.helperText,
-    this.enabled = true,
     this.minLines,
     this.maxLength,
+    this.keyboardType,
     this.onChanged,
     this.onSubmitted,
     this.onEditingComplete,
@@ -333,8 +338,8 @@ class _AppInputState extends State<AppInput> {
     final backgroundColor = colorScheme.surface;
     final borderColor = _getBorderColor(context);
     final textColor = colorScheme.onSurface;
-    final hintColor = colorScheme.onSurface.withOpacity(0.6);
-    final labelColor = colorScheme.onSurface.withOpacity(0.8);
+    final hintColor = colorScheme.onSurface.withValues(alpha: 0.6);
+    final labelColor = colorScheme.onSurface.withValues(alpha: 0.8);
     
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
     final effectiveBorderRadius = widget.borderRadius ?? 16.0;
@@ -365,7 +370,7 @@ class _AppInputState extends State<AppInput> {
             boxShadow: _isFocused && !hasError
                 ? [
                     BoxShadow(
-                      color: theme.primaryColor.withOpacity(0.1),
+                      color: theme.primaryColor.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -394,7 +399,7 @@ class _AppInputState extends State<AppInput> {
               color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.w400,
-              fontFamily: 'Poppins',
+              fontFamily: 'GeneralSans',
             ),
             decoration: InputDecoration(
               hintText: effectiveHint,
@@ -402,7 +407,7 @@ class _AppInputState extends State<AppInput> {
                 color: hintColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                fontFamily: 'Poppins',
+                fontFamily: 'GeneralSans',
               ),
               prefixIcon: widget.prefixIcon != null
                   ? IconTheme(
@@ -465,7 +470,7 @@ class _AppInputState extends State<AppInput> {
           widget.obscureText
               ? Icons.visibility_off_outlined
               : Icons.visibility_outlined,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
         ),
         onPressed: widget.onToggleVisibility,
       );
@@ -473,7 +478,7 @@ class _AppInputState extends State<AppInput> {
     return widget.suffixIcon != null
         ? IconTheme(
             data: IconThemeData(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             child: widget.suffixIcon!,
           )
@@ -493,9 +498,9 @@ class _AppInputState extends State<AppInput> {
     }
     
     if (!widget.enabled) {
-      return colorScheme.outline.withOpacity(0.3);
+      return colorScheme.outline.withValues(alpha: 0.3);
     }
     
-    return colorScheme.outline.withOpacity(0.5);
+    return colorScheme.outline.withValues(alpha: 0.5);
   }
 }

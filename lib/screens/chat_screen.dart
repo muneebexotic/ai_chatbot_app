@@ -24,7 +24,7 @@ import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
-import '../providers/image_generation_provider.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -70,7 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final shouldExit = await _showExitDialog();
       return shouldExit ?? false;
     } catch (e) {
-      debugPrint('Error in _onWillPop: $e');
+      Log.d('Error in _onWillPop: $e');
       return true;
     }
   }
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -124,9 +124,9 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -174,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('Error showing exit dialog: $e');
+      Log.d('Error showing exit dialog: $e');
       return false;
     }
   }
@@ -227,7 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: Text(
           message,
           style: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'GeneralSans',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -311,7 +311,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollToTopSafely() {
     // Wait a bit longer for the UI to update
     Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted && _scrollController != null) {
+      if (mounted) {
         try {
           if (_scrollController.hasClients &&
               _scrollController.position.hasContentDimensions) {
@@ -325,7 +325,7 @@ class _ChatScreenState extends State<ChatScreen> {
             }
           }
         } catch (e) {
-          debugPrint('❌ Safe scroll failed: $e');
+          Log.d('Safe scroll failed: $e');
         }
       }
     });
@@ -351,7 +351,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -393,7 +393,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                      color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -402,7 +402,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   contentPadding: const EdgeInsets.all(16),
                   filled: true,
-                  fillColor: AppColors.getBackground(isDark).withOpacity(0.5),
+                  fillColor: AppColors.getBackground(isDark).withValues(alpha: 0.5),
                 ),
                 style: TextStyle(
                   color: AppColors.getTextPrimary(isDark),
@@ -413,9 +413,9 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -488,7 +488,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.star, color: AppColors.primary, size: 20),
@@ -515,7 +515,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -540,9 +540,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -603,15 +603,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToTop() {
     // Add comprehensive null checks and safety measures
-    if (_scrollController == null) {
-      debugPrint('⚠️ Scroll controller is null, cannot scroll');
-      return;
-    }
-
     Future.delayed(const Duration(milliseconds: 100), () {
       // Check if widget is still mounted and controller is still valid
       if (mounted &&
-          _scrollController != null &&
           _scrollController.hasClients) {
         try {
           // Additional safety check for position
@@ -623,22 +617,21 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
         } catch (e) {
-          debugPrint('❌ Error during scroll animation: $e');
+          Log.d('Error during scroll animation: $e');
           // Try immediate jump as fallback
           try {
             if (mounted &&
-                _scrollController != null &&
                 _scrollController.hasClients &&
                 _scrollController.position.hasContentDimensions) {  // Added check here
               _scrollController.jumpTo(0);
             }
           } catch (fallbackError) {
-            debugPrint('❌ Even fallback scroll failed: $fallbackError');
+            Log.d('Even fallback scroll failed: $fallbackError');
           }
         }
       } else {
-        debugPrint(
-          '⚠️ Cannot scroll: mounted=$mounted, hasClients=${_scrollController?.hasClients}',
+        Log.d(
+          'Cannot scroll: mounted=$mounted, hasClients=${_scrollController.hasClients}',
         );
       }
     });
@@ -657,7 +650,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: AppColors.getSurface(isDark),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -667,7 +660,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                    color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -694,7 +687,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -740,10 +733,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       width: 2,
                     ),
                   ),
@@ -798,10 +791,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.05),
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -868,10 +861,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -906,9 +899,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.getBackground(isDark).withOpacity(0.9),
+            color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
             border: Border(
-              bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+              bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
             ),
           ),
           child: AppBar(
@@ -1036,7 +1029,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -1307,7 +1300,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 content: const Text(
                                                   'Copied to clipboard',
                                                   style: TextStyle(
-                                                    fontFamily: 'Poppins',
+                                                    fontFamily: 'GeneralSans',
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),

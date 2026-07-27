@@ -56,7 +56,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         final isTablet = size.width > 600;
 
         return Scaffold(
-          backgroundColor: colorScheme.background,
+          backgroundColor: colorScheme.surface,
           resizeToAvoidBottomInset: true,
           body: Container(
             width: double.infinity,
@@ -211,10 +211,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: surfaceColor.withOpacity(0.5),
+          color: surfaceColor.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: surfaceVariantColor.withOpacity(0.3),
+            color: surfaceVariantColor.withValues(alpha: 0.3),
           ),
         ),
         child: Column(

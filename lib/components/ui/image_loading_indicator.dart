@@ -105,15 +105,15 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
-        color: AppColors.getSurface(isDark).withOpacity(0.9),
+        color: AppColors.getSurface(isDark).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primary.withValues(alpha: 0.2),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -140,7 +140,7 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
                           size: Size(widget.size * 0.6, widget.size * 0.6),
                           painter: WavePainter(
                             progress: _waveAnimation.value,
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                           ),
                         );
                       },
@@ -157,7 +157,7 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
                             painter: LoadingRingPainter(
                               progress: widget.showProgress ? widget.progress : 1.0,
                               color: AppColors.primary,
-                              backgroundColor: AppColors.primary.withOpacity(0.2),
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                             ),
                           ),
                         );
@@ -173,10 +173,10 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary.withOpacity(0.3),
+                                color: AppColors.primary.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
@@ -244,7 +244,7 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
                       padding: const EdgeInsets.only(top: 8),
                       child: LinearProgressIndicator(
                         value: widget.progress,
-                        backgroundColor: AppColors.primary.withOpacity(0.2),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                         valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         minHeight: 3,
                       ),
@@ -265,7 +265,7 @@ class _ImageLoadingIndicatorState extends State<ImageLoadingIndicator>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                      color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                     ),
                   ),
                 ),
@@ -346,7 +346,7 @@ class LoadingRingPainter extends CustomPainter {
       );
 
       final dotPaint = Paint()
-        ..color = color.withOpacity(0.8)
+        ..color = color.withValues(alpha: 0.8)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(dotCenter, 2, dotPaint);
@@ -379,7 +379,7 @@ class WavePainter extends CustomPainter {
       final opacity = (1.0 - waveProgress) * 0.5;
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity)
+        ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
 
@@ -451,7 +451,7 @@ class _CompactImageLoadingIndicatorState extends State<CompactImageLoadingIndica
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Stack(
@@ -467,7 +467,7 @@ class _CompactImageLoadingIndicatorState extends State<CompactImageLoadingIndica
                   value: widget.progress > 0 ? widget.progress : null,
                   strokeWidth: 3,
                   color: AppColors.primary,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                 ),
               );
             },

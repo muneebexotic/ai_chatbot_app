@@ -93,8 +93,8 @@ class _SuggestionChipState extends State<SuggestionChip>
                       end: Alignment.bottomRight,
                       colors: _isPressed
                           ? [
-                              AppColors.primary.withOpacity(0.8),
-                              AppColors.secondary.withOpacity(0.9),
+                              AppColors.primary.withValues(alpha: 0.8),
+                              AppColors.secondary.withValues(alpha: 0.9),
                             ]
                           : [
                               AppColors.primary,
@@ -104,21 +104,21 @@ class _SuggestionChipState extends State<SuggestionChip>
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(
                       color: _isPressed
-                          ? AppColors.primary.withOpacity(0.6)
-                          : AppColors.primary.withOpacity(0.3),
+                          ? AppColors.primary.withValues(alpha: 0.6)
+                          : AppColors.primary.withValues(alpha: 0.3),
                       width: 1,
                     ),
                     boxShadow: _isPressed
                         ? [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ]
                         : [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.primary.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -136,7 +136,7 @@ class _SuggestionChipState extends State<SuggestionChip>
                       Text(
                         widget.label,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'GeneralSans',
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                           color: AppColors.getTextPrimary(isDark),

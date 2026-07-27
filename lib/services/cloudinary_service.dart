@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class CloudinaryService {
   final String cloudName = 'drbt1cndv';
@@ -24,12 +25,12 @@ class CloudinaryService {
         final data = json.decode(resBody);
         return data['secure_url']; // This is the image URL
       } else {
-        debugPrint('Upload failed: ${response.statusCode}');
-        debugPrint('Response body: $resBody');
+        Log.d('Upload failed: ${response.statusCode}');
+        Log.d('Response body: $resBody');
         return null;
       }
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      Log.d('Error uploading image: $e');
       return null;
     }
   }
@@ -75,15 +76,15 @@ class CloudinaryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(resBody);
-        debugPrint('✅ Image uploaded successfully: ${data['secure_url']}');
+        Log.d('Image uploaded successfully: ${data['secure_url']}');
         return data['secure_url']; // This is the image URL
       } else {
-        debugPrint('❌ Upload failed: ${response.statusCode}');
-        debugPrint('Response body: $resBody');
+        Log.d('Upload failed: ${response.statusCode}');
+        Log.d('Response body: $resBody');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error uploading image bytes: $e');
+      Log.d('Error uploading image bytes: $e');
       return null;
     }
   }
@@ -102,15 +103,15 @@ class CloudinaryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(resBody);
-        debugPrint('✅ Image deleted successfully: $publicId');
+        Log.d('Image deleted successfully: $publicId');
         return data['result'] == 'ok';
       } else {
-        debugPrint('❌ Delete failed: ${response.statusCode}');
-        debugPrint('Response body: $resBody');
+        Log.d('Delete failed: ${response.statusCode}');
+        Log.d('Response body: $resBody');
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error deleting image: $e');
+      Log.d('Error deleting image: $e');
       return false;
     }
   }
@@ -127,11 +128,11 @@ class CloudinaryService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        debugPrint('❌ Failed to get image info: ${response.statusCode}');
+        Log.d('Failed to get image info: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error getting image info: $e');
+      Log.d('Error getting image info: $e');
       return null;
     }
   }

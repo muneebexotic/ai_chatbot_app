@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../constants/image_generation_constants.dart';
 import '../../utils/app_theme.dart';
 
@@ -117,13 +116,13 @@ class _ImageGenerationInputState extends State<ImageGenerationInput>
                   ? AppColors.error
                   : _isFocused
                       ? AppColors.primary
-                      : AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                      : AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
               width: _isFocused ? 2 : 1,
             ),
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     )
@@ -171,7 +170,7 @@ class _ImageGenerationInputState extends State<ImageGenerationInput>
                         decoration: BoxDecoration(
                           border: Border(
                             top: BorderSide(
-                              color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
                             ),
                           ),
                         ),
@@ -300,13 +299,13 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: onPressed != null
-                ? AppColors.primary.withOpacity(0.1)
-                : AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: onPressed != null
-                  ? AppColors.primary.withOpacity(0.3)
-                  : AppColors.getTextTertiary(isDark).withOpacity(0.2),
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
             ),
           ),
           child: Row(

@@ -17,6 +17,7 @@ import '../constants/image_generation_constants.dart';
 import '../models/image_generation_request.dart';
 import '../utils/app_theme.dart';
 import 'image_prompt_suggestions.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ImageGenerationDialog extends StatefulWidget {
   const ImageGenerationDialog({super.key});
@@ -150,7 +151,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
       }
     } catch (e) {
       // Error handling is done in the controller
-      debugPrint('Generation error: $e');
+      Log.d('Generation error: $e');
     }
   }
 
@@ -215,12 +216,12 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                 color: AppColors.getBackground(isDark),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -247,7 +248,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -256,7 +257,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -376,7 +377,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+          color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -503,7 +504,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+          color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -540,13 +541,13 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                  color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                  color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -573,13 +574,13 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                    color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                    color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -670,7 +671,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -682,7 +683,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -728,7 +729,7 @@ class _ImageGenerationDialogState extends State<ImageGenerationDialog>
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                        color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                       ),
                     ),
                   ),

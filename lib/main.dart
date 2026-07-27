@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'core/ui/app_messenger.dart';
 import 'config/bootstrap.dart';
 import 'config/app_providers.dart';
 import 'config/app_router.dart';
@@ -35,6 +35,10 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'AI Chatbot',
             debugShowCheckedModeBanner: false,
+            // Lets non-widget code surface a message without holding a
+            // BuildContext (PRD §9.1). Without this key every AppMessenger
+            // call is a silent no-op.
+            scaffoldMessengerKey: AppMessenger.key,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,

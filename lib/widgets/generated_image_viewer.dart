@@ -11,7 +11,6 @@ import '../providers/themes_provider.dart';
 import '../controllers/image_generation_controller.dart';
 import '../utils/app_theme.dart';
 import '../components/ui/app_text.dart';
-import '../constants/image_generation_constants.dart';
 
 class GeneratedImageViewer extends StatefulWidget {
   final GeneratedImage image;
@@ -160,7 +159,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
                       radius: 1.2,
                       colors: [
                         AppColors.getBackground(isDark),
-                        AppColors.getSurface(isDark).withOpacity(0.8),
+                        AppColors.getSurface(isDark).withValues(alpha: 0.8),
                         AppColors.getBackground(isDark),
                       ],
                       stops: const [0.0, 0.6, 1.0],
@@ -196,10 +195,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
       leading: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.getBackground(isDark).withOpacity(0.9),
+          color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -216,10 +215,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
         Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.getBackground(isDark).withOpacity(0.9),
+            color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -256,7 +255,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -350,7 +349,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.error.withOpacity(0.3),
+          color: AppColors.error.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -390,10 +389,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: AppColors.getSurface(isDark).withOpacity(0.95),
+        color: AppColors.getSurface(isDark).withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -405,10 +404,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.primary.withOpacity(0.2),
+                color: AppColors.primary.withValues(alpha: 0.2),
               ),
             ),
             child: Column(
@@ -535,10 +534,10 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
             : AppColors.getTextSecondary(isDark);
 
     final backgroundColor = isDestructive
-        ? AppColors.error.withOpacity(0.1)
+        ? AppColors.error.withValues(alpha: 0.1)
         : isPrimary
-            ? AppColors.primary.withOpacity(0.1)
-            : AppColors.getTextTertiary(isDark).withOpacity(0.1);
+            ? AppColors.primary.withValues(alpha: 0.1)
+            : AppColors.getTextTertiary(isDark).withValues(alpha: 0.1);
 
     return Material(
       color: Colors.transparent,
@@ -551,7 +550,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
             color: backgroundColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
             ),
           ),
           child: Column(
@@ -575,7 +574,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
       child: GestureDetector(
         onTap: _toggleDetails,
         child: Container(
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withValues(alpha: 0.5),
           child: SlideTransition(
             position: _slideAnimation,
             child: Align(
@@ -588,7 +587,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
                   color: AppColors.getSurface(isDark),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
@@ -645,7 +644,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
                           color: AppColors.getBackground(isDark),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                           ),
                         ),
                         child: AppText.bodySmall(
@@ -670,7 +669,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
                         color: AppColors.getBackground(isDark),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                          color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                         ),
                       ),
                       child: AppText.bodySmall(
@@ -716,7 +715,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
   Widget _buildLoadingOverlay(bool isDark) {
     return Positioned.fill(
       child: Container(
-        color: AppColors.getBackground(isDark).withOpacity(0.8),
+        color: AppColors.getBackground(isDark).withValues(alpha: 0.8),
         child: Center(
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -725,7 +724,7 @@ class _GeneratedImageViewerState extends State<GeneratedImageViewer>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import '../models/generated_image.dart';
 import '../services/cloudinary_service.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ImageStorageService {
   static const String _cacheFolder = 'generated_images';
@@ -28,10 +29,10 @@ class ImageStorageService {
       final file = File(filePath);
       await file.writeAsBytes(image.imageData);
       
-      debugPrint('💾 Image cached locally: $filePath');
+      Log.d('Image cached locally: $filePath');
       return filePath;
     } catch (e) {
-      debugPrint('❌ Failed to cache image: $e');
+      Log.d('Failed to cache image: $e');
       return null;
     }
   }
@@ -44,7 +45,7 @@ class ImageStorageService {
         return await file.readAsBytes();
       }
     } catch (e) {
-      debugPrint('❌ Failed to load cached image: $e');
+      Log.d('Failed to load cached image: $e');
     }
     return null;
   }
@@ -52,9 +53,9 @@ class ImageStorageService {
   /// Upload image to cloud storage (Cloudinary)
   Future<String?> uploadImageToCloud(GeneratedImage image, String userId) async {
     try {
-      debugPrint('☁️ Uploading image to cloud: ${image.id}');
+      Log.d('Uploading image to cloud: ${image.id}');
       
-      final publicId = 'generated_images/${userId}/${image.id}_${DateTime.now().millisecondsSinceEpoch}';
+      final publicId = 'generated_images/$userId/${image.id}_${DateTime.now().millisecondsSinceEpoch}';
       
       final cloudUrl = await _cloudinaryService.uploadImageBytes(
         imageBytes: image.imageData,
@@ -63,11 +64,11 @@ class ImageStorageService {
       );
 
       if (cloudUrl != null) {
-        debugPrint('✅ Image uploaded to cloud: $cloudUrl');
+        Log.d('Image uploaded to cloud: $cloudUrl');
         return cloudUrl;
       }
     } catch (e) {
-      debugPrint('❌ Failed to upload image to cloud: $e');
+      Log.d('Failed to upload image to cloud: $e');
     }
     return null;
   }
@@ -87,7 +88,7 @@ class ImageStorageService {
           .map((file) => file.path)
           .toList();
     } catch (e) {
-      debugPrint('❌ Failed to get cached images: $e');
+      Log.d('Failed to get cached images: $e');
       return [];
     }
   }
@@ -109,7 +110,7 @@ class ImageStorageService {
         
         if (age > _maxCacheAge) {
           await file.delete();
-          debugPrint('🗑️ Deleted old cached image: ${path.basename(file.path)}');
+          Log.d('Deleted old cached image: ${path.basename(file.path)}');
         } else {
           totalSize += stat.size;
         }
@@ -120,9 +121,9 @@ class ImageStorageService {
         await _cleanupBySize(directory);
       }
       
-      debugPrint('🧹 Cache cleanup completed. Size: ${(totalSize / 1024 / 1024).toStringAsFixed(1)}MB');
+      Log.d('Cache cleanup completed. Size: ${(totalSize / 1024 / 1024).toStringAsFixed(1)}MB');
     } catch (e) {
-      debugPrint('❌ Cache cleanup failed: $e');
+      Log.d('Cache cleanup failed: $e');
     }
   }
 
@@ -149,10 +150,10 @@ class ImageStorageService {
         
         await entry.key.delete();
         currentSize -= entry.value.size;
-        debugPrint('🗑️ Deleted cached image to free space: ${path.basename(entry.key.path)}');
+        Log.d('Deleted cached image to free space: ${path.basename(entry.key.path)}');
       }
     } catch (e) {
-      debugPrint('❌ Size-based cleanup failed: $e');
+      Log.d('Size-based cleanup failed: $e');
     }
   }
 
@@ -222,7 +223,7 @@ class ImageStorageService {
         'maxAge': _maxCacheAge,
       };
     } catch (e) {
-      debugPrint('❌ Failed to get cache stats: $e');
+      Log.d('Failed to get cache stats: $e');
       return {
         'totalFiles': 0,
         'totalSize': 0,
@@ -243,10 +244,10 @@ class ImageStorageService {
         await file.delete();
       }
 
-      debugPrint('🧹 All cached images cleared');
+      Log.d('All cached images cleared');
       return true;
     } catch (e) {
-      debugPrint('❌ Failed to clear cache: $e');
+      Log.d('Failed to clear cache: $e');
       return false;
     }
   }
@@ -267,7 +268,7 @@ class ImageStorageService {
 
     // For Flutter web/mobile, you might want to use image compression packages
     // like flutter_image_compress or similar
-    debugPrint('⚠️ Image size (${imageData.length} bytes) exceeds limit, consider compression');
+    Log.d('Image size (${imageData.length} bytes) exceeds limit, consider compression');
     
     // For now, return original - implement compression as needed
     return imageData;

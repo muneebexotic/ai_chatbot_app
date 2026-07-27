@@ -119,9 +119,9 @@ class _LoginScreenState extends State<LoginScreen>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colorScheme.background,
             colorScheme.surface,
-            colorScheme.background,
+            colorScheme.surface,
+            colorScheme.surface,
           ],
           stops: const [0.0, 0.5, 1.0],
         ),
@@ -200,11 +200,11 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             AppText.displayLarge(
               LoginConstants.titleLine1,
-              color: colorScheme.onBackground, // Theme-aware
+              color: colorScheme.onSurface, // Theme-aware
             ),
             AppText.displayLarge(
               LoginConstants.titleLine2,
-              color: colorScheme.onBackground, // Theme-aware
+              color: colorScheme.onSurface, // Theme-aware
             ),
           ],
         ),
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             AppText.bodyMedium(
               LoginConstants.signUpPrompt,
-              color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware
+              color: colorScheme.onSurface.withValues(alpha: 0.7), // Theme-aware
             ),
             AppButton.text(
               text: LoginConstants.signUpText,
@@ -322,20 +322,20 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: Container(
               height: 1,
-              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
+              color: colorScheme.outline.withValues(alpha: 0.3), // Theme-aware
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
               LoginConstants.dividerText,
-              color: colorScheme.onBackground.withOpacity(0.5), // Theme-aware
+              color: colorScheme.onSurface.withValues(alpha: 0.5), // Theme-aware
             ),
           ),
           Expanded(
             child: Container(
               height: 1,
-              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
+              color: colorScheme.outline.withValues(alpha: 0.3), // Theme-aware
             ),
           ),
         ],
@@ -360,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Container(
       height: MediaQuery.of(context).padding.bottom,
-      color: colorScheme.background, // Theme-aware
+      color: colorScheme.surface, // Theme-aware
     );
   }
 }

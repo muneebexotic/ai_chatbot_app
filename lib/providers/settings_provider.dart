@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class SettingsProvider with ChangeNotifier {
 
@@ -50,10 +51,10 @@ class SettingsProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _persona = prefs.getString('selected_persona') ?? 'Default';
       
-      print('✅ Settings loaded: Persona = $_persona');
+      Log.d('Settings loaded: Persona = $_persona');
       notifyListeners();
     } catch (e) {
-      print('❌ Error loading settings: $e');
+      Log.d('Error loading settings: $e');
     }
   }
 
@@ -68,7 +69,7 @@ class SettingsProvider with ChangeNotifier {
 
       // Check if user can access this persona
       if (personaDetails['isPremium'] == true && !isPremium) {
-        print('⚠️ Attempted to select premium persona without subscription: $newPersona');
+        Log.d('Attempted to select premium persona without subscription: $newPersona');
         throw Exception('This persona requires Premium subscription');
       }
 
@@ -78,10 +79,10 @@ class SettingsProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selected_persona', newPersona);
       
-      print('✅ Persona updated: $_persona (${personaDetails['name']})');
+      Log.d('Persona updated: $_persona (${personaDetails['name']})');
       notifyListeners();
     } catch (e) {
-      print('❌ Error setting persona: $e');
+      Log.d('Error setting persona: $e');
       rethrow;
     }
   }
@@ -89,7 +90,7 @@ class SettingsProvider with ChangeNotifier {
   // Reset to default persona when subscription expires
   Future<void> resetToFreePersona() async {
     if (isCurrentPersonaPremium) {
-      print('🔄 Resetting to free persona due to subscription expiry');
+      Log.d('Resetting to free persona due to subscription expiry');
       await setPersona('Default', isPremium: false);
     }
   }

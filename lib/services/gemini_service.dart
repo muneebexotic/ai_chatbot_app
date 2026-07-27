@@ -3,6 +3,7 @@ import 'package:ai_chatbot_app/providers/settings_provider.dart';
 import 'package:ai_chatbot_app/models/chat_message.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class GeminiService {
   /// TRANSITIONAL — Milestone 0 only.
@@ -39,15 +40,15 @@ class GeminiService {
     _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
     
     // Debug log to verify persona is being applied
-    print('🎭 GeminiService initialized with persona: ${_settingsProvider.persona}');
-    print('🎭 System prompt: $_systemPrompt');
+    Log.d('GeminiService initialized with persona: ${_settingsProvider.persona}');
+    Log.d('System prompt: $_systemPrompt');
   }
 
   // 🔥 FIXED: Get current system prompt (for real-time updates)
   String? get currentSystemPrompt {
     final currentPersona = _settingsProvider.persona;
     final prompt = _getSystemPrompt(currentPersona);
-    print('🎭 Current persona: $currentPersona, Prompt: $prompt');
+    Log.d('Current persona: $currentPersona, Prompt: $prompt');
     return prompt;
   }
 
@@ -62,9 +63,9 @@ class GeminiService {
       // Add system prompt if available
       if (systemPrompt != null && systemPrompt.isNotEmpty) {
         input.add(Content.text(systemPrompt));
-        print('🎭 Using system prompt: $systemPrompt');
+        Log.d('Using system prompt: $systemPrompt');
       } else {
-        print('🎭 No system prompt - using default behavior');
+        Log.d('No system prompt - using default behavior');
       }
 
       // Convert chat messages to Gemini format
@@ -87,10 +88,10 @@ class GeminiService {
         return text;
       }
 
-      debugPrint('⚠️ Gemini returned no usable text');
+      Log.d('Gemini returned no usable text');
       return null;
     } catch (e) {
-      debugPrint('❌ Gemini error: $e');
+      Log.d('Gemini error: $e');
       return null;
     }
   }
@@ -113,10 +114,10 @@ class GeminiService {
 
       if (systemPrompt != null && systemPrompt.isNotEmpty) {
         input.add(Content.text('$systemPrompt\n$prompt'));
-        print('🎭 Single message with system prompt: $systemPrompt');
+        Log.d('Single message with system prompt: $systemPrompt');
       } else {
         input.add(Content.text(prompt));
-        print('🎭 Single message without system prompt');
+        Log.d('Single message without system prompt');
       }
 
       final response = await _model.generateContent(input);
@@ -129,10 +130,10 @@ class GeminiService {
         return text;
       }
 
-      debugPrint('⚠️ Gemini returned no usable text');
+      Log.d('Gemini returned no usable text');
       return null;
     } catch (e) {
-      debugPrint('❌ Gemini error: $e');
+      Log.d('Gemini error: $e');
       return null;
     }
   }
@@ -175,7 +176,7 @@ Generate a concise title:''';
         
         // Ensure max length
         if (title.length > 40) {
-          title = title.substring(0, 37) + '...';
+          title = '${title.substring(0, 37)}...';
         }
         
         return title.isNotEmpty ? title : null;
@@ -183,7 +184,7 @@ Generate a concise title:''';
 
       return null;
     } catch (e) {
-      debugPrint('❌ Title generation error: $e');
+      Log.d('Title generation error: $e');
       return null;
     }
   }
@@ -204,7 +205,7 @@ Generate a concise title:''';
       case 'Motivational Coach':
         return 'You are an enthusiastic motivational coach! Respond with high energy, encouragement, and positivity. Use motivational language, push for action, and inspire confidence. Be supportive and uplifting in every response.';
       default:
-        print('⚠️ Unknown persona: $persona, falling back to default');
+        Log.d('Unknown persona: $persona, falling back to default');
         return null;
     }
   }

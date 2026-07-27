@@ -289,6 +289,6 @@ class ImageGenerationUI {
   }
   
   static String getImageDimensions(int width, int height) {
-    return '${width}×$height pixels';
+    return '$width×$height pixels';
   }
 }

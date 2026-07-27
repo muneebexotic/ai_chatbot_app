@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../constants/welcome_screen_constants.dart';
 import '../utils/app_theme.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class WelcomeController {
   final BuildContext context;
@@ -65,7 +66,7 @@ class WelcomeController {
       await Future.delayed(checkInterval);
     }
 
-    print('⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}');
+    Log.d('Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}');
   }
 
   void navigateToLogin() {

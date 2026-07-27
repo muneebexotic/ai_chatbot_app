@@ -8,6 +8,34 @@ would reverse it.
 
 ---
 
+## D4 — Three markdown renderers survive Milestone 1
+
+**Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Defers:** PRD §2.2
+("keep exactly one renderer") to Milestone 3
+
+**What.** `flutter_markdown`, `flutter_highlight`, and `markdown` stay in
+`pubspec.yaml` alongside `gpt_markdown` for now. `markdown_widget` is removed —
+it had zero usages.
+
+**Why.** `app_message_bubble.dart` is 846 lines built on `flutter_markdown`
+plus a custom `flutter_highlight` code-block builder. PRD §7.4 replaces that
+widget wholesale in Milestone 3: AI turns stop being bubbles and become
+full-width Newsreader paragraphs with a `signal` rule on the left. Porting it
+to `gpt_markdown` now would be work discarded one milestone later, and it would
+be done against the old design rather than the new one.
+
+§14's "exactly one renderer" is an acceptance criterion for the finished
+rebuild, not for this milestone. The dependency lines carry `# REMOVE in
+Milestone 3` markers.
+
+**Cost:** three unnecessary packages in the dependency tree, and a slightly
+larger debug APK, for the duration of Milestone 2.
+
+**Reverses if:** Milestone 3 slips far enough that these linger past the chat
+rebuild, at which point the port should happen on its own.
+
+---
+
 ## D3 — Default model routing moves off Gemini's unpaid tier
 
 **Date:** 2026-07-26 · **Status:** approved · **Amends:** PRD R9.3.3 ·

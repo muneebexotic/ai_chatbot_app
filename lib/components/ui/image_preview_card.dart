@@ -151,20 +151,20 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
           color: widget.isSelected
               ? AppColors.primary
               : (_isHovered
-                    ? AppColors.primary.withOpacity(0.3)
-                    : AppColors.getTextTertiary(isDark).withOpacity(0.1)),
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : AppColors.getTextTertiary(isDark).withValues(alpha: 0.1)),
           width: widget.isSelected ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
             blurRadius: _isHovered ? 20 : 8,
             spreadRadius: _isHovered ? 2 : 0,
             offset: Offset(0, _isHovered ? 8 : 4),
           ),
           if (widget.isSelected)
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               blurRadius: 12,
               spreadRadius: 0,
               offset: const Offset(0, 4),
@@ -285,7 +285,7 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
               stops: const [0.5, 1.0],
             ),
           ),
@@ -355,9 +355,9 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -379,7 +379,7 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -404,7 +404,7 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
             gradient: LinearGradient(
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
-              colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+              colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
             ),
           ),
           child: Column(
@@ -429,7 +429,7 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.8),
+                      color: AppColors.primary.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: AppText.labelSmall(
@@ -444,7 +444,7 @@ class _ImagePreviewCardState extends State<ImagePreviewCard>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: AppText.labelSmall(

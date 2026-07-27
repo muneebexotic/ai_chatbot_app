@@ -198,7 +198,7 @@ class _SplashScreenState extends State<SplashScreen>
                 valueColor: AlwaysStoppedAnimation<Color>(
                   AppColors.primary,
                 ),
-                backgroundColor: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+                backgroundColor: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
               ),
             ),
           );
@@ -229,7 +229,7 @@ class _SplashScreenState extends State<SplashScreen>
             padding: const EdgeInsets.symmetric(horizontal: 32.0),
             child: AppText.caption(
               error,
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.8),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.8),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
