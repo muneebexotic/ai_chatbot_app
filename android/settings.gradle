@@ -20,7 +20,16 @@ pluginManagement {
 
 plugins {
     id 'dev.flutter.flutter-plugin-loader' version '1.0.0'
-    id 'com.android.application' version '8.7.3' apply false
+    // 8.9.1 is the floor set by supabase_flutter's transitive AndroidX
+    // dependencies: androidx.browser 1.9.0 and androidx.core 1.17.0 both
+    // refuse to build under an older plugin. 8.7.3 failed
+    // :app:checkDebugAarMetadata outright when Supabase was added.
+    //
+    // Safe with the Gradle 8.12 already in gradle-wrapper.properties (AGP
+    // 8.9 requires 8.11.1 or newer) and with JDK 17. Kept at the minimum that
+    // satisfies the constraint rather than the newest available, since a
+    // bigger jump buys nothing here and risks more.
+    id 'com.android.application' version '8.9.1' apply false
     id 'org.jetbrains.kotlin.android' version '2.1.0' apply false
 }
 
