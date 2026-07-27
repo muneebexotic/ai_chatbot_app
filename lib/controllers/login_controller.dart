@@ -5,15 +5,19 @@ import '../utils/app_theme.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Controller to handle login screen business logic
+/// Navigation and messaging are handed in per call rather than stored.
+///
+/// This controller used to hold the BuildContext it was constructed with.
+/// That is the same shape as F3 one layer up: the object outlives nothing in
+/// practice, but it forces a liveness check before every use and makes the
+/// class impossible to drive in a test without a widget tree. See
+/// CRITIQUE.md W1.3 -- the architecture test caught this and was briefly
+/// narrowed to accommodate it instead of it being fixed.
 class LoginController extends ChangeNotifier {
   final AuthProvider _authProvider;
-  final BuildContext _context;
 
-  LoginController({
-    required AuthProvider authProvider,
-    required BuildContext context,
-  })  : _authProvider = authProvider,
-        _context = context;
+  LoginController({required AuthProvider authProvider})
+      : _authProvider = authProvider;
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -117,10 +121,10 @@ class LoginController extends ChangeNotifier {
   }
 
   /// Shows error snackbar
-  void showErrorSnackBar(String message) {
-    if (!_contextMounted) return;
+  void showErrorSnackBar(BuildContext context, String message) {
+    if (!context.mounted) return;
 
-    ScaffoldMessenger.of(_context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: AppColors.error,
@@ -133,33 +137,31 @@ class LoginController extends ChangeNotifier {
   }
 
   /// Navigates to chat screen - FIXED
-  void navigateToChat() {
-    if (!_contextMounted) return;
-    
-    // Clear entire navigation stack and navigate to chat
+  void navigateToChat(BuildContext context) {
+    if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(
-      _context, 
+      context,
       LoginConstants.chatRoute,
       (route) => false, // Remove ALL previous routes
     );
   }
 
   /// Navigates to signup screen
-  void navigateToSignup() {
-    if (!_contextMounted) return;
-    Navigator.pushNamed(_context, LoginConstants.signupRoute);
+  void navigateToSignup(BuildContext context) {
+    if (!context.mounted) return;
+    Navigator.pushNamed(context, LoginConstants.signupRoute);
   }
 
   /// Navigates to forgot password screen
-  void navigateToForgotPassword() {
-    if (!_contextMounted) return;
-    Navigator.pushNamed(_context, LoginConstants.forgotPasswordRoute);
+  void navigateToForgotPassword(BuildContext context) {
+    if (!context.mounted) return;
+    Navigator.pushNamed(context, LoginConstants.forgotPasswordRoute);
   }
 
   /// Navigates back to welcome screen
-  void navigateToWelcome() {
-    if (!_contextMounted) return;
-    Navigator.pushReplacementNamed(_context, LoginConstants.welcomeRoute);
+  void navigateToWelcome(BuildContext context) {
+    if (!context.mounted) return;
+    Navigator.pushReplacementNamed(context, LoginConstants.welcomeRoute);
   }
 
   void _setLoading(bool loading) {
@@ -176,12 +178,5 @@ class LoginController extends ChangeNotifier {
     _errorMessage = null;
   }
 
-  bool get _contextMounted {
-    try {
-      return _context.mounted;
-    } catch (e) {
-      return false;
-    }
-  }
 
 }

@@ -23,7 +23,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   @override
   void initState() {
     super.initState();
-    _controller = WelcomeController(context, ref.read(authNotifierProvider));
+    _controller = WelcomeController(ref.read(authNotifierProvider));
     initializeWelcomeAnimations();
     startWelcomeAnimations();
   }
@@ -86,14 +86,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                     WelcomeActions(
                       fadeAnimation: fadeAnimation,
                       buttonsSlideAnimation: buttonsSlideAnimation,
-                      onLoginPressed: _controller.navigateToLogin,
-                      onSignUpPressed: _controller.navigateToSignUp,
+                      onLoginPressed: () => _controller.navigateToLogin(context),
+                      onSignUpPressed: () => _controller.navigateToSignUp(context),
                     ),
 
                     WelcomeSocialLogin(
                       fadeAnimation: fadeAnimation,
                       buttonsSlideAnimation: buttonsSlideAnimation,
                       onGoogleSignIn: () => _controller.handleGoogleSignIn(
+                        context,
                         onLoadingChanged: _onLoadingChanged,
                       ),
                       isLoading: _isGoogleSignInLoading,  

@@ -4,15 +4,13 @@ import '../constants/welcome_screen_constants.dart';
 import '../utils/app_theme.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
 
+/// Navigation and messaging take a BuildContext per call rather than storing
+/// one. See CRITIQUE.md W1.3.
 class WelcomeController {
-  /// Held only for navigation and snackbars, which are genuinely presentation
-  /// concerns. Provider lookups go through [_auth] instead -- reading other
-  /// state off a stored context is F3.
-  final BuildContext context;
   final AuthProvider _auth;
   bool _isLoading = false;
 
-  WelcomeController(this.context, AuthProvider auth) : _auth = auth;
+  WelcomeController(AuthProvider auth) : _auth = auth;
 
   bool get isLoading => _isLoading;
 
@@ -20,7 +18,8 @@ class WelcomeController {
     _isLoading = loading;
   }
 
-  Future<void> handleGoogleSignIn({
+  Future<void> handleGoogleSignIn(
+    BuildContext context, {
     required VoidCallback onLoadingChanged,
   }) async {
     _setLoading(true);
@@ -43,7 +42,7 @@ class WelcomeController {
       }
     } catch (e) {
       if (context.mounted) {
-        _showErrorSnackBar(_formatErrorMessage(e.toString()));
+        _showErrorSnackBar(context, _formatErrorMessage(e.toString()));
       }
     } finally {
       _setLoading(false);
@@ -70,11 +69,11 @@ class WelcomeController {
     Log.d('Timeout waiting for user data. Auth: ${_auth.isLoggedIn}, User: ${_auth.currentUser != null}');
   }
 
-  void navigateToLogin() {
+  void navigateToLogin(BuildContext context) {
     Navigator.pushNamed(context, WelcomeScreenConstants.loginRoute);
   }
 
-  void navigateToSignUp() {
+  void navigateToSignUp(BuildContext context) {
     Navigator.pushNamed(context, WelcomeScreenConstants.signupRoute);
   }
 
@@ -90,7 +89,7 @@ class WelcomeController {
     }
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

@@ -46,10 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     // Initialize login controller with auth provider
     final authProvider = ref.read(authNotifierProvider);
-    _loginController = LoginController(
-      authProvider: authProvider,
-      context: context,
-    );
+    _loginController = LoginController(authProvider: authProvider);
   }
 
   void _initializeAnimations() {
@@ -71,9 +68,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (!mounted) return;
 
     if (success) {
-      _loginController.navigateToChat();
+      _loginController.navigateToChat(context);
     } else if (_loginController.errorMessage != null) {
-      _loginController.showErrorSnackBar(_loginController.errorMessage!);
+      _loginController.showErrorSnackBar(context, _loginController.errorMessage!);
     }
   }
 
@@ -83,9 +80,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (!mounted) return;
 
     if (success) {
-      _loginController.navigateToChat();
+      _loginController.navigateToChat(context);
     } else if (_loginController.errorMessage != null) {
-      _loginController.showErrorSnackBar(_loginController.errorMessage!);
+      _loginController.showErrorSnackBar(context, _loginController.errorMessage!);
     }
   }
 
@@ -182,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return FadeTransition(
       opacity: fadeAnimation,
       child: AppBackButton(
-        onPressed: _loginController.navigateToWelcome,
+        onPressed: () => _loginController.navigateToWelcome(context),
       ),
     );
   }
@@ -257,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         alignment: Alignment.centerRight,
         child: AppButton.text(
           text: LoginConstants.forgotPasswordText,
-          onPressed: _loginController.navigateToForgotPassword,
+          onPressed: () => _loginController.navigateToForgotPassword(context),
         ),
       ),
     );
@@ -301,7 +298,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ),
             AppButton.text(
               text: LoginConstants.signUpText,
-              onPressed: _loginController.navigateToSignup,
+              onPressed: () => _loginController.navigateToSignup(context),
             ),
           ],
         ),

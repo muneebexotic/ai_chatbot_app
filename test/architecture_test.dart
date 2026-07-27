@@ -63,53 +63,32 @@ void main() {
       );
     });
 
-    test('no provider stores a BuildContext as a field', () {
-      // A provider holding a context is the same defect as a service holding
-      // one, one layer up: providers outlive the widget that supplied the
-      // context, which forces `mounted` guards everywhere and makes the class
-      // untestable without pumping a widget. `ChatProvider` was exactly this.
+    test('no provider or controller stores a BuildContext as a field', () {
+      // Holding a context is the same defect as a service holding one, one
+      // layer up: it forces a liveness check before every use and makes the
+      // class impossible to drive in a test without a widget tree.
+      // `ChatProvider` was exactly this.
       //
-      // SCOPE NOTE. `lib/controllers/` is deliberately excluded, and this was
-      // narrowed after the first version of this test failed on
-      // login_controller and welcome_controller. Those are presentation-layer
-      // objects created in `initState` and disposed in `dispose`, so the
-      // context's lifetime equals the controller's; they use it only to
-      // navigate and to show snackbars, and both guard with `mounted`. That is
-      // a different thing from a long-lived service reaching into the tree,
-      // which is what F3 names.
-      //
-      // It is still not ideal — those controllers should take navigation
-      // callbacks instead — and it is recorded as residual debt in
-      // CRITIQUE.md rather than quietly passed over.
+      // HISTORY. This assertion originally covered `providers/` and
+      // `controllers/`, failed on login_controller and welcome_controller, and
+      // was narrowed to `providers/` with a justification. Narrowing a rule
+      // because it caught something is how F3 survived a year in the first
+      // place, so the controllers were fixed instead and the original scope
+      // restored. Both now take a BuildContext per call. See CRITIQUE.md W1.3.
       final pattern = RegExp(r'final\s+BuildContext\s+\w+\s*;');
       final offenders = <String>[];
-      for (final file in dartFilesIn('providers')) {
-        if (pattern.hasMatch(codeOf(file))) offenders.add(file.path);
+      for (final dir in ['providers', 'controllers']) {
+        for (final file in dartFilesIn(dir)) {
+          if (pattern.hasMatch(codeOf(file))) offenders.add(file.path);
+        }
       }
       expect(
         offenders,
         isEmpty,
         reason:
             'Storing a BuildContext on a long-lived object outlives the widget '
-            'that provided it:\n${offenders.join('\n')}',
-      );
-    });
-
-    test('any controller holding a BuildContext guards it with mounted', () {
-      // The concession above is only safe while the guard exists. If someone
-      // adds a context-using method without a liveness check, this fails.
-      final offenders = <String>[];
-      for (final file in dartFilesIn('controllers')) {
-        final code = codeOf(file);
-        if (!RegExp(r'final\s+BuildContext\s+\w+\s*;').hasMatch(code)) continue;
-        if (!code.contains('.mounted')) offenders.add(file.path);
-      }
-      expect(
-        offenders,
-        isEmpty,
-        reason:
-            'These controllers store a BuildContext but never check it is '
-            'still mounted:\n${offenders.join('\n')}',
+            'that provided it. Pass it per call instead:\n'
+            '${offenders.join('\n')}',
       );
     });
   });
