@@ -8,6 +8,71 @@ would reverse it.
 
 ---
 
+## D5 — Riverpod migration keeps `ChangeNotifier` for now
+
+**Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Implements:** PRD F5
+
+**What.** `package:provider` is removed entirely — no `MultiProvider`, no
+`Provider.of`, no `context.read`. The graph is Riverpod, rooted in a
+`ProviderScope`, declared in `lib/app/providers.dart`. But the six state
+classes behind it are still `ChangeNotifier`, exposed through Riverpod's
+`ChangeNotifierProvider` rather than rewritten as `Notifier`.
+
+**Why.** F5's stated purpose is "what removes F3 cleanly and makes
+quota/entitlement state testable". That comes from the dependency
+*injection*, and that part is done and verified: no service holds a
+`BuildContext`, no provider stores one, and every class in the graph can be
+constructed in a test. Rewriting `AuthProvider` (770 lines), `PaymentService`
+(900+), and four others into `Notifier` at the same time would have been a
+simultaneous rewrite of several thousand lines of code that Milestones 2–5
+are going to replace anyway, with no way to tell a migration bug from a
+rewrite bug.
+
+`ChangeNotifierProvider` is Riverpod's own documented migration path off
+`package:provider`, so this is the intended intermediate state, not a
+workaround.
+
+**Cost.** The state classes do not yet get Riverpod's compile-time safety or
+its `AsyncValue` handling. `ref.watch` on a `ChangeNotifier` rebuilds on any
+`notifyListeners()` rather than on the specific field read.
+
+**Reverses if:** never — each becomes a `Notifier` as its feature is rebuilt
+(auth in Milestone 2, chat in Milestone 3, entitlements in Milestone 6), at
+which point it is a rewrite of code already being rewritten.
+
+**Guarded by:** `test/architecture_test.dart` fails if `package:provider`,
+`Provider.of`, `context.read`, or `context.watch` reappears anywhere in `lib/`.
+
+---
+
+## D4 — Three markdown renderers survive Milestone 1
+
+**Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Defers:** PRD §2.2
+("keep exactly one renderer") to Milestone 3
+
+**What.** `flutter_markdown`, `flutter_highlight`, and `markdown` stay in
+`pubspec.yaml` alongside `gpt_markdown` for now. `markdown_widget` is removed —
+it had zero usages.
+
+**Why.** `app_message_bubble.dart` is 846 lines built on `flutter_markdown`
+plus a custom `flutter_highlight` code-block builder. PRD §7.4 replaces that
+widget wholesale in Milestone 3: AI turns stop being bubbles and become
+full-width Newsreader paragraphs with a `signal` rule on the left. Porting it
+to `gpt_markdown` now would be work discarded one milestone later, and it would
+be done against the old design rather than the new one.
+
+§14's "exactly one renderer" is an acceptance criterion for the finished
+rebuild, not for this milestone. The dependency lines carry `# REMOVE in
+Milestone 3` markers.
+
+**Cost:** three unnecessary packages in the dependency tree, and a slightly
+larger debug APK, for the duration of Milestone 2.
+
+**Reverses if:** Milestone 3 slips far enough that these linger past the chat
+rebuild, at which point the port should happen on its own.
+
+---
+
 ## D3 — Default model routing moves off Gemini's unpaid tier
 
 **Date:** 2026-07-26 · **Status:** approved · **Amends:** PRD R9.3.3 ·

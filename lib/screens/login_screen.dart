@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Internal imports
-import '../providers/auth_provider.dart';
 import '../controllers/login_controller.dart';
 import '../mixins/login_animations_mixin.dart';
 import '../constants/login_constants.dart';
@@ -14,16 +13,17 @@ import '../components/ui/app_button.dart';
 import '../components/ui/app_input.dart';
 import '../components/ui/social_button.dart';
 import '../components/ui/app_back_button.dart';
+import '../app/providers.dart';
 
 /// Theme-aware login screen with form validation and authentication
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with TickerProviderStateMixin, LoginAnimationsMixin {
   // Controllers
   late final LoginController _loginController;
@@ -45,11 +45,8 @@ class _LoginScreenState extends State<LoginScreen>
     _formKey = GlobalKey<FormState>();
 
     // Initialize login controller with auth provider
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    _loginController = LoginController(
-      authProvider: authProvider,
-      context: context,
-    );
+    final authProvider = ref.read(authNotifierProvider);
+    _loginController = LoginController(authProvider: authProvider);
   }
 
   void _initializeAnimations() {
@@ -71,9 +68,9 @@ class _LoginScreenState extends State<LoginScreen>
     if (!mounted) return;
 
     if (success) {
-      _loginController.navigateToChat();
+      _loginController.navigateToChat(context);
     } else if (_loginController.errorMessage != null) {
-      _loginController.showErrorSnackBar(_loginController.errorMessage!);
+      _loginController.showErrorSnackBar(context, _loginController.errorMessage!);
     }
   }
 
@@ -83,9 +80,9 @@ class _LoginScreenState extends State<LoginScreen>
     if (!mounted) return;
 
     if (success) {
-      _loginController.navigateToChat();
+      _loginController.navigateToChat(context);
     } else if (_loginController.errorMessage != null) {
-      _loginController.showErrorSnackBar(_loginController.errorMessage!);
+      _loginController.showErrorSnackBar(context, _loginController.errorMessage!);
     }
   }
 
@@ -119,9 +116,9 @@ class _LoginScreenState extends State<LoginScreen>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            colorScheme.background,
             colorScheme.surface,
-            colorScheme.background,
+            colorScheme.surface,
+            colorScheme.surface,
           ],
           stops: const [0.0, 0.5, 1.0],
         ),
@@ -182,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen>
     return FadeTransition(
       opacity: fadeAnimation,
       child: AppBackButton(
-        onPressed: _loginController.navigateToWelcome,
+        onPressed: () => _loginController.navigateToWelcome(context),
       ),
     );
   }
@@ -200,11 +197,11 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             AppText.displayLarge(
               LoginConstants.titleLine1,
-              color: colorScheme.onBackground, // Theme-aware
+              color: colorScheme.onSurface, // Theme-aware
             ),
             AppText.displayLarge(
               LoginConstants.titleLine2,
-              color: colorScheme.onBackground, // Theme-aware
+              color: colorScheme.onSurface, // Theme-aware
             ),
           ],
         ),
@@ -228,10 +225,10 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildPasswordInput() {
-    return ChangeNotifierProvider.value(
-      value: _loginController,
-      child: Consumer<LoginController>(
-        builder: (context, controller, child) {
+    return ListenableBuilder(
+      listenable: _loginController,
+      builder: (context, child) {
+        final controller = _loginController;
           return FadeTransition(
             opacity: fadeAnimation,
             child: SlideTransition(
@@ -247,7 +244,6 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           );
         },
-      ),
     );
   }
 
@@ -258,17 +254,17 @@ class _LoginScreenState extends State<LoginScreen>
         alignment: Alignment.centerRight,
         child: AppButton.text(
           text: LoginConstants.forgotPasswordText,
-          onPressed: _loginController.navigateToForgotPassword,
+          onPressed: () => _loginController.navigateToForgotPassword(context),
         ),
       ),
     );
   }
 
   Widget _buildLoginButton() {
-    return ChangeNotifierProvider.value(
-      value: _loginController,
-      child: Consumer<LoginController>(
-        builder: (context, controller, child) {
+    return ListenableBuilder(
+      listenable: _loginController,
+      builder: (context, child) {
+        final controller = _loginController;
           return FadeTransition(
             opacity: fadeAnimation,
             child: SlideTransition(
@@ -283,7 +279,6 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           );
         },
-      ),
     );
   }
 
@@ -299,11 +294,11 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             AppText.bodyMedium(
               LoginConstants.signUpPrompt,
-              color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware
+              color: colorScheme.onSurface.withValues(alpha: 0.7), // Theme-aware
             ),
             AppButton.text(
               text: LoginConstants.signUpText,
-              onPressed: _loginController.navigateToSignup,
+              onPressed: () => _loginController.navigateToSignup(context),
             ),
           ],
         ),
@@ -322,20 +317,20 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: Container(
               height: 1,
-              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
+              color: colorScheme.outline.withValues(alpha: 0.3), // Theme-aware
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppText.bodyMedium(
               LoginConstants.dividerText,
-              color: colorScheme.onBackground.withOpacity(0.5), // Theme-aware
+              color: colorScheme.onSurface.withValues(alpha: 0.5), // Theme-aware
             ),
           ),
           Expanded(
             child: Container(
               height: 1,
-              color: colorScheme.outline.withOpacity(0.3), // Theme-aware
+              color: colorScheme.outline.withValues(alpha: 0.3), // Theme-aware
             ),
           ),
         ],
@@ -360,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Container(
       height: MediaQuery.of(context).padding.bottom,
-      color: colorScheme.background, // Theme-aware
+      color: colorScheme.surface, // Theme-aware
     );
   }
 }

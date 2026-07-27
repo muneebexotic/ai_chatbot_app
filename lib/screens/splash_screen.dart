@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/splash_controller.dart';
 import '../components/ui/app_logo.dart';
 import '../components/ui/app_text.dart';
 import '../mixins/splash_animations_mixin.dart';
 import '../constants/splash_constants.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin, SplashAnimationsMixin {
   
   late final SplashController _controller;
@@ -32,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
     initializeAnimations();
     
     // Setup controller
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     _controller = SplashController(
       authProvider: authProvider,
       onNavigationComplete: _onNavigationComplete,
@@ -66,8 +65,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Scaffold(
@@ -180,10 +181,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildLoadingIndicator(bool isDark) {
-    return ChangeNotifierProvider.value(
-      value: _controller,
-      child: Consumer<SplashController>(
-        builder: (context, controller, child) {
+    return ListenableBuilder(
+      listenable: _controller,
+      builder: (context, child) {
+        final controller = _controller;
           if (controller.hasError) {
             return _buildErrorIndicator(controller.error!, isDark);
           }
@@ -198,12 +199,11 @@ class _SplashScreenState extends State<SplashScreen>
                 valueColor: AlwaysStoppedAnimation<Color>(
                   AppColors.primary,
                 ),
-                backgroundColor: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+                backgroundColor: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
               ),
             ),
           );
         },
-      ),
     );
   }
 
@@ -229,7 +229,7 @@ class _SplashScreenState extends State<SplashScreen>
             padding: const EdgeInsets.symmetric(horizontal: 32.0),
             child: AppText.caption(
               error,
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.8),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.8),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

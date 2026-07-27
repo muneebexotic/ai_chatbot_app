@@ -126,5 +126,58 @@ run_case "env var reference in CI"       pass ci.yml \
   "api_key: \${{ secrets.GEMINI_API_KEY }}"
 
 echo
+echo "== MUST CATCH: encoding damage =="
+#
+# Both failures this repository actually suffered, reproduced byte for byte.
+# Written through Python so the test file itself stays clean UTF-8 — a test
+# fixture that is corrupt on disk would trip the very check it is testing.
+
+run_case_bytes() {
+  local name="$1" expect="$2" filename="$3" pyexpr="$4"
+  local tmp rc out
+  tmp=$(mktemp -d)
+  (
+    cd "$tmp"
+    git init -q .
+    git config user.email t@t.t
+    git config user.name t
+    mkdir -p "$(dirname "$filename")" 2>/dev/null || true
+    python -c "import io,sys; io.open(sys.argv[1],'wb').write($pyexpr)" "$filename"
+    git add -A -f "$filename" 2>/dev/null
+  )
+  set +e
+  out=$(cd "$tmp" && NO_COLOR=1 bash "$SCANNER" 2>&1)
+  rc=$?
+  set -e
+  rm -rf "$tmp"
+
+  if [ "$expect" = "catch" ] && [ "$rc" -ne 0 ]; then
+    printf '  ok    CATCH     %s\n' "$name"; PASS=$((PASS+1))
+  elif [ "$expect" = "pass" ] && [ "$rc" -eq 0 ]; then
+    printf '  ok    ALLOW     %s\n' "$name"; PASS=$((PASS+1))
+  else
+    printf '  FAIL  expected %s, got rc=%s :: %s\n' "$expect" "$rc" "$name"
+    printf '%s\n' "$out" | sed 's/^/          /'
+    FAIL=$((FAIL+1))
+  fi
+}
+
+# The Milestone 0 root cause: PowerShell wrote `.env` as UTF-16LE, git read
+# `.\0e\0n\0v`, the ignore rule matched nothing, a token leaked for months.
+run_case_bytes "UTF-16LE text file (the .gitignore root cause)" catch rules.txt \
+  "b'build/\r\n' + '.env'.encode('utf-16-le')"
+
+# The Milestone 1 repeat: Get-Content without -Encoding utf8 decoded UTF-8 as
+# cp1252 and re-encoded, turning every em-dash into three bytes of noise.
+run_case_bytes "mojibake: UTF-8 decoded as cp1252 and re-encoded" catch lib/x.dart \
+  "'// a comment — with an em dash'.encode('utf-8').decode('cp1252').encode('utf-8')"
+
+run_case_bytes "clean UTF-8 with a real em-dash is allowed" pass lib/x.dart \
+  "'// a comment — with an em dash'.encode('utf-8')"
+
+run_case_bytes "plain ASCII is allowed" pass lib/x.dart \
+  "b'// plain ascii'"
+
+echo
 printf 'passed %s, failed %s\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
 import 'dart:math' as math;
+import '../app/providers.dart';
 
 // Main modern typing indicator with sophisticated animations
-class ModernTypingIndicator extends StatefulWidget {
+class ModernTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final bool showAvatar;
   final Widget? customAvatar;
   
   const ModernTypingIndicator({
-    Key? key,
+    super.key,
     this.customText,
     this.showAvatar = false,
     this.customAvatar,
-  }) : super(key: key);
+  });
 
   @override
-  State<ModernTypingIndicator> createState() => _ModernTypingIndicatorState();
+  ConsumerState<ModernTypingIndicator> createState() => _ModernTypingIndicatorState();
 }
 
-class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
+class _ModernTypingIndicatorState extends ConsumerState<ModernTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _dotsController;
@@ -101,12 +101,12 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
         ),
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -153,14 +153,14 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.primary.withOpacity(opacity),
-                        AppColors.secondary.withOpacity(opacity * 0.8),
+                        AppColors.primary.withValues(alpha: opacity),
+                        AppColors.secondary.withValues(alpha: opacity * 0.8),
                       ],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3 * opacity),
+                        color: AppColors.primary.withValues(alpha: 0.3 * opacity),
                         blurRadius: 4,
                         spreadRadius: 1,
                       ),
@@ -200,7 +200,7 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
           child: Text(
             text,
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: 'GeneralSans',
               fontWeight: FontWeight.w400,
               fontSize: 14,
               color: AppColors.getTextPrimary(isDark),
@@ -214,8 +214,10 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return FadeTransition(
@@ -241,7 +243,7 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
                         end: Alignment.bottomRight,
                         colors: [
                           AppColors.getSurface(isDark),
-                          AppColors.getSurfaceVariant(isDark).withOpacity(0.8),
+                          AppColors.getSurfaceVariant(isDark).withValues(alpha: 0.8),
                         ],
                       ),
                       borderRadius: BorderRadius.only(
@@ -251,17 +253,17 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
                         bottomRight: const Radius.circular(20),
                       ),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.05),
+                          color: AppColors.primary.withValues(alpha: 0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -287,23 +289,23 @@ class _ModernTypingIndicatorState extends State<ModernTypingIndicator>
 }
 
 // Wave-based typing indicator with modern aesthetics
-class WaveTypingIndicator extends StatefulWidget {
+class WaveTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final Color? primaryColor;
   final bool showAvatar;
   
   const WaveTypingIndicator({
-    Key? key,
+    super.key,
     this.customText,
     this.primaryColor,
     this.showAvatar = true,
-  }) : super(key: key);
+  });
 
   @override
-  State<WaveTypingIndicator> createState() => _WaveTypingIndicatorState();
+  ConsumerState<WaveTypingIndicator> createState() => _WaveTypingIndicatorState();
 }
 
-class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
+class _WaveTypingIndicatorState extends ConsumerState<WaveTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late AnimationController _containerController;
@@ -358,8 +360,10 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         final primaryColor = widget.primaryColor ?? AppColors.primary;
         
@@ -384,7 +388,7 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
                       ),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: primaryColor.withOpacity(0.3),
+                        color: primaryColor.withValues(alpha: 0.3),
                         width: 1.5,
                       ),
                     ),
@@ -408,12 +412,12 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
                         bottomRight: const Radius.circular(20),
                       ),
                       border: Border.all(
-                        color: primaryColor.withOpacity(0.15),
+                        color: primaryColor.withValues(alpha: 0.15),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
@@ -440,13 +444,13 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
                                       end: Alignment.topCenter,
                                       colors: [
                                         primaryColor,
-                                        primaryColor.withOpacity(0.6),
+                                        primaryColor.withValues(alpha: 0.6),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(2),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: primaryColor.withOpacity(0.3),
+                                        color: primaryColor.withValues(alpha: 0.3),
                                         blurRadius: 2,
                                         spreadRadius: 0.5,
                                       ),
@@ -461,7 +465,7 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
                         Text(
                           widget.customText ?? 'Processing...',
                           style: TextStyle(
-                            fontFamily: 'Poppins',
+                            fontFamily: 'GeneralSans',
                             fontWeight: FontWeight.w400,
                             fontSize: 14,
                             color: AppColors.getTextSecondary(isDark),
@@ -482,21 +486,21 @@ class _WaveTypingIndicatorState extends State<WaveTypingIndicator>
 }
 
 // Pulse typing indicator with breathing effect
-class PulseTypingIndicator extends StatefulWidget {
+class PulseTypingIndicator extends ConsumerStatefulWidget {
   final String? customText;
   final bool showAvatar;
   
   const PulseTypingIndicator({
-    Key? key,
+    super.key,
     this.customText,
     this.showAvatar = true,
-  }) : super(key: key);
+  });
 
   @override
-  State<PulseTypingIndicator> createState() => _PulseTypingIndicatorState();
+  ConsumerState<PulseTypingIndicator> createState() => _PulseTypingIndicatorState();
 }
 
-class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
+class _PulseTypingIndicatorState extends ConsumerState<PulseTypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _glowController;
@@ -546,8 +550,10 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Container(
@@ -574,12 +580,12 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
                           ),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.3 + (_glowAnimation.value * 0.4)),
+                            color: AppColors.primary.withValues(alpha: 0.3 + (_glowAnimation.value * 0.4)),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(_glowAnimation.value * 0.4),
+                              color: AppColors.primary.withValues(alpha: _glowAnimation.value * 0.4),
                               blurRadius: 8 + (_glowAnimation.value * 8),
                               spreadRadius: _glowAnimation.value * 2,
                             ),
@@ -613,12 +619,12 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
                             bottomRight: const Radius.circular(20),
                           ),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             width: 1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -632,7 +638,7 @@ class _PulseTypingIndicatorState extends State<PulseTypingIndicator>
                               child: Text(
                                 widget.customText ?? 'AI is generating response...',
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'GeneralSans',
                                   fontWeight: FontWeight.w400,
                                   fontSize: 14,
                                   color: AppColors.getTextSecondary(isDark),

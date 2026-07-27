@@ -12,20 +12,6 @@ class AppText extends StatelessWidget {
   final TextDecoration? decoration;
   final TextStyle _style;
 
-  const AppText._(
-    this.text, {
-    this.color,
-    this.fontSize,
-    this.fontWeight,
-    this.textAlign,
-    this.maxLines,
-    this.overflow,
-    this.height,
-    this.decoration,
-    required TextStyle style,
-    super.key,
-  }) : _style = style;
-
   // Display styles
   const AppText.displayLarge(
     this.text, {
@@ -38,7 +24,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 36,
          fontWeight: FontWeight.w600,
          letterSpacing: 1.2,
@@ -57,7 +43,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 28,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.8,
@@ -76,7 +62,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 24,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.6,
@@ -96,7 +82,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 32,
          fontWeight: FontWeight.w600,
          letterSpacing: 0.8,
@@ -115,7 +101,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 22,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.5,
@@ -134,7 +120,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 20,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.3,
@@ -154,7 +140,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 18,
          fontWeight: FontWeight.w600,
          letterSpacing: 0.2,
@@ -173,7 +159,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 16,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.15,
@@ -192,7 +178,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 14,
          fontWeight: FontWeight.w500,
          letterSpacing: 0.1,
@@ -212,7 +198,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 16,
          fontWeight: FontWeight.w400,
          height: 1.5,
@@ -231,7 +217,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 14,
          fontWeight: FontWeight.w400,
          height: 1.4,
@@ -250,7 +236,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 12,
          fontWeight: FontWeight.w400,
          height: 1.4,
@@ -270,7 +256,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 14,
          fontWeight: FontWeight.w500,
          height: 1.4,
@@ -289,7 +275,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 12,
          fontWeight: FontWeight.w500,
          height: 1.3,
@@ -308,7 +294,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 10,
          fontWeight: FontWeight.w500,
          height: 1.2,
@@ -328,7 +314,7 @@ class AppText extends StatelessWidget {
     this.height,
     this.decoration,
   }) : _style = const TextStyle(
-         fontFamily: 'Poppins',
+         fontFamily: 'GeneralSans',
          fontSize: 11,
          fontWeight: FontWeight.w400,
          height: 1.3,

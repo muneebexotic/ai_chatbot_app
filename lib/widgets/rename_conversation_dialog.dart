@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
+import '../app/providers.dart';
 
-class RenameConversationDialog extends StatefulWidget {
+class RenameConversationDialog extends ConsumerStatefulWidget {
   final String currentTitle;
 
   const RenameConversationDialog({
@@ -13,10 +13,10 @@ class RenameConversationDialog extends StatefulWidget {
   });
 
   @override
-  State<RenameConversationDialog> createState() => _RenameConversationDialogState();
+  ConsumerState<RenameConversationDialog> createState() => _RenameConversationDialogState();
 }
 
-class _RenameConversationDialogState extends State<RenameConversationDialog> {
+class _RenameConversationDialogState extends ConsumerState<RenameConversationDialog> {
   late TextEditingController _controller;
   final _focusNode = FocusNode();
   bool _isValid = true;
@@ -60,8 +60,10 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return AlertDialog(
@@ -74,7 +76,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -104,12 +106,12 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.getSurfaceVariant(isDark).withOpacity(0.3),
+                  color: AppColors.getSurfaceVariant(isDark).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isValid 
-                        ? AppColors.primary.withOpacity(0.3)
-                        : AppColors.error.withOpacity(0.3),
+                        ? AppColors.primary.withValues(alpha: 0.3)
+                        : AppColors.error.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -117,7 +119,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
                   controller: _controller,
                   focusNode: _focusNode,
                   style: TextStyle(
-                    fontFamily: 'Poppins',
+                    fontFamily: 'GeneralSans',
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColors.getTextPrimary(isDark),
@@ -125,7 +127,7 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
                   decoration: InputDecoration(
                     hintText: 'Enter conversation title',
                     hintStyle: TextStyle(
-                      fontFamily: 'Poppins',
+                      fontFamily: 'GeneralSans',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: AppColors.getTextTertiary(isDark),
@@ -202,8 +204,8 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isValid 
                     ? AppColors.primary 
-                    : AppColors.getTextTertiary(isDark).withOpacity(0.3),
-                disabledBackgroundColor: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                    : AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
+                disabledBackgroundColor: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

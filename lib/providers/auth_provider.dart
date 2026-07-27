@@ -1,14 +1,13 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ai_chatbot_app/core/ui/app_messenger.dart';
 
 import '../models/app_user.dart';
 import '../services/firestore_service.dart';
-import '../services/cloudinary_service.dart';
 import '../services/payment_service.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Enhanced AuthProvider with improved state management and error handling
 class AuthProvider with ChangeNotifier {
@@ -16,7 +15,6 @@ class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirestoreService _firestoreService = FirestoreService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
   final PaymentService _paymentService = PaymentService();
 
   // State variables
@@ -35,7 +33,7 @@ class AuthProvider with ChangeNotifier {
 
   // Cache management
   DateTime? _lastUserDataRefresh;
-  static const Duration USER_DATA_CACHE_DURATION = Duration(minutes: 3);
+  static const Duration userDataCacheDuration = Duration(minutes: 3);
 
   // Public getters
   User? get user => _firebaseUser;
@@ -76,9 +74,9 @@ class AuthProvider with ChangeNotifier {
       final images = _currentUser!.dailyUsage['images'] ?? 0;
       final voice = _currentUser!.dailyUsage['voice'] ?? 0;
 
-      return 'Messages: $messages/${PaymentService.FREE_DAILY_MESSAGES}, '
-          'Images: $images/${PaymentService.FREE_DAILY_IMAGES}, '
-          'Voice: $voice/${PaymentService.FREE_DAILY_VOICE}';
+      return 'Messages: $messages/${PaymentService.freeDailyMessages}, '
+          'Images: $images/${PaymentService.freeDailyImages}, '
+          'Voice: $voice/${PaymentService.freeDailyVoice}';
     }
 
     return 'No usage data';
@@ -92,7 +90,7 @@ class AuthProvider with ChangeNotifier {
   /// Initialize the auth provider
   Future<void> _initialize() async {
     try {
-      print('🔄 Initializing AuthProvider...');
+      Log.d('Initializing AuthProvider...');
 
       // Initialize payment service first
       await _initializePaymentService();
@@ -113,9 +111,9 @@ class AuthProvider with ChangeNotifier {
       _startPeriodicSubscriptionCheck();
 
       _isInitialized = true;
-      print('✅ AuthProvider initialized successfully');
+      Log.d('AuthProvider initialized successfully');
     } catch (e) {
-      print('❌ AuthProvider initialization failed: $e');
+      Log.d('AuthProvider initialization failed: $e');
       _isInitialized = true; // Set to true even on failure to prevent blocking
     }
   }
@@ -130,9 +128,9 @@ class AuthProvider with ChangeNotifier {
       _paymentService.onSubscriptionStatusChanged =
           _handleSubscriptionStatusChange;
 
-      print('✅ Payment service initialized with callbacks');
+      Log.d('Payment service initialized with callbacks');
     } catch (e) {
-      print('❌ Payment service initialization failed: $e');
+      Log.d('Payment service initialization failed: $e');
     }
   }
 
@@ -141,12 +139,12 @@ class AuthProvider with ChangeNotifier {
     try {
       if (_googleSignIn.supportsAuthenticate()) {
         await _googleSignIn.initialize();
-        print('✅ Google Sign-In initialized');
+        Log.d('Google Sign-In initialized');
       } else {
-        print('⚠️ Google Sign-In not supported on this platform');
+        Log.d('Google Sign-In not supported on this platform');
       }
     } catch (e) {
-      print('❌ Google Sign-In initialization failed: $e');
+      Log.d('Google Sign-In initialization failed: $e');
     }
   }
 
@@ -156,14 +154,14 @@ class AuthProvider with ChangeNotifier {
 
     _authStateSubscription = _auth.authStateChanges().listen(
       (User? user) => _handleAuthStateChange(user),
-      onError: (error) => print('❌ Auth state change error: $error'),
+      onError: (error) => Log.d('Auth state change error: $error'),
     );
   }
 
   /// Handle authentication state changes
   Future<void> _handleAuthStateChange(User? user) async {
     if (_isProcessingAuthChange) {
-      print('⚠️ Already processing auth change, skipping...');
+      Log.d('Already processing auth change, skipping...');
       return;
     }
 
@@ -173,10 +171,10 @@ class AuthProvider with ChangeNotifier {
       _firebaseUser = user;
 
       if (user != null) {
-        print('👤 User signed in: ${user.uid}');
+        Log.d('User signed in: ${user.uid}');
         await _handleUserSignIn(user);
       } else {
-        print('👋 User signed out');
+        Log.d('User signed out');
         await _handleUserSignOut();
       }
 
@@ -184,7 +182,7 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('❌ Error handling auth state change: $e');
+      Log.d('Error handling auth state change: $e');
     } finally {
       _isProcessingAuthChange = false;
     }
@@ -193,7 +191,7 @@ class AuthProvider with ChangeNotifier {
   /// Handle user sign in
   Future<void> _handleUserSignIn(User firebaseUser) async {
     try {
-      print('🔄 Processing user sign-in: ${firebaseUser.uid}');
+      Log.d('Processing user sign-in: ${firebaseUser.uid}');
 
       // Clear previous payment service data
       await _paymentService.clearUserData();
@@ -207,9 +205,9 @@ class AuthProvider with ChangeNotifier {
       // Validate and sync subscription status
       await _validateAndSyncSubscriptionStatus();
 
-      print('✅ User sign-in completed: ${firebaseUser.uid}');
+      Log.d('User sign-in completed: ${firebaseUser.uid}');
     } catch (e) {
-      print('❌ Error handling user sign-in: $e');
+      Log.d('Error handling user sign-in: $e');
       throw AuthException('Failed to process user sign-in: $e');
     }
   }
@@ -222,7 +220,7 @@ class AuthProvider with ChangeNotifier {
 
       if (_currentUser == null) {
         // Create new user
-        print('🆕 Creating new user profile');
+        Log.d('Creating new user profile');
         await _createNewUserProfile(firebaseUser);
       } else {
         // Update existing user if needed
@@ -230,9 +228,9 @@ class AuthProvider with ChangeNotifier {
       }
 
       _lastUserDataRefresh = DateTime.now();
-      print('✅ User data loaded/created successfully');
+      Log.d('User data loaded/created successfully');
     } catch (e) {
-      print('❌ Error loading/creating user data: $e');
+      Log.d('Error loading/creating user data: $e');
       rethrow;
     }
   }
@@ -251,7 +249,7 @@ class AuthProvider with ChangeNotifier {
     );
 
     await _firestoreService.saveUserWithRetry(_currentUser!);
-    print('✅ New user profile created');
+    Log.d('New user profile created');
   }
 
   /// Update existing user profile
@@ -278,20 +276,20 @@ class AuthProvider with ChangeNotifier {
     if (updatedUser.needsUsageReset()) {
       updatedUser = updatedUser.resetDailyUsage();
       needsUpdate = true;
-      print('🔄 Daily usage reset for new day');
+      Log.d('Daily usage reset for new day');
     }
 
     if (needsUpdate) {
       _currentUser = updatedUser;
       await _firestoreService.saveUserWithRetry(_currentUser!);
-      print('✅ User profile updated');
+      Log.d('User profile updated');
     }
   }
 
   /// Handle user sign out
   Future<void> _handleUserSignOut() async {
     try {
-      print('🔄 Processing user sign-out...');
+      Log.d('Processing user sign-out...');
 
       // Clear payment service data
       await _paymentService.clearUserData();
@@ -306,9 +304,9 @@ class AuthProvider with ChangeNotifier {
       _isGoogleSignIn = false;
       _lastUserDataRefresh = null;
 
-      print('✅ User sign-out completed');
+      Log.d('User sign-out completed');
     } catch (e) {
-      print('❌ Error handling user sign-out: $e');
+      Log.d('Error handling user sign-out: $e');
     }
   }
 
@@ -317,14 +315,14 @@ class AuthProvider with ChangeNotifier {
     if (_currentUser == null) return;
 
     try {
-      print('🔄 Validating subscription status...');
+      Log.d('Validating subscription status...');
 
       bool needsUpdate = false;
       AppUser updatedUser = _currentUser!;
 
       // Check if subscription expired
       if (updatedUser.isSubscriptionExpired) {
-        print('⚠️ Subscription expired, updating status...');
+        Log.d('Subscription expired, updating status...');
         await _firestoreService.cancelUserSubscription(_firebaseUser!.uid);
         updatedUser = updatedUser.copyWith(
           isPremium: false,
@@ -338,37 +336,27 @@ class AuthProvider with ChangeNotifier {
       if (needsUpdate) {
         _currentUser = updatedUser;
         await _firestoreService.saveUserWithRetry(_currentUser!);
-        print('✅ Subscription status updated');
+        Log.d('Subscription status updated');
         notifyListeners();
       }
     } catch (e) {
-      print('❌ Error validating subscription: $e');
+      Log.d('Error validating subscription: $e');
     }
   }
 
   /// Handle purchase result callback
   void _handlePurchaseResult(bool success, String message) {
     if (success) {
-      Fluttertoast.showToast(
-        msg: message,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_LONG,
-      );
+      AppMessenger.show(message, tone: AppMessageTone.success);
       _refreshUserDataFromFirestore();
     } else {
-      Fluttertoast.showToast(
-        msg: message,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        toastLength: Toast.LENGTH_LONG,
-      );
+      AppMessenger.show(message, tone: AppMessageTone.failure);
     }
   }
 
   /// Handle subscription status change callback
   void _handleSubscriptionStatusChange(bool isSubscribed) {
-    print('💳 Subscription status changed: $isSubscribed');
+    Log.d('Subscription status changed: $isSubscribed');
     _refreshUserDataFromFirestore();
   }
 
@@ -379,18 +367,18 @@ class AuthProvider with ChangeNotifier {
     _isRefreshing = true;
 
     try {
-      print('🔄 Refreshing user data from Firestore...');
+      Log.d('Refreshing user data from Firestore...');
 
       final freshUserData = await _firestoreService.getUser(_firebaseUser!.uid);
       if (freshUserData != null) {
         _currentUser = freshUserData;
         _lastUserDataRefresh = DateTime.now();
-        print('✅ User data refreshed');
+        Log.d('User data refreshed');
       }
 
       notifyListeners();
     } catch (e) {
-      print('❌ Error refreshing user data: $e');
+      Log.d('Error refreshing user data: $e');
     } finally {
       _isRefreshing = false;
     }
@@ -410,7 +398,7 @@ class AuthProvider with ChangeNotifier {
   bool _isUserDataCacheValid() {
     if (_lastUserDataRefresh == null) return false;
     return DateTime.now().difference(_lastUserDataRefresh!) <
-        USER_DATA_CACHE_DURATION;
+        userDataCacheDuration;
   }
 
   // AUTHENTICATION METHODS
@@ -431,7 +419,7 @@ class AuthProvider with ChangeNotifier {
 
       return isNewUser;
     } catch (e) {
-      print('❌ Sign up error: $e');
+      Log.d('Sign up error: $e');
       throw AuthException(_getAuthErrorMessage(e));
     }
   }
@@ -445,7 +433,7 @@ class AuthProvider with ChangeNotifier {
 
       // User data will be handled by auth state change listener
     } catch (e) {
-      print('❌ Login error: $e');
+      Log.d('Login error: $e');
       throw AuthException(_getAuthErrorMessage(e));
     }
   }
@@ -486,14 +474,14 @@ class AuthProvider with ChangeNotifier {
 
       // User data will be handled by auth state change listener
 
-      print('✅ Google sign-in completed');
+      Log.d('Google sign-in completed');
     } on GoogleSignInException catch (e) {
       _isGoogleSignIn = false;
-      print('❌ Google Sign-In error: $e');
+      Log.d('Google Sign-In error: $e');
       throw AuthException(_getGoogleSignInErrorMessage(e));
     } catch (e) {
       _isGoogleSignIn = false;
-      print('❌ Google Sign-In error: $e');
+      Log.d('Google Sign-In error: $e');
       throw AuthException('Google Sign-In failed: $e');
     }
   }
@@ -501,7 +489,7 @@ class AuthProvider with ChangeNotifier {
   /// Logout
   Future<void> logout() async {
     try {
-      print('🔄 Starting logout process...');
+      Log.d('Starting logout process...');
 
       // Sign out from Google if applicable
       if (_isGoogleSignIn) {
@@ -509,16 +497,16 @@ class AuthProvider with ChangeNotifier {
           await _googleSignIn.signOut();
           await _googleSignIn.disconnect();
         } catch (e) {
-          print('⚠️ Google sign-out warning: $e');
+          Log.d('Google sign-out warning: $e');
         }
       }
 
       // Sign out from Firebase (this will trigger auth state change)
       await _auth.signOut();
 
-      print('✅ Logout completed');
+      Log.d('Logout completed');
     } catch (e) {
-      print('❌ Logout error: $e');
+      Log.d('Logout error: $e');
       throw AuthException('Logout failed: $e');
     }
   }
@@ -536,36 +524,6 @@ class AuthProvider with ChangeNotifier {
 
   // USER PROFILE METHODS
 
-  /// Upload user photo
-  Future<void> uploadUserPhoto(File imageFile) async {
-    try {
-      if (_firebaseUser == null || _currentUser == null) {
-        throw AuthException('User not authenticated');
-      }
-
-      final downloadUrl = await _cloudinaryService.uploadImage(imageFile);
-      if (downloadUrl == null) {
-        throw AuthException('Image upload failed');
-      }
-
-      _currentUser = _currentUser!.copyWith(photoUrl: downloadUrl);
-      await _firestoreService.saveUserWithRetry(_currentUser!);
-
-      Fluttertoast.showToast(
-        msg: '✅ Photo uploaded successfully!',
-        backgroundColor: Colors.green,
-      );
-
-      notifyListeners();
-    } catch (e) {
-      print('❌ Photo upload error: $e');
-      Fluttertoast.showToast(
-        msg: '❌ Failed to upload photo',
-        backgroundColor: Colors.red,
-      );
-      throw AuthException('Photo upload failed: $e');
-    }
-  }
 
   /// Set user avatar
   Future<void> setUserAvatar(String avatarUrl) async {
@@ -579,7 +537,7 @@ class AuthProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print('❌ Avatar setting error: $e');
+      Log.d('Avatar setting error: $e');
       throw AuthException('Failed to set avatar: $e');
     }
   }
@@ -594,7 +552,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentMessages = _currentUser!.dailyUsage['messages'] ?? 0;
-      return currentMessages < PaymentService.FREE_DAILY_MESSAGES;
+      return currentMessages < PaymentService.freeDailyMessages;
     }
 
     return false;
@@ -608,7 +566,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentImages = _currentUser!.dailyUsage['images'] ?? 0;
-      return currentImages < PaymentService.FREE_DAILY_IMAGES;
+      return currentImages < PaymentService.freeDailyImages;
     }
 
     return false;
@@ -622,7 +580,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentVoice = _currentUser!.dailyUsage['voice'] ?? 0;
-      return currentVoice < PaymentService.FREE_DAILY_VOICE;
+      return currentVoice < PaymentService.freeDailyVoice;
     }
 
     return false;
@@ -636,7 +594,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_currentUser != null) {
       final currentImages = _currentUser!.dailyUsage['images'] ?? 0;
-      return currentImages < PaymentService.FREE_DAILY_IMAGES;
+      return currentImages < PaymentService.freeDailyImages;
     }
 
     return false;
@@ -660,11 +618,6 @@ class AuthProvider with ChangeNotifier {
   /// Increment voice usage
   Future<void> incrementVoiceUsage() async {
     await _incrementUsage('voice');
-  }
-
-  /// Increment image generation usage
-  Future<void> incrementImageGenerationUsage() async {
-    await _incrementUsage('images');
   }
 
   /// Generic usage increment
@@ -693,9 +646,9 @@ class AuthProvider with ChangeNotifier {
       }
 
       notifyListeners();
-      print('✅ $type usage incremented: ${_currentUser!.dailyUsage[type]}');
+      Log.d('$type usage incremented: ${_currentUser!.dailyUsage[type]}');
     } catch (e) {
-      print('❌ Error incrementing $type usage: $e');
+      Log.d('Error incrementing $type usage: $e');
     }
   }
 
@@ -730,7 +683,7 @@ class AuthProvider with ChangeNotifier {
         return _currentUser?.photoUrl?.isEmpty != false;
       }
     } catch (e) {
-      print('❌ Error checking if new user: $e');
+      Log.d('Error checking if new user: $e');
       return false;
     }
   }
@@ -791,7 +744,7 @@ class AuthProvider with ChangeNotifier {
   /// Dispose resources
   @override
   void dispose() {
-    print('🧹 Disposing AuthProvider...');
+    Log.d('Disposing AuthProvider...');
 
     _authStateSubscription?.cancel();
     _subscriptionCheckTimer?.cancel();
@@ -799,7 +752,7 @@ class AuthProvider with ChangeNotifier {
 
     super.dispose();
 
-    print('✅ AuthProvider disposed');
+    Log.d('AuthProvider disposed');
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/firestore_service.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ConversationSummary {
   final String id;
@@ -73,12 +74,12 @@ class ConversationsProvider with ChangeNotifier {
 
   Future<void> loadConversations() async {
     if (_userId.isEmpty) {
-      print('❌ Cannot load conversations: userId is empty');
+      Log.d('Cannot load conversations: userId is empty');
       return;
     }
 
     try {
-      print('📂 Loading conversations for user: $_userId');
+      Log.d('Loading conversations for user: $_userId');
       final data = await _firestoreService.getConversations(_userId);
       _conversations = data.map((map) {
         return ConversationSummary(
@@ -88,7 +89,7 @@ class ConversationsProvider with ChangeNotifier {
         );
       }).toList();
 
-      print('✅ Loaded ${_conversations.length} conversations');
+      Log.d('Loaded ${_conversations.length} conversations');
 
       if (_isSearching) {
         await _performSearch(_searchQuery);
@@ -96,7 +97,7 @@ class ConversationsProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print('❌ Error loading conversations: $e');
+      Log.d('Error loading conversations: $e');
       _conversations = [];
       notifyListeners();
     }
@@ -180,7 +181,7 @@ class ConversationsProvider with ChangeNotifier {
           }
         }
       } catch (e) {
-        debugPrint(
+        Log.d(
           'Error searching messages for conversation ${conversation.id}: $e',
         );
       }
@@ -303,9 +304,9 @@ class ConversationsProvider with ChangeNotifier {
       }
 
       notifyListeners();
-      print('✅ Conversation added: $title');
+      Log.d('Conversation added: $title');
     } catch (e) {
-      print('❌ Error adding conversation: $e');
+      Log.d('Error adding conversation: $e');
       rethrow;
     }
   }
@@ -323,9 +324,9 @@ class ConversationsProvider with ChangeNotifier {
       }
 
       notifyListeners();
-      print('✅ Conversation deleted: $conversationId');
+      Log.d('Conversation deleted: $conversationId');
     } catch (e) {
-      print('❌ Error deleting conversation: $e');
+      Log.d('Error deleting conversation: $e');
       rethrow;
     }
   }
@@ -356,10 +357,10 @@ class ConversationsProvider with ChangeNotifier {
         }
 
         notifyListeners();
-        print('✅ Conversation renamed: $conversationId -> $newTitle');
+        Log.d('Conversation renamed: $conversationId -> $newTitle');
       }
     } catch (e) {
-      print('❌ Error renaming conversation: $e');
+      Log.d('Error renaming conversation: $e');
       rethrow;
     }
   }

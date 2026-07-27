@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../constants/welcome_screen_constants.dart';
 import '../utils/app_theme.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
+/// Navigation and messaging take a BuildContext per call rather than storing
+/// one. See CRITIQUE.md W1.3.
 class WelcomeController {
-  final BuildContext context;
+  final AuthProvider _auth;
   bool _isLoading = false;
 
-  WelcomeController(this.context);
+  WelcomeController(AuthProvider auth) : _auth = auth;
 
   bool get isLoading => _isLoading;
 
@@ -16,21 +18,20 @@ class WelcomeController {
     _isLoading = loading;
   }
 
-  Future<void> handleGoogleSignIn({
+  Future<void> handleGoogleSignIn(
+    BuildContext context, {
     required VoidCallback onLoadingChanged,
   }) async {
     _setLoading(true);
     onLoadingChanged();
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     try {
-      await authProvider.signInWithGoogle();
+      await _auth.signInWithGoogle();
 
       // Wait for auth state to update with timeout
-      await _waitForAuthState(authProvider);
+      await _waitForAuthState(_auth);
 
-      if (authProvider.isLoggedIn && authProvider.currentUser != null && context.mounted) {
+      if (_auth.isLoggedIn && _auth.currentUser != null && context.mounted) {
         // Apply the change from the first file:
         // Use pushNamedAndRemoveUntil to clear the navigation stack.
         Navigator.pushNamedAndRemoveUntil(
@@ -41,7 +42,7 @@ class WelcomeController {
       }
     } catch (e) {
       if (context.mounted) {
-        _showErrorSnackBar(_formatErrorMessage(e.toString()));
+        _showErrorSnackBar(context, _formatErrorMessage(e.toString()));
       }
     } finally {
       _setLoading(false);
@@ -57,7 +58,7 @@ class WelcomeController {
     final stopwatch = Stopwatch()..start();
 
     while (stopwatch.elapsed < maxWaitTime) {
-      if (authProvider.isLoggedIn && authProvider.currentUser != null) {
+      if (_auth.isLoggedIn && _auth.currentUser != null) {
         // Extra small delay to ensure everything is settled
         await Future.delayed(const Duration(milliseconds: 50));
         return;
@@ -65,14 +66,14 @@ class WelcomeController {
       await Future.delayed(checkInterval);
     }
 
-    print('⚠️ Timeout waiting for user data. Auth: ${authProvider.isLoggedIn}, User: ${authProvider.currentUser != null}');
+    Log.d('Timeout waiting for user data. Auth: ${_auth.isLoggedIn}, User: ${_auth.currentUser != null}');
   }
 
-  void navigateToLogin() {
+  void navigateToLogin(BuildContext context) {
     Navigator.pushNamed(context, WelcomeScreenConstants.loginRoute);
   }
 
-  void navigateToSignUp() {
+  void navigateToSignUp(BuildContext context) {
     Navigator.pushNamed(context, WelcomeScreenConstants.signupRoute);
   }
 
@@ -88,7 +89,7 @@ class WelcomeController {
     }
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

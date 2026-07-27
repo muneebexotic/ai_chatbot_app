@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
 import '../components/ui/app_text.dart';
-import '../models/image_generation_request.dart';
+import '../app/providers.dart';
 
-class ImagePromptSuggestions extends StatefulWidget {
+class ImagePromptSuggestions extends ConsumerStatefulWidget {
   const ImagePromptSuggestions({super.key});
 
   @override
-  State<ImagePromptSuggestions> createState() => _ImagePromptSuggestionsState();
+  ConsumerState<ImagePromptSuggestions> createState() => _ImagePromptSuggestionsState();
 }
 
-class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
+class _ImagePromptSuggestionsState extends ConsumerState<ImagePromptSuggestions>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
@@ -254,8 +253,10 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Container(
@@ -264,7 +265,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
             color: AppColors.getSurface(isDark),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               width: 2,
             ),
           ),
@@ -287,7 +288,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -296,7 +297,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -364,13 +365,13 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+              color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -388,7 +389,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+            color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -417,7 +418,6 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
     return TabBarView(
       controller: _tabController,
       children: _promptCategories.entries.map((entry) {
-        final category = entry.key;
         final prompts = _getFilteredPrompts(entry.value);
         
         if (prompts.isEmpty && _searchQuery.isNotEmpty) {
@@ -443,7 +443,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
         color: AppColors.getBackground(isDark),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.getTextTertiary(isDark).withOpacity(0.2),
+          color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.2),
         ),
       ),
       child: Material(
@@ -464,7 +464,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: AppText.bodySmall(
@@ -528,7 +528,7 @@ class _ImagePromptSuggestionsState extends State<ImagePromptSuggestions>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

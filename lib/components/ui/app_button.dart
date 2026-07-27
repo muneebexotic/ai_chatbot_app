@@ -221,8 +221,6 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     // Get button style properties based on theme
     final buttonStyle = _getButtonStyle(context);
@@ -291,20 +289,20 @@ class AppButton extends StatelessWidget {
         return _ButtonStyleData(
           backgroundColor: primaryColor,
           textColor: Colors.white,
-          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
-          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+          disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
-          shadowColor: primaryColor.withOpacity(0.3),
+          shadowColor: primaryColor.withValues(alpha: 0.3),
         );
 
       case AppButtonStyle.secondary:
         return _ButtonStyleData(
           backgroundColor: colorScheme.surface,
           textColor: colorScheme.onSurface,
-          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
-          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+          disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
-          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
         );
 
       case AppButtonStyle.outline:
@@ -312,7 +310,7 @@ class AppButton extends StatelessWidget {
           backgroundColor: Colors.transparent,
           textColor: primaryColor,
           disabledBackgroundColor: Colors.transparent,
-          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
           borderSide: BorderSide(color: primaryColor, width: 1.5),
         );
@@ -322,7 +320,7 @@ class AppButton extends StatelessWidget {
           backgroundColor: Colors.transparent,
           textColor: primaryColor,
           disabledBackgroundColor: Colors.transparent,
-          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
         );
 
@@ -330,10 +328,10 @@ class AppButton extends StatelessWidget {
         return _ButtonStyleData(
           backgroundColor: colorScheme.error,
           textColor: Colors.white,
-          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
-          disabledTextColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
+          disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
-          shadowColor: colorScheme.error.withOpacity(0.3),
+          shadowColor: colorScheme.error.withValues(alpha: 0.3),
         );
     }
   }

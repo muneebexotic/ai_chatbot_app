@@ -22,12 +22,12 @@ class SocialButton extends StatelessWidget {
           color: colorScheme.surface,
           shape: BoxShape.circle,
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.3), 
+            color: colorScheme.outline.withValues(alpha: 0.3), 
             width: 1
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.1),
+              color: colorScheme.shadow.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

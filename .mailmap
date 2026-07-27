@@ -1,0 +1,40 @@
+# Canonical authorship for this repository.
+#
+#     muneebexotic <muneebusman112233@gmail.com>
+#
+# The history carries five distinct author identities. Four of them are the
+# same person under different names, machines, or typos:
+#
+#   43  muneebexotic <muneebusman112233@gmail.com>      correct
+#   33  Muneeb Usman <muneebusman112233@gmail.com>      right email, other name
+#   21  Muneeb U. <...@users.noreply.github.com>        commits made on github.com
+#   15  muneebexotic3 <musman@innovative-pk.com>        a work account, wrong entirely
+#    1  Muneeb Usman <muneebusma112233@gmail.com>       typo: "muneebusma", missing an n
+#
+# The `musman@innovative-pk.com` commits came from this machine's GLOBAL git
+# identity, which belongs to a different account. The single typo'd address
+# (commit 2036c90, 2025-07-11) is a plain slip that has been sitting in the
+# history for a year.
+#
+# A mailmap fixes attribution for `git log --use-mailmap`, `git blame` and
+# `git shortlog` **without rewriting anything**. Two things it does not do,
+# stated so it is not mistaken for more than it is:
+#
+#   1. GitHub links a commit to an account by the raw author email, so its
+#      web UI keeps showing the wrong ones until history is actually
+#      rewritten.
+#   2. It does not prevent a wrong identity being used again. The pre-commit
+#      hook does that.
+#
+# To make it permanent, SECURITY-REMEDIATION.md §2.5 passes `--mailmap` to
+# git-filter-repo during the history purge that is already planned. The
+# rewrite is happening regardless, so this correction rides along for free.
+#
+# Format:  <canonical name> <canonical email> <commit name> <commit email>
+
+muneebexotic <muneebusman112233@gmail.com> muneebexotic3 <musman@innovative-pk.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <musman@innovative-pk.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <muneebusman112233@gmail.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb Usman <muneebusma112233@gmail.com>
+muneebexotic <muneebusman112233@gmail.com> Muneeb U. <129713618+muneebexotic@users.noreply.github.com>
+muneebexotic <muneebusman112233@gmail.com> <muneebexotic3@gmail.com>

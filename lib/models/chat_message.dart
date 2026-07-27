@@ -1,130 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'generated_image.dart';
 
+/// A single turn in a thread.
+///
+/// Text only. PRD §2.2 cuts image generation outright, so the `MessageType`
+/// enum and the `GeneratedImage` payload that used to live here are gone.
+///
+/// Image *understanding* (§5.4) is a different feature and is not modelled
+/// yet: it arrives with the gateway in Milestone 3, and when it does the
+/// attachment is a Supabase Storage reference behind a signed URL, not an
+/// embedded blob. Adding a speculative field for it now would be guessing at
+/// a shape the server has not defined.
+///
+/// `fromMap` still tolerates the old persisted `type` and `imageData` keys —
+/// see the note there. Real users had messages written in the old format.
 class ChatMessage {
-  final String text;
-  final String sender; // 'user' or 'bot'
-  final DateTime timestamp;
-  final MessageType type; // New: message type
-  final GeneratedImage? imageData; // New: for image messages
-  String? _userPhotoUrl;
-  String? get userPhotoUrl => _userPhotoUrl;
-
   ChatMessage({
     required this.text,
     required this.sender,
     DateTime? timestamp,
-    this.type = MessageType.text, // Default to text
-    this.imageData,
   }) : timestamp = timestamp ?? DateTime.now();
 
-  // Factory constructor for image messages
-  ChatMessage.image({
-    required GeneratedImage image,
-    required this.sender,
-    DateTime? timestamp,
-  }) : text = image.prompt,
-       type = MessageType.image,
-       imageData = image,
-       timestamp = timestamp ?? DateTime.now();
-
-  // Factory constructor for text messages (existing)
+  /// Named constructor kept because call sites read better with it, and
+  /// because removing it would churn files this milestone has no other reason
+  /// to touch.
   ChatMessage.text({
     required this.text,
     required this.sender,
     DateTime? timestamp,
-  }) : type = MessageType.text,
-       imageData = null,
-       timestamp = timestamp ?? DateTime.now();
+  }) : timestamp = timestamp ?? DateTime.now();
 
-  /// Check if this is an image message
-  bool get isImageMessage => type == MessageType.image && imageData != null;
+  final String text;
 
-  /// Check if this is a text message
-  bool get isTextMessage => type == MessageType.text;
+  /// `'user'` or `'bot'`.
+  final String sender;
 
-  /// Get display text for the message
-  String get displayText {
-    switch (type) {
-      case MessageType.image:
-        return imageData != null ? 'Generated image: ${imageData!.prompt}' : text;
-      case MessageType.text:
-        return text;
-    }
-  }
+  final DateTime timestamp;
 
-  /// Validation method to check if the message is valid
-  bool isValid() {
-    switch (type) {
-      case MessageType.text:
-        return text.trim().isNotEmpty && 
-               sender.trim().isNotEmpty && 
-               (sender == 'user' || sender == 'bot');
-      case MessageType.image:
-        return imageData != null && 
-               imageData!.isValid() && 
-               sender.trim().isNotEmpty && 
-               (sender == 'user' || sender == 'bot');
-    }
-  }
+  String? _userPhotoUrl;
+  String? get userPhotoUrl => _userPhotoUrl;
 
-  Map<String, dynamic> toMap() {
-    final map = {
-      'text': text,
-      'sender': sender,
-      'timestamp': timestamp,
-      'type': type.name,
-    };
+  /// What to render. Retained so call sites need not care whether a message
+  /// has a display form distinct from its raw text.
+  String get displayText => text;
 
-    if (imageData != null) {
-      map['imageData'] = imageData!.toMap();
-    }
+  bool isValid() =>
+      text.trim().isNotEmpty &&
+      sender.trim().isNotEmpty &&
+      (sender == 'user' || sender == 'bot');
 
-    return map;
-  }
+  Map<String, dynamic> toMap() => {
+    'text': text,
+    'sender': sender,
+    'timestamp': timestamp,
+  };
 
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     final rawTimestamp = map['timestamp'];
 
-    DateTime parsedTimestamp;
+    final DateTime parsedTimestamp;
     if (rawTimestamp is Timestamp) {
       parsedTimestamp = rawTimestamp.toDate();
     } else if (rawTimestamp is String) {
       parsedTimestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
     } else {
-      parsedTimestamp = DateTime.now(); // fallback
+      parsedTimestamp = DateTime.now();
     }
 
-    final messageType = MessageType.values.firstWhere(
-      (type) => type.name == map['type'],
-      orElse: () => MessageType.text,
-    );
-
-    GeneratedImage? imageData;
-    if (messageType == MessageType.image && map['imageData'] != null) {
-      imageData = GeneratedImage.fromMap(map['imageData']);
-    }
-
+    // Messages written before image generation was cut may still carry
+    // `type: 'image'` and an `imageData` map. Both are ignored rather than
+    // rejected: the row keeps its text and timestamp and renders as an
+    // ordinary message, which is better than throwing on a user's history.
     return ChatMessage(
       text: map['text'] ?? '',
       sender: map['sender'] ?? '',
       timestamp: parsedTimestamp,
-      type: messageType,
-      imageData: imageData,
     );
-  }
-}
-
-enum MessageType {
-  text,
-  image;
-
-  String get displayName {
-    switch (this) {
-      case MessageType.text:
-        return 'Text';
-      case MessageType.image:
-        return 'Image';
-    }
   }
 }

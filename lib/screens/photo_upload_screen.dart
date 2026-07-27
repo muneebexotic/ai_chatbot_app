@@ -1,27 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/photo_service.dart';
-import '../services/cloudinary_service.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../components/ui/app_button.dart';
-import '../components/ui/app_back_button.dart';
 import '../utils/app_theme.dart';
-import 'chat_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart'; 
+import '../app/providers.dart';
 
-class PhotoUploadScreen extends StatefulWidget {
+class PhotoUploadScreen extends ConsumerStatefulWidget {
   const PhotoUploadScreen({super.key});
 
   @override
-  State<PhotoUploadScreen> createState() => _PhotoUploadScreenState();
+  ConsumerState<PhotoUploadScreen> createState() => _PhotoUploadScreenState();
 }
 
-class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
+class _PhotoUploadScreenState extends ConsumerState<PhotoUploadScreen> {
   final PhotoService _photoService = PhotoService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
   File? _selectedImage;
   String? _avatarUrl;
   bool _isLoading = false;
@@ -29,13 +24,15 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return PopScope(
           canPop: false, // Prevent default back behavior
-          onPopInvoked: (didPop) {
+          onPopInvokedWithResult: (didPop, result) {
             if (!didPop) {
               // Handle swipe back - same as skip button
               _skipPhotoUpload();
@@ -119,10 +116,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       bottom: false,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.getBackground(isDark).withOpacity(0.9),
+          color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
           border: Border(
             bottom: BorderSide(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -168,10 +165,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -182,7 +179,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           Container(
             padding: EdgeInsets.all(_getResponsivePadding(context) * 0.67),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.67),
             ),
             child: Icon(
@@ -217,12 +214,12 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           width: _getResponsiveBorderWidth(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -300,10 +297,10 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.getSurface(isDark),
         borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context)),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -345,7 +342,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     return Container(
       height: 1,
       margin: EdgeInsets.symmetric(horizontal: _getResponsivePadding(context) * 0.83),
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withValues(alpha: 0.1),
     );
   }
 
@@ -366,8 +363,8 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           top: isFirst ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
           bottom: isLast ? Radius.circular(_getResponsiveBorderRadius(context)) : Radius.zero,
         ),
-        splashColor: AppColors.primary.withOpacity(0.1),
-        highlightColor: AppColors.primary.withOpacity(0.05),
+        splashColor: AppColors.primary.withValues(alpha: 0.1),
+        highlightColor: AppColors.primary.withValues(alpha: 0.05),
         child: Container(
           padding: EdgeInsets.all(_getResponsivePadding(context) * 0.83),
           child: Row(
@@ -375,7 +372,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
               Container(
                 padding: EdgeInsets.all(_getResponsivePadding(context) * 0.5),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(_getResponsiveBorderRadius(context) * 0.5),
                 ),
                 child: Icon(
@@ -551,23 +548,27 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
   Future<void> _continueToChat() async {
     setState(() => _isUploading = true);
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = ref.read(authNotifierProvider);
 
       // Check if user is authenticated
       if (authProvider.currentUser?.uid == null || authProvider.currentUser!.uid.isEmpty) {
         throw Exception('❌ User is not authenticated.');
       }
 
-      // Upload image or set avatar
-      if (_selectedImage != null) {
-        final imageUrl = await _cloudinaryService.uploadImage(_selectedImage!);
-        if (imageUrl != null) {
-          await authProvider.setUserAvatar(imageUrl);
-        } else {
-          throw Exception('❌ Cloudinary upload failed');
-        }
-      } else if (_avatarUrl != null) {
-        await authProvider.setUserAvatar(_avatarUrl!);
+      // PRD §2.2 removes Cloudinary, and there is no replacement store until
+      // Supabase Storage lands in Milestone 2. R5.3.1 also settles the
+      // question for v1: an avatar is a generated mark, not an uploaded
+      // photo. So a picked photo is used as the user's intent to have *an*
+      // avatar, and a generated one is set instead of silently doing nothing.
+      //
+      // The picker itself should go when Milestone 2 rebuilds this screen;
+      // logged in CRITIQUE.md.
+      var avatarUrl = _avatarUrl;
+      if (avatarUrl == null && _selectedImage != null) {
+        avatarUrl = await _photoService.generateRandomAvatar();
+      }
+      if (avatarUrl != null) {
+        await authProvider.setUserAvatar(avatarUrl);
       }
 
       if (mounted) {
@@ -589,7 +590,8 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
     setState(() => _isUploading = true);
     try {
       final avatarUrl = await _photoService.generateRandomAvatar();
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (!mounted) return;
+      final authProvider = ref.read(authNotifierProvider);
       await authProvider.setUserAvatar(avatarUrl);
       if (mounted) {
         // Use named route instead of direct MaterialPageRoute

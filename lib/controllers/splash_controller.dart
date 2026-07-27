@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import '../providers/auth_provider.dart';
 import '../services/splash_service.dart';
 
@@ -39,7 +38,11 @@ class SplashController extends ChangeNotifier {
 
       // Initialize app and get navigation route from the service
       final route = await SplashService.initializeApp(_authProvider);
-      
+
+      // The 8-second safety timer in _startInitializationTimer may already
+      // have navigated away, disposing this context.
+      if (!context.mounted) return;
+
       // Navigate to determined route
       await _navigateToRoute(context, route);
     } catch (e) {

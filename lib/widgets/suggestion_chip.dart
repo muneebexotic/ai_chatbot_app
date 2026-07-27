@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../providers/themes_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class SuggestionChip extends StatefulWidget {
+class SuggestionChip extends ConsumerStatefulWidget {
   final String label;
   final IconData icon;
   final List<String> suggestions;
@@ -19,10 +19,10 @@ class SuggestionChip extends StatefulWidget {
   });
 
   @override
-  State<SuggestionChip> createState() => _SuggestionChipState();
+  ConsumerState<SuggestionChip> createState() => _SuggestionChipState();
 }
 
-class _SuggestionChipState extends State<SuggestionChip>
+class _SuggestionChipState extends ConsumerState<SuggestionChip>
     with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
@@ -71,8 +71,10 @@ class _SuggestionChipState extends State<SuggestionChip>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return AnimatedBuilder(
@@ -93,8 +95,8 @@ class _SuggestionChipState extends State<SuggestionChip>
                       end: Alignment.bottomRight,
                       colors: _isPressed
                           ? [
-                              AppColors.primary.withOpacity(0.8),
-                              AppColors.secondary.withOpacity(0.9),
+                              AppColors.primary.withValues(alpha: 0.8),
+                              AppColors.secondary.withValues(alpha: 0.9),
                             ]
                           : [
                               AppColors.primary,
@@ -104,21 +106,21 @@ class _SuggestionChipState extends State<SuggestionChip>
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(
                       color: _isPressed
-                          ? AppColors.primary.withOpacity(0.6)
-                          : AppColors.primary.withOpacity(0.3),
+                          ? AppColors.primary.withValues(alpha: 0.6)
+                          : AppColors.primary.withValues(alpha: 0.3),
                       width: 1,
                     ),
                     boxShadow: _isPressed
                         ? [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ]
                         : [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.primary.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -136,7 +138,7 @@ class _SuggestionChipState extends State<SuggestionChip>
                       Text(
                         widget.label,
                         style: TextStyle(
-                          fontFamily: 'Poppins',
+                          fontFamily: 'GeneralSans',
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                           color: AppColors.getTextPrimary(isDark),

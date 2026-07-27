@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_theme.dart';
-import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../screens/subscription_screen.dart';
 import '../components/ui/app_text.dart';
+import '../app/providers.dart';
 
-class MessageInputField extends StatefulWidget {
+class MessageInputField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isListening;
@@ -15,7 +14,6 @@ class MessageInputField extends StatefulWidget {
   final VoidCallback onSend;
   final Function(String)? onTextChanged;
   final Function(bool)? onTypingStatusChanged;
-  final VoidCallback? onImageGeneration;
 
   const MessageInputField({
     super.key,
@@ -25,15 +23,13 @@ class MessageInputField extends StatefulWidget {
     required this.onMicTap,
     required this.onSend,
     this.onTextChanged,
-    this.onTypingStatusChanged,
-    this.onImageGeneration, 
-  });
+    this.onTypingStatusChanged,});
 
   @override
-  State<MessageInputField> createState() => _MessageInputFieldState();
+  ConsumerState<MessageInputField> createState() => _MessageInputFieldState();
 }
 
-class _MessageInputFieldState extends State<MessageInputField>
+class _MessageInputFieldState extends ConsumerState<MessageInputField>
     with TickerProviderStateMixin {
   AnimationController? _micAnimationController;
   AnimationController? _sendAnimationController;
@@ -52,7 +48,6 @@ class _MessageInputFieldState extends State<MessageInputField>
   // Height constraints
   static const double _minHeight = 56.0;
   static const double _maxHeight = 120.0; // About 4-5 lines
-  static const double _lineHeight = 22.0; // Approximate line height
   
   Timer? _typingTimer;
   static const Duration _typingTimeout = Duration(milliseconds: 2000);
@@ -63,19 +58,6 @@ class _MessageInputFieldState extends State<MessageInputField>
     _initializeAnimations();
     _setupListeners();
   }
-
-  Future<void> _handleImageGeneration() async {
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  final canGenerate = await authProvider.canGenerateImage(); // You may need to add this method to AuthProvider
-  
-  if (!canGenerate) {
-    _showUsageLimitDialog('image generation');
-    return;
-  }
-
-  // Call the callback function passed from chat_screen
-  widget.onImageGeneration?.call();
-}
 
   void _initializeAnimations() {
     _micAnimationController = AnimationController(
@@ -197,7 +179,7 @@ class _MessageInputFieldState extends State<MessageInputField>
       text: TextSpan(
         text: widget.controller.text,
         style: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'GeneralSans',
           fontWeight: FontWeight.w400,
           fontSize: 16,
         ),
@@ -272,7 +254,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleSendTap() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canSend = await authProvider.canSendMessage();
     
     if (!canSend) {
@@ -293,7 +275,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleMicTap() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canSendVoice = await authProvider.canSendVoice();
     
     if (!canSendVoice) {
@@ -305,7 +287,7 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   Future<void> _handleImageUpload() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     final canUpload = await authProvider.canUploadImage();
     
     if (!canUpload) {
@@ -313,7 +295,10 @@ class _MessageInputFieldState extends State<MessageInputField>
       return;
     }
 
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // `mounted` on the State, not `context.mounted`: inside a State the
+    // analyzer treats the latter as an unrelated check.
+    if (!mounted) return;
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -321,7 +306,7 @@ class _MessageInputFieldState extends State<MessageInputField>
         content: const Text(
           'Image upload coming soon!',
           style: TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'GeneralSans',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -337,8 +322,8 @@ class _MessageInputFieldState extends State<MessageInputField>
   }
 
   void _showUsageLimitDialog(String limitType) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
     
     showDialog(
@@ -382,7 +367,7 @@ class _MessageInputFieldState extends State<MessageInputField>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -439,8 +424,11 @@ class _MessageInputFieldState extends State<MessageInputField>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, ThemeProvider>(
-      builder: (context, authProvider, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Center(
@@ -478,20 +466,20 @@ class _MessageInputFieldState extends State<MessageInputField>
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
                             color: _isFocused
-                                ? AppColors.primary.withOpacity(0.5)
-                                : AppColors.getTextPrimary(isDark).withOpacity(0.08),
+                                ? AppColors.primary.withValues(alpha: 0.5)
+                                : AppColors.getTextPrimary(isDark).withValues(alpha: 0.08),
                             width: _isFocused ? 2 : 1,
                           ),
                           boxShadow: _isFocused
                               ? [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.1),
+                                    color: AppColors.primary.withValues(alpha: 0.1),
                                     blurRadius: 20,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 4),
                                   ),
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -499,7 +487,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -517,7 +505,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                 focusNode: widget.focusNode,
                                 enabled: authProvider.isPremium || authProvider.paymentService.remainingMessages > 0,
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'GeneralSans',
                                   fontWeight: FontWeight.w400,
                                   fontSize: 16,
                                   color: AppColors.getTextPrimary(isDark),
@@ -529,7 +517,7 @@ class _MessageInputFieldState extends State<MessageInputField>
                                       : 'Daily message limit reached',
                                   filled: false,
                                   hintStyle: TextStyle(
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'GeneralSans',
                                     fontWeight: FontWeight.w400,
                                     fontSize: 16,
                                     color: AppColors.getTextTertiary(isDark),
@@ -580,12 +568,6 @@ AnimatedBuilder(
         children: [
           if (!_hasText) ...[
             _buildIconButton(
-              icon: Icons.image_outlined, // New image generation icon
-              onPressed: _handleImageGeneration,
-              tooltip: 'Generate image',
-              isDark: isDark,
-            ),
-            _buildIconButton(
               icon: Icons.attach_file_rounded,
               onPressed: _handleImageUpload,
               tooltip: 'Attach file',
@@ -599,18 +581,6 @@ AnimatedBuilder(
             ),
           ],
           if (_hasText) ...[
-            Transform.scale(
-              scale: _expandAnimation?.value ?? 0.0,
-              child: Opacity(
-                opacity: _expandAnimation?.value ?? 0.0,
-                child: _buildIconButton(
-                  icon: Icons.image_outlined, // Image generation button when typing
-                  onPressed: _handleImageGeneration,
-                  tooltip: 'Generate image',
-                  isDark: isDark,
-                ),
-              ),
-            ),
             Transform.scale(
               scale: _expandAnimation?.value ?? 0.0,
               child: Opacity(
@@ -666,20 +636,20 @@ AnimatedBuilder(
                             colors: _hasText || widget.isListening
                                 ? (isEnabled 
                                     ? [AppColors.primary, AppColors.secondary]
-                                    : [AppColors.getTextTertiary(isDark).withOpacity(0.5), AppColors.getTextTertiary(isDark).withOpacity(0.3)])
+                                    : [AppColors.getTextTertiary(isDark).withValues(alpha: 0.5), AppColors.getTextTertiary(isDark).withValues(alpha: 0.3)])
                                 : [AppColors.getSurface(isDark), AppColors.getSurfaceVariant(isDark)],
                           ),
                           shape: BoxShape.circle,
                           border: !_hasText && !widget.isListening
                               ? Border.all(
-                                  color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
+                                  color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.3),
                                   width: 1,
                                 )
                               : null,
                           boxShadow: (_hasText || widget.isListening) && isEnabled
                               ? [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.3),
+                                    color: AppColors.primary.withValues(alpha: 0.3),
                                     blurRadius: 12,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 4),
@@ -687,7 +657,7 @@ AnimatedBuilder(
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                                     blurRadius: 8,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 2),
@@ -706,7 +676,7 @@ AnimatedBuilder(
                                 ? (_hasText || widget.isListening
                                     ? Colors.white
                                     : AppColors.getTextSecondary(isDark))
-                                : AppColors.getTextTertiary(isDark).withOpacity(0.5),
+                                : AppColors.getTextTertiary(isDark).withValues(alpha: 0.5),
                             size: 26, // Larger icon
                           ),
                           tooltip: _hasText 

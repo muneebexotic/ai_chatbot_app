@@ -45,7 +45,7 @@ class WelcomeHeader extends StatelessWidget {
             position: titleSlideAnimation,
             child: AppText.displayMedium(
               WelcomeScreenConstants.welcomeTitle,
-              color: colorScheme.onBackground, // Use theme-aware color
+              color: colorScheme.onSurface, // Use theme-aware color
               textAlign: TextAlign.center,
             ),
           ),
@@ -58,7 +58,7 @@ class WelcomeHeader extends StatelessWidget {
           opacity: subtitleFadeAnimation,
           child: AppText.bodyLarge(
             WelcomeScreenConstants.welcomeSubtitle,
-            color: colorScheme.onBackground.withOpacity(0.7), // Theme-aware secondary color
+            color: colorScheme.onSurface.withValues(alpha: 0.7), // Theme-aware secondary color
             textAlign: TextAlign.center,
           ),
         ),

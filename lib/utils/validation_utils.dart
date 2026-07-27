@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Utility class for form validation
 /// 
@@ -31,7 +32,7 @@ class ValidationUtils {
       
       // Debug logging
       if (kDebugMode) {
-        print('🔍 Validating email: "$sanitizedValue"');
+        Log.d('Validating email: "$sanitizedValue"');
       }
 
       // Check length limits
@@ -42,7 +43,7 @@ class ValidationUtils {
       // Check email format
       if (!_emailRegex.hasMatch(sanitizedValue)) {
         if (kDebugMode) {
-          print('❌ Email validation failed for: "$sanitizedValue"');
+          Log.d('Email validation failed for: "$sanitizedValue"');
         }
         return 'Please enter a valid email';
       }
@@ -53,13 +54,13 @@ class ValidationUtils {
       }
 
       if (kDebugMode) {
-        print('✅ Email validation passed for: "$sanitizedValue"');
+        Log.d('Email validation passed for: "$sanitizedValue"');
       }
 
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Email validation error: $e');
+        Log.d('Email validation error: $e');
       }
       return 'Please enter a valid email';
     }
@@ -109,7 +110,7 @@ class ValidationUtils {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Password validation error: $e');
+        Log.d('Password validation error: $e');
       }
       return 'Please enter a valid password';
     }
@@ -143,7 +144,7 @@ class ValidationUtils {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Complex password validation error: $e');
+        Log.d('Complex password validation error: $e');
       }
       return 'Please enter a valid password';
     }
@@ -208,7 +209,7 @@ class ValidationUtils {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Phone validation error: $e');
+        Log.d('Phone validation error: $e');
       }
       return 'Please enter a valid phone number';
     }
@@ -235,7 +236,7 @@ class ValidationUtils {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Name validation error: $e');
+        Log.d('Name validation error: $e');
       }
       return 'Please enter a valid name';
     }
@@ -267,7 +268,7 @@ class ValidationUtils {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Full name validation error: $e');
+        Log.d('Full name validation error: $e');
       }
       return 'Please enter a valid name';
     }

@@ -5,11 +5,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import '../widgets/typing_indicator.dart';
@@ -24,16 +23,17 @@ import '../services/speech_service.dart';
 import '../widgets/rename_conversation_dialog.dart';
 import '../screens/subscription_screen.dart';
 import '../services/payment_service.dart';
-import '../providers/image_generation_provider.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
+import '../app/providers.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<bool> _onWillPop() async {
     try {
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final chatProvider = ref.read(chatNotifierProvider);
       if (chatProvider.isTyping) {
         return false;
       }
@@ -70,13 +70,13 @@ class _ChatScreenState extends State<ChatScreen> {
       final shouldExit = await _showExitDialog();
       return shouldExit ?? false;
     } catch (e) {
-      debugPrint('Error in _onWillPop: $e');
+      Log.d('Error in _onWillPop: $e');
       return true;
     }
   }
 
   Future<bool?> _showExitDialog() async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     try {
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -124,9 +124,9 @@ class _ChatScreenState extends State<ChatScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -174,18 +174,18 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('Error showing exit dialog: $e');
+      Log.d('Error showing exit dialog: $e');
       return false;
     }
   }
 
   Future<void> _startListening() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
 
     if (!await authProvider.canSendVoice()) {
       _showUpgradeDialog(
         'Voice Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_VOICE} voice messages.',
+        'You\'ve reached your daily limit of ${PaymentService.freeDailyVoice} voice messages.',
         'Upgrade to Premium for unlimited voice messages!',
       );
       return;
@@ -227,7 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: Text(
           message,
           style: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'GeneralSans',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -242,12 +242,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final message = _controller.text.trim();
     if (message.isEmpty) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
 
     if (!await authProvider.canSendMessage()) {
       _showUpgradeDialog(
         'Message Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_MESSAGES} messages.',
+        'You\'ve reached your daily limit of ${PaymentService.freeDailyMessages} messages.',
         'Upgrade to Premium for unlimited messages!',
       );
       return;
@@ -257,11 +257,9 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
     _focusNode.unfocus();
 
+    if (!mounted) return;
     try {
-      await Provider.of<ChatProvider>(
-        context,
-        listen: false,
-      ).sendMessage(message);
+      await ref.read(chatNotifierProvider).sendMessage(message);
       await authProvider.incrementMessageUsage();
       _scrollToTop();
     } catch (e) {
@@ -269,213 +267,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handleImageGeneration() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    if (!await authProvider.canUploadImage()) {
-      _showUpgradeDialog(
-        'Image Generation Limit Reached',
-        'You\'ve reached your daily limit of ${PaymentService.FREE_DAILY_IMAGES} images.',
-        'Upgrade to Premium for unlimited image generation!',
-      );
-      return;
-    }
-
-    // Check if there's text in the input field
-    String prompt = _controller.text.trim();
-
-    if (prompt.isEmpty) {
-      // Show dialog to get prompt if text field is empty
-      prompt = await _showImagePromptDialog();
-      if (prompt.isEmpty) return; // User cancelled or entered empty prompt
-    } else {
-      // Use text from field and clear it
-      _controller.clear();
-    }
-
-    HapticFeedback.selectionClick();
-    _focusNode.unfocus();
-
-    try {
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      await chatProvider.generateImageMessage(prompt);
-
-      // Safely scroll with additional checks
-      _scrollToTopSafely();
-    } catch (e) {
-      _showErrorSnackBar('Failed to generate image: $e');
-    }
-  }
 
   // Add this new safer scroll method:
-  void _scrollToTopSafely() {
-    // Wait a bit longer for the UI to update
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted && _scrollController != null) {
-        try {
-          if (_scrollController.hasClients &&
-              _scrollController.position.hasContentDimensions) {
-            final maxScroll = _scrollController.position.maxScrollExtent;
-            if (maxScroll > 0) {
-              _scrollController.animateTo(
-                0,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOut,
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint('❌ Safe scroll failed: $e');
-        }
-      }
-    });
-  }
-
-  // Add this new method to show the image prompt dialog:
-
-  Future<String> _showImagePromptDialog() async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDark = themeProvider.isDark;
-    final promptController = TextEditingController();
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.getSurface(isDark),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.image_outlined,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppText.displayMedium(
-                  'Generate Image',
-                  color: AppColors.getTextPrimary(isDark),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText.bodyMedium(
-                'Describe what you want to create:',
-                color: AppColors.getTextSecondary(isDark),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: promptController,
-                autofocus: true,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText:
-                      'e.g., A beautiful sunset over mountains, digital art style',
-                  hintStyle: TextStyle(
-                    color: AppColors.getTextTertiary(isDark),
-                    fontSize: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.getTextTertiary(isDark).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                  filled: true,
-                  fillColor: AppColors.getBackground(isDark).withOpacity(0.5),
-                ),
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(isDark),
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.tips_and_updates,
-                      color: AppColors.primary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: AppText.bodySmall(
-                        'Be specific! Include style, mood, colors, and details for better results.',
-                        color: AppColors.getTextSecondary(isDark),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(''),
-              child: AppText.bodyMedium(
-                'Cancel',
-                color: AppColors.getTextSecondary(isDark),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final prompt = promptController.text.trim();
-                Navigator.of(dialogContext).pop(prompt);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: AppText.bodyMedium(
-                'Generate',
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    // Dispose after a delay to allow dialog dismiss animation to complete
-    Future.delayed(const Duration(milliseconds: 300), () {
-      promptController.dispose();
-    });
-
-    return result ?? '';
-  }
 
   void _showUpgradeDialog(String title, String description, String benefits) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showDialog(
@@ -488,7 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.star, color: AppColors.primary, size: 20),
@@ -515,7 +311,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -535,14 +331,16 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Consumer<AuthProvider>(
-              builder: (context, auth, child) {
+            Consumer(
+      builder: (context, ref, child) {
+        final auth = ref.watch(authNotifierProvider);
+
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -603,15 +401,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToTop() {
     // Add comprehensive null checks and safety measures
-    if (_scrollController == null) {
-      debugPrint('⚠️ Scroll controller is null, cannot scroll');
-      return;
-    }
-
     Future.delayed(const Duration(milliseconds: 100), () {
       // Check if widget is still mounted and controller is still valid
       if (mounted &&
-          _scrollController != null &&
           _scrollController.hasClients) {
         try {
           // Additional safety check for position
@@ -623,29 +415,28 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
         } catch (e) {
-          debugPrint('❌ Error during scroll animation: $e');
+          Log.d('Error during scroll animation: $e');
           // Try immediate jump as fallback
           try {
             if (mounted &&
-                _scrollController != null &&
                 _scrollController.hasClients &&
                 _scrollController.position.hasContentDimensions) {  // Added check here
               _scrollController.jumpTo(0);
             }
           } catch (fallbackError) {
-            debugPrint('❌ Even fallback scroll failed: $fallbackError');
+            Log.d('Even fallback scroll failed: $fallbackError');
           }
         }
       } else {
-        debugPrint(
-          '⚠️ Cannot scroll: mounted=$mounted, hasClients=${_scrollController?.hasClients}',
+        Log.d(
+          'Cannot scroll: mounted=$mounted, hasClients=${_scrollController.hasClients}',
         );
       }
     });
   }
 
   void _showSuggestionModal(List<String> suggestions) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showModalBottomSheet(
@@ -657,7 +448,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: AppColors.getSurface(isDark),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -667,7 +458,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.getTextTertiary(isDark).withOpacity(0.1),
+                    color: AppColors.getTextTertiary(isDark).withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -694,7 +485,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -727,8 +518,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Center(
@@ -740,10 +533,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       width: 2,
                     ),
                   ),
@@ -791,17 +584,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 const SizedBox(height: 32),
 
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
+                Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+
                     if (authProvider.isPremium) return const SizedBox.shrink();
 
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.05),
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -868,10 +663,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -900,15 +695,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildAppBar(String title) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.getBackground(isDark).withOpacity(0.9),
+            color: AppColors.getBackground(isDark).withValues(alpha: 0.9),
             border: Border(
-              bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+              bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
             ),
           ),
           child: AppBar(
@@ -927,8 +724,10 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             centerTitle: true,
             actions: [
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
+              Consumer(
+      builder: (context, ref, child) {
+        final authProvider = ref.watch(authNotifierProvider);
+
                   if (authProvider.isPremium) {
                     return IconButton(
                       icon: Icon(
@@ -1005,7 +804,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showUsageDialog(AuthProvider authProvider) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     showDialog(
@@ -1036,7 +835,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -1049,7 +848,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(height: 8),
                   AppText.bodySmall(
-                    '• ${PaymentService.FREE_DAILY_MESSAGES} messages per day\n• ${PaymentService.FREE_DAILY_IMAGES} images per day\n• ${PaymentService.FREE_DAILY_VOICE} voice inputs per day\n• ${PaymentService.FREE_PERSONAS_COUNT} personas available',
+                    '• ${PaymentService.freeDailyMessages} messages per day\n• ${PaymentService.freeDailyImages} images per day\n• ${PaymentService.freeDailyVoice} voice inputs per day\n• ${PaymentService.freePersonasCount} personas available',
                     color: AppColors.getTextSecondary(isDark),
                   ),
                 ],
@@ -1111,11 +910,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _handleMenuSelection(String value) async {
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final chatProvider = ref.read(chatNotifierProvider);
+    final convoProvider = ref.read(conversationsNotifierProvider);
 
     switch (value) {
       case 'clear':
@@ -1157,7 +953,7 @@ class _ChatScreenState extends State<ChatScreen> {
     ChatProvider chatProvider,
     ConversationsProvider convoProvider,
   ) async {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final themeProvider = ref.read(themeNotifierProvider);
     final isDark = themeProvider.isDark;
 
     final confirmed = await showDialog<bool>(
@@ -1215,8 +1011,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
-    final convoProvider = Provider.of<ConversationsProvider>(context);
+    final chatProvider = ref.watch(chatNotifierProvider);
+    final convoProvider = ref.watch(conversationsNotifierProvider);
 
     final currentTitle = convoProvider.conversations
         .firstWhere(
@@ -1229,12 +1025,30 @@ class _ChatScreenState extends State<ChatScreen> {
         )
         .title;
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
 
-        return WillPopScope(
-          onWillPop: _onWillPop,
+        // PopScope replaces the deprecated WillPopScope. WillPopScope breaks
+        // Android's predictive-back gesture, which shows the destination
+        // behind the swipe — so this is a visible behaviour fix, not only a
+        // deprecation cleanup.
+        //
+        // The inversion is easy to get wrong: WillPopScope's callback returned
+        // "may I pop?", whereas PopScope declares `canPop` up front and then
+        // reports what happened. Blocking means canPop: false plus an explicit
+        // pop once the user confirms.
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            final shouldExit = await _onWillPop();
+            if (shouldExit && context.mounted) {
+              Navigator.of(context).pop();
+            }
+          },
           child: GestureDetector(
             onTap: () => _focusNode.unfocus(),
             child: Scaffold(
@@ -1242,10 +1056,7 @@ class _ChatScreenState extends State<ChatScreen> {
               drawer: ConversationDrawer(
                 onRenameDialog: _showRenameDialog,
                 onDrawerClosed: () {
-                  Provider.of<ConversationsProvider>(
-                    context,
-                    listen: false,
-                  ).clearSearch();
+                  ref.read(conversationsNotifierProvider).clearSearch();
                 },
               ),
               body: Container(
@@ -1307,7 +1118,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 content: const Text(
                                                   'Copied to clipboard',
                                                   style: TextStyle(
-                                                    fontFamily: 'Poppins',
+                                                    fontFamily: 'GeneralSans',
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -1366,8 +1177,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         isListening: _isListening,
                         onMicTap: _startListening,
                         onSend: _handleSend,
-                        onImageGeneration:
-                            _handleImageGeneration, // Add this line
                       ),
                     ),
                   ],

@@ -20,7 +20,6 @@ class WelcomeSocialLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return FadeTransition(
       opacity: fadeAnimation,
@@ -64,7 +63,7 @@ class WelcomeSocialLogin extends StatelessWidget {
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: colorScheme.outline.withOpacity(
+            color: colorScheme.outline.withValues(alpha: 
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),
@@ -75,13 +74,13 @@ class WelcomeSocialLogin extends StatelessWidget {
           ),
           child: AppText.bodyMedium(
             WelcomeScreenConstants.dividerText,
-            color: colorScheme.onBackground.withOpacity(0.6),
+            color: colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         Expanded(
           child: Container(
             height: WelcomeScreenConstants.dividerHeight,
-            color: colorScheme.outline.withOpacity(
+            color: colorScheme.outline.withValues(alpha: 
               WelcomeScreenConstants.dividerOpacity,
             ),
           ),

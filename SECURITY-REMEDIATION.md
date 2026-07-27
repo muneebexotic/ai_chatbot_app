@@ -383,7 +383,29 @@ git filter-repo \
     --path android/app/google-services.json \
     --path-glob 'android/build/*' \
     --path-glob '**/.dart_tool/*' \
-  --replace-text ../replacements.txt
+  --replace-text ../replacements.txt \
+  --mailmap ../mailmap.txt
+```
+
+`--mailmap` fixes commit authorship in the same pass. Early commits — the
+whole of the pushed `milestone-0-security-remediation` branch — were made
+under this machine's global git identity (`muneebexotic3` /
+`musman@innovative-pk.com`) rather than the owner's. They do not link to the
+right GitHub account, and correcting them needs exactly the rewrite you are
+already doing, so it is free here.
+
+Copy the repository's `.mailmap` out to `../mailmap.txt` first — filter-repo
+reads it from outside the repo, like `replacements.txt`:
+
+```bash
+cp .mailmap ../mailmap.txt
+```
+
+Verify afterwards, alongside the other checks below:
+
+```bash
+# Expect: every commit attributed to muneebusman112233@gmail.com.
+git log --all --format='%an <%ae>' | sort -u
 ```
 
 Verify before pushing anything — this is the step people skip:

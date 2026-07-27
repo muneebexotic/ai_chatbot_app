@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/subscription_models.dart';
 import '../services/payment_service.dart';
 import '../constants/subscription_constants.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   final PaymentService _paymentService;
@@ -47,9 +48,9 @@ class SubscriptionProvider extends ChangeNotifier {
         error: null,
       ));
       
-      debugPrint('✅ SubscriptionProvider initialized successfully');
+      Log.d('SubscriptionProvider initialized successfully');
     } catch (e) {
-      debugPrint('❌ SubscriptionProvider initialization failed: $e');
+      Log.d('SubscriptionProvider initialization failed: $e');
       _updateState(_state.copyWith(
         isLoading: false,
         error: 'Failed to load subscription plans: ${e.toString()}',
@@ -73,9 +74,9 @@ class SubscriptionProvider extends ChangeNotifier {
         error: null,
       ));
       
-      debugPrint('✅ Loaded ${subscriptionProducts.length} subscription products');
+      Log.d('Loaded ${subscriptionProducts.length} subscription products');
     } catch (e) {
-      debugPrint('❌ Error loading products: $e');
+      Log.d('Error loading products: $e');
       throw Exception('Unable to load subscription plans');
     }
   }
@@ -94,7 +95,7 @@ class SubscriptionProvider extends ChangeNotifier {
         error: null,
       ));
     } catch (e) {
-      debugPrint('❌ Error refreshing products: $e');
+      Log.d('Error refreshing products: $e');
       _updateState(_state.copyWith(
         isLoading: false,
         error: 'Failed to refresh products: ${e.toString()}',
@@ -107,7 +108,7 @@ class SubscriptionProvider extends ChangeNotifier {
     if (_state.selectedPlan == plan) return;
     
     _updateState(_state.copyWith(selectedPlan: plan));
-    debugPrint('📋 Selected plan: ${plan.displayName}');
+    Log.d('Selected plan: ${plan.displayName}');
   }
 
   /// Purchase the selected subscription
@@ -123,7 +124,7 @@ class SubscriptionProvider extends ChangeNotifier {
       await _paymentService.purchaseSubscription(selectedProduct.id);
       // Success handling is done through payment service callbacks
     } catch (e) {
-      debugPrint('❌ Purchase failed: $e');
+      Log.d('Purchase failed: $e');
       _updateState(_state.copyWith(isLoading: false));
       rethrow;
     }
@@ -137,7 +138,7 @@ class SubscriptionProvider extends ChangeNotifier {
       await _paymentService.restorePurchases();
       _updateState(_state.copyWith(isLoading: false));
     } catch (e) {
-      debugPrint('❌ Restore failed: $e');
+      Log.d('Restore failed: $e');
       _updateState(_state.copyWith(isLoading: false));
       rethrow;
     }
@@ -167,14 +168,14 @@ class SubscriptionProvider extends ChangeNotifier {
       _updateState(_state.copyWith(isLoading: false));
       
       if (success) {
-        debugPrint('✅ Purchase successful: $message');
+        Log.d('Purchase successful: $message');
       } else {
-        debugPrint('❌ Purchase failed: $message');
+        Log.d('Purchase failed: $message');
       }
     };
     
     _paymentService.onSubscriptionStatusChanged = (isSubscribed) {
-      debugPrint('🔔 Subscription status changed: $isSubscribed');
+      Log.d('Subscription status changed: $isSubscribed');
       // You might want to refresh products or update UI here
     };
   }

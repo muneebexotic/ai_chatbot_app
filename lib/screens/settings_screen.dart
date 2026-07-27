@@ -1,21 +1,21 @@
 import 'package:ai_chatbot_app/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Add this import
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/themes_provider.dart'; // Add theme provider import
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import 'personas_screen.dart';
 import 'welcome_screen.dart';
+import '../app/providers.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context); // Add theme provider
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authProvider = ref.watch(authNotifierProvider);
+    final themeProvider = ref.watch(themeNotifierProvider); // Add theme provider
     final userName = authProvider.displayName;
     final userEmail = authProvider.email;
     final photoUrl = authProvider.userPhotoUrl;
@@ -25,7 +25,7 @@ class SettingsScreen extends StatelessWidget {
     final surfaceColor = Theme.of(context).colorScheme.surface;
     final primaryColor = Theme.of(context).primaryColor;
     final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -49,10 +49,10 @@ class SettingsScreen extends StatelessWidget {
               bottom: false,
               child: Container(
                 decoration: BoxDecoration(
-                  color: backgroundColor.withOpacity(0.9),
+                  color: backgroundColor.withValues(alpha: 0.9),
                   border: Border(
                     bottom: BorderSide(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
@@ -83,10 +83,10 @@ class SettingsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: primaryColor.withOpacity(0.2)),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 4),
                         ),
@@ -98,7 +98,7 @@ class SettingsScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: primaryColor.withOpacity(0.3),
+                              color: primaryColor.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
@@ -222,7 +222,7 @@ class SettingsScreen extends StatelessWidget {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -232,6 +232,7 @@ class SettingsScreen extends StatelessWidget {
                           final confirmed = await _showSignOutDialog(context);
                           if (confirmed == true) {
                             await authProvider.logout();
+                            if (!context.mounted) return;
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(builder: (context) => const WelcomeScreen()),
@@ -246,7 +247,7 @@ class SettingsScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.error.withOpacity(0.1),
+                                  color: AppColors.error.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -266,7 +267,7 @@ class SettingsScreen extends StatelessWidget {
                                   ),
                                   AppText.bodySmall(
                                     'Sign out from your account',
-                                    color: AppColors.error.withOpacity(0.7),
+                                    color: AppColors.error.withValues(alpha: 0.7),
                                   ),
                                 ],
                               ),
@@ -305,7 +306,7 @@ class SettingsScreen extends StatelessWidget {
           fit: BoxFit.cover,
           placeholderBuilder: (_) => CircleAvatar(
             radius: 32,
-            backgroundColor: primaryColor.withOpacity(0.1),
+            backgroundColor: primaryColor.withValues(alpha: 0.1),
             child: Icon(
               Icons.person,
               size: 36,
@@ -321,7 +322,7 @@ class SettingsScreen extends StatelessWidget {
         backgroundImage: photoUrl != null && photoUrl.isNotEmpty
             ? NetworkImage(photoUrl)
             : const AssetImage('assets/images/user_avatar.png') as ImageProvider,
-        backgroundColor: primaryColor.withOpacity(0.1),
+        backgroundColor: primaryColor.withValues(alpha: 0.1),
         child: photoUrl == null || photoUrl.isEmpty
             ? Icon(Icons.person, size: 36, color: primaryColor)
             : null,
@@ -332,7 +333,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildSection(BuildContext context, String title, List<Widget> children) {
     final surfaceColor = Theme.of(context).colorScheme.surface;
     final primaryColor = Theme.of(context).primaryColor;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +350,7 @@ class SettingsScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primaryColor.withOpacity(0.1)),
+            border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
           ),
           child: Column(
             children: children,
@@ -363,7 +364,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildThemeToggleTile(BuildContext context, ThemeProvider themeProvider) {
     final primaryColor = Theme.of(context).primaryColor;
     final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -372,7 +373,7 @@ class SettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -402,8 +403,8 @@ class SettingsScreen extends StatelessWidget {
           Switch(
             value: themeProvider.isDark,
             onChanged: (value) => themeProvider.toggleTheme(),
-            activeColor: primaryColor,
-            activeTrackColor: primaryColor.withOpacity(0.3),
+            activeThumbColor: primaryColor,
+            activeTrackColor: primaryColor.withValues(alpha: 0.3),
           ),
         ],
       ),
@@ -413,8 +414,8 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildOptionTile(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
     final primaryColor = Theme.of(context).primaryColor;
     final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
-    final textTertiaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
+    final textTertiaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -428,7 +429,7 @@ class SettingsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -470,7 +471,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildInfoTile(BuildContext context, String label, String value, IconData icon) {
     final primaryColor = Theme.of(context).primaryColor;
     final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -479,7 +480,7 @@ class SettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -515,7 +516,7 @@ class SettingsScreen extends StatelessWidget {
   Future<bool?> _showSignOutDialog(BuildContext context) {
     final surfaceColor = Theme.of(context).colorScheme.surface;
     final textPrimaryColor = Theme.of(context).colorScheme.onSurface;
-    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final textSecondaryColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
 
     return showDialog<bool>(
       context: context,

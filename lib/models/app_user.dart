@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Enhanced AppUser model with improved validation, timezone handling, and error management
 class AppUser {
@@ -24,14 +25,14 @@ class AppUser {
   final String? appVersion;
 
   // Configuration constants
-  static const int MAX_USERNAME_LENGTH = 50;
-  static const int MAX_DAILY_MESSAGES = 20;
-  static const int MAX_DAILY_IMAGES = 3;
-  static const int MAX_DAILY_VOICE = 5;
-  static const int MAX_USAGE_VALUE = 100000;
+  static const int maxUsernameLength = 50;
+  static const int maxDailyMessages = 20;
+  static const int maxDailyImages = 3;
+  static const int maxDailyVoice = 5;
+  static const int maxUsageValue = 100000;
   
   // Valid subscription types
-  static const Set<String> VALID_SUBSCRIPTION_TYPES = {
+  static const Set<String> validSubscriptionTypes = {
     'premium_monthly',
     'premium_yearly'
   };
@@ -63,7 +64,7 @@ class AppUser {
     
     if (usage != null) {
       for (final entry in usage.entries) {
-        validatedUsage[entry.key] = entry.value.clamp(0, MAX_USAGE_VALUE);
+        validatedUsage[entry.key] = entry.value.clamp(0, maxUsageValue);
       }
     }
     
@@ -116,11 +117,11 @@ class AppUser {
       final subscriptionType = data['subscriptionType'] as String?;
       
       if (isPremium) {
-        if (subscriptionType == null || !VALID_SUBSCRIPTION_TYPES.contains(subscriptionType)) {
-          print('⚠️ Premium user has invalid subscription type: $subscriptionType');
+        if (subscriptionType == null || !validSubscriptionTypes.contains(subscriptionType)) {
+          Log.d('Premium user has invalid subscription type: $subscriptionType');
         }
         if (subscriptionExpiryDate == null) {
-          print('⚠️ Premium user missing expiry date');
+          Log.d('Premium user missing expiry date');
         }
       }
 
@@ -153,7 +154,7 @@ class AppUser {
       // Run comprehensive validation
       final validationErrors = user._runFullValidation();
       if (validationErrors.isNotEmpty) {
-        print('⚠️ User validation errors for $uid: ${validationErrors.join(', ')}');
+        Log.d('User validation errors for $uid: ${validationErrors.join(', ')}');
         
         // Return null for critical errors, user for warnings
         final hasCriticalError = validationErrors.any((error) => 
@@ -168,7 +169,7 @@ class AppUser {
       
       return user;
     } catch (e) {
-      print('❌ Error creating AppUser with validation: $e');
+      Log.d('Error creating AppUser with validation: $e');
       return null;
     }
   }
@@ -186,7 +187,7 @@ class AppUser {
         return DateTime.fromMillisecondsSinceEpoch(timestamp);
       }
     } catch (e) {
-      print('⚠️ Failed to parse timestamp: $timestamp, error: $e');
+      Log.d('Failed to parse timestamp: $timestamp, error: $e');
     }
     
     return null;
@@ -198,9 +199,9 @@ class AppUser {
       final usage = <String, int>{};
       for (final entry in usageData.entries) {
         if (entry.value is int) {
-          usage[entry.key] = (entry.value as int).clamp(0, MAX_USAGE_VALUE);
+          usage[entry.key] = (entry.value as int).clamp(0, maxUsageValue);
         } else if (entry.value is num) {
-          usage[entry.key] = (entry.value as num).toInt().clamp(0, MAX_USAGE_VALUE);
+          usage[entry.key] = (entry.value as num).toInt().clamp(0, maxUsageValue);
         }
       }
       return _validateUsageMap(usage);
@@ -218,8 +219,8 @@ class AppUser {
         .replaceAll(RegExp(r'''[<>"']'''), '') 
         .replaceAll(RegExp(r'\s+'), ' '); // Normalize whitespace
     
-    if (sanitized.length > MAX_USERNAME_LENGTH) {
-      sanitized = sanitized.substring(0, MAX_USERNAME_LENGTH);
+    if (sanitized.length > maxUsernameLength) {
+      sanitized = sanitized.substring(0, maxUsernameLength);
     }
     
     return sanitized.isNotEmpty ? sanitized : null;
@@ -372,13 +373,13 @@ class AppUser {
     if (hasActiveSubscription) return this; // Premium users have unlimited usage
     
     if (amount <= 0 || amount > 100) {
-      print('⚠️ Invalid usage increment amount: $amount');
+      Log.d('Invalid usage increment amount: $amount');
       return this;
     }
 
     final newUsage = Map<String, int>.from(dailyUsage);
     final currentValue = newUsage[type] ?? 0;
-    final newValue = (currentValue + amount).clamp(0, MAX_USAGE_VALUE);
+    final newValue = (currentValue + amount).clamp(0, maxUsageValue);
     
     newUsage[type] = newValue;
 
@@ -401,9 +402,9 @@ class AppUser {
   /// Get usage limit for a specific type
   int _getUsageLimit(String type) {
     switch (type) {
-      case 'messages': return MAX_DAILY_MESSAGES;
-      case 'images': return MAX_DAILY_IMAGES;
-      case 'voice': return MAX_DAILY_VOICE;
+      case 'messages': return maxDailyMessages;
+      case 'images': return maxDailyImages;
+      case 'voice': return maxDailyVoice;
       default: return 0;
     }
   }
@@ -477,7 +478,7 @@ class AppUser {
         return 'Premium user missing subscription type';
       }
       
-      if (!VALID_SUBSCRIPTION_TYPES.contains(subscriptionType)) {
+      if (!validSubscriptionTypes.contains(subscriptionType)) {
         return 'Invalid subscription type: $subscriptionType';
       }
       
@@ -522,7 +523,7 @@ class AppUser {
         errors.add('Negative usage value for $type: $value');
       }
       
-      if (value > MAX_USAGE_VALUE) {
+      if (value > maxUsageValue) {
         errors.add('Usage value too high for $type: $value');
       }
       
@@ -541,11 +542,11 @@ class AppUser {
     final validated = <String, int>{};
     
     for (final entry in dailyUsage.entries) {
-      final sanitizedValue = entry.value.clamp(0, MAX_USAGE_VALUE);
+      final sanitizedValue = entry.value.clamp(0, maxUsageValue);
       validated[entry.key] = sanitizedValue;
       
       if (sanitizedValue != entry.value) {
-        print('⚠️ Sanitized usage value for ${entry.key}: ${entry.value} -> $sanitizedValue');
+        Log.d('Sanitized usage value for ${entry.key}: ${entry.value} -> $sanitizedValue');
       }
     }
     

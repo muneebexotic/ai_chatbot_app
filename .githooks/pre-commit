@@ -13,6 +13,41 @@ set -eu
 REPO_ROOT=$(git rev-parse --show-toplevel)
 SCANNER="$REPO_ROOT/scripts/check-secrets.sh"
 
+# ── Author identity ───────────────────────────────────────────────────────
+#
+# This machine's GLOBAL git identity belongs to a different account
+# (muneebexotic3 / an @innovative-pk.com work address). Fifteen commits were
+# authored under it before anyone noticed, and the seven on the pushed
+# Milestone 0 branch cannot be corrected without a force push.
+#
+# The repo-local identity is set correctly, but `git config --local` is easy
+# to lose — a fresh clone inherits the global one silently, and the mistake is
+# invisible until the commits are already public. So it is checked here.
+EXPECTED_EMAIL='muneebusman112233@gmail.com'
+ACTUAL_EMAIL=$(git config user.email || true)
+
+if [ "$ACTUAL_EMAIL" != "$EXPECTED_EMAIL" ]; then
+  cat >&2 <<EOF
+
+✗ Wrong author identity for this repository.
+
+    configured: ${ACTUAL_EMAIL:-<unset>}
+    expected:   $EXPECTED_EMAIL
+
+  Commits authored under any other address do not link to the owner's GitHub
+  account, and correcting them later needs a history rewrite.
+
+  Fix, from the repository root:
+
+    git config user.name  "muneebexotic"
+    git config user.email "$EXPECTED_EMAIL"
+
+  This sets it for THIS repository only; your global identity is untouched.
+
+EOF
+  exit 1
+fi
+
 if [ ! -f "$SCANNER" ]; then
   echo "pre-commit: scripts/check-secrets.sh is missing. Refusing to commit blind." >&2
   echo "Restore it from the repository, or bypass once with --no-verify." >&2

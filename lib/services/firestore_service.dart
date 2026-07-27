@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_message.dart';
 import '../models/app_user.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Enhanced FirestoreService with improved error handling, performance, and reliability
 class FirestoreService {
@@ -16,11 +17,11 @@ class FirestoreService {
   final Map<String, DateTime> _cacheTimestamps = {};
 
   // Configuration constants
-  static const Duration CACHE_DURATION = Duration(minutes: 5);
-  static const Duration OPERATION_TIMEOUT = Duration(seconds: 30);
-  static const int MAX_RETRY_ATTEMPTS = 3;
-  static const int MAX_BATCH_SIZE = 500;
-  static const int SEARCH_RESULTS_LIMIT = 50;
+  static const Duration cacheDuration = Duration(minutes: 5);
+  static const Duration operationTimeout = Duration(seconds: 30);
+  static const int maxRetryAttempts = 3;
+  static const int maxBatchSize = 500;
+  static const int searchResultsLimit = 50;
 
   // Connection state
   bool _isOffline = false;
@@ -29,7 +30,7 @@ class FirestoreService {
   /// Get user with intelligent caching and offline support
   Future<AppUser?> getUserWithCache(String uid) async {
     if (uid.isEmpty) {
-      print('❌ Error: getUserWithCache called with empty uid');
+      Log.d('Error: getUserWithCache called with empty uid');
       return null;
     }
 
@@ -37,8 +38,8 @@ class FirestoreService {
     if (_userCache.containsKey(uid)) {
       final cacheTime = _cacheTimestamps[uid];
       if (cacheTime != null &&
-          DateTime.now().difference(cacheTime) < CACHE_DURATION) {
-        print('✅ Returning cached user data for: $uid');
+          DateTime.now().difference(cacheTime) < cacheDuration) {
+        Log.d('Returning cached user data for: $uid');
         return _userCache[uid];
       } else {
         // Clear expired cache entry
@@ -50,7 +51,7 @@ class FirestoreService {
     return await _performOperationWithRetry(
       operation: () => _fetchUserFromFirestore(uid),
       operationName: 'getUserWithCache',
-      maxRetries: MAX_RETRY_ATTEMPTS,
+      maxRetries: maxRetryAttempts,
     );
   }
 
@@ -63,15 +64,15 @@ class FirestoreService {
           .collection('users')
           .doc(uid)
           .get()
-          .timeout(OPERATION_TIMEOUT);
+          .timeout(operationTimeout);
 
       stopwatch.stop();
-      print('📊 Firestore user fetch took: ${stopwatch.elapsedMilliseconds}ms');
+      Log.d('Firestore user fetch took: ${stopwatch.elapsedMilliseconds}ms');
 
       if (doc.exists) {
         final data = doc.data();
         if (data == null) {
-          print('⚠️ Document data is null for uid: $uid');
+          Log.d('Document data is null for uid: $uid');
           return null;
         }
 
@@ -82,19 +83,19 @@ class FirestoreService {
           _updateUserCache(uid, user);
           return user;
         } else {
-          print('⚠️ Invalid user data returned from Firestore for uid: $uid');
+          Log.d('Invalid user data returned from Firestore for uid: $uid');
         }
       }
 
       return null;
     } catch (e) {
       stopwatch.stop();
-      print('❌ Error getting user (${stopwatch.elapsedMilliseconds}ms): $e');
+      Log.d('Error getting user (${stopwatch.elapsedMilliseconds}ms): $e');
 
       // Check if we're offline
       if (_isNetworkError(e)) {
         _isOffline = true;
-        print('📶 Network error detected, entering offline mode');
+        Log.d('Network error detected, entering offline mode');
       }
 
       // Return cached data if available (graceful degradation)
@@ -105,7 +106,7 @@ class FirestoreService {
   /// Update user cache with validation
   void _updateUserCache(String uid, AppUser user) {
     if (uid.isEmpty || !user.isValid()) {
-      print('⚠️ Attempted to cache invalid user data');
+      Log.d('Attempted to cache invalid user data');
       return;
     }
 
@@ -133,11 +134,11 @@ class FirestoreService {
   Future<T> _performOperationWithRetry<T>({
     required Future<T> Function() operation,
     required String operationName,
-    int maxRetries = MAX_RETRY_ATTEMPTS,
+    int maxRetries = maxRetryAttempts,
   }) async {
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        final result = await operation().timeout(OPERATION_TIMEOUT);
+        final result = await operation().timeout(operationTimeout);
 
         // Reset offline status on successful operation
         if (_isOffline) {
@@ -147,7 +148,7 @@ class FirestoreService {
 
         return result;
       } catch (e) {
-        print('❌ $operationName failed (attempt $attempt/$maxRetries): $e');
+        Log.d('$operationName failed (attempt $attempt/$maxRetries): $e');
 
         if (_isNetworkError(e)) {
           _isOffline = true;
@@ -182,15 +183,15 @@ class FirestoreService {
 
       final duration = stopwatch.elapsedMilliseconds;
       if (Duration(milliseconds: duration) > threshold) {
-        print('⚠️ $operation took ${duration}ms (above threshold)');
+        Log.d('$operation took ${duration}ms (above threshold)');
       } else {
-        print('📊 $operation completed in ${duration}ms');
+        Log.d('$operation completed in ${duration}ms');
       }
 
       return result;
     } catch (e) {
       stopwatch.stop();
-      print('❌ $operation failed after ${stopwatch.elapsedMilliseconds}ms: $e');
+      Log.d('$operation failed after ${stopwatch.elapsedMilliseconds}ms: $e');
       rethrow;
     }
   }
@@ -347,7 +348,7 @@ class FirestoreService {
   /// Get all conversation summaries with enhanced error handling
   Future<List<Map<String, dynamic>>> getConversations(String userId) async {
     if (userId.isEmpty) {
-      print('❌ Error: userId is empty in getConversations');
+      Log.d('Error: userId is empty in getConversations');
       return [];
     }
 
@@ -426,7 +427,7 @@ class FirestoreService {
           }
 
           // Limit client-side results
-          if (results.length >= SEARCH_RESULTS_LIMIT) break;
+          if (results.length >= searchResultsLimit) break;
         }
 
         return results;
@@ -499,7 +500,7 @@ class FirestoreService {
     bool hasMore = true;
     while (hasMore) {
       final batch = _db.batch();
-      final snapshot = await messagesRef.limit(MAX_BATCH_SIZE).get();
+      final snapshot = await messagesRef.limit(maxBatchSize).get();
 
       if (snapshot.docs.isEmpty) {
         hasMore = false;
@@ -510,7 +511,7 @@ class FirestoreService {
         await batch.commit();
 
         // Check if there are more documents
-        hasMore = snapshot.docs.length == MAX_BATCH_SIZE;
+        hasMore = snapshot.docs.length == maxBatchSize;
       }
     }
 
@@ -531,7 +532,7 @@ class FirestoreService {
 
     final subscriptionValidationError = user.validateSubscription();
     if (subscriptionValidationError != null) {
-      print('⚠️ Subscription validation warning: $subscriptionValidationError');
+      Log.d('Subscription validation warning: $subscriptionValidationError');
     }
 
     await saveUserWithRetry(user);
@@ -587,7 +588,7 @@ class FirestoreService {
 
         // Clear cache to force refresh
         clearUserCache(userId);
-        print('✅ Subscription updated for user: $userId');
+        Log.d('Subscription updated for user: $userId');
       },
       operationName: 'updateUserSubscription',
     );
@@ -610,7 +611,7 @@ class FirestoreService {
 
         // Clear cache to force refresh
         clearUserCache(userId);
-        print('✅ Subscription cancelled for user: $userId');
+        Log.d('Subscription cancelled for user: $userId');
       },
       operationName: 'cancelUserSubscription',
     );
@@ -670,7 +671,7 @@ class FirestoreService {
         'lastUsageUpdate': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Usage updated for user: $userId - $usageType: $count');
+      Log.d('Usage updated for user: $userId - $usageType: $count');
     });
   }
 
@@ -689,7 +690,7 @@ class FirestoreService {
 
         // Clear cache to force refresh
         clearUserCache(userId);
-        print('✅ Daily usage reset for user: $userId');
+        Log.d('Daily usage reset for user: $userId');
       },
       operationName: 'resetUserDailyUsage',
     );
@@ -713,7 +714,7 @@ class FirestoreService {
 
         // Clear cache to force refresh
         clearUserCache(userId);
-        print('✅ Incremented daily usage for user: $userId - $usageType');
+        Log.d('Incremented daily usage for user: $userId - $usageType');
       },
       operationName: 'incrementUserDailyUsage',
     );
@@ -776,7 +777,7 @@ class FirestoreService {
           }
 
           await batch.commit();
-          print('✅ Updated ${query.docs.length} expired subscriptions');
+          Log.d('Updated ${query.docs.length} expired subscriptions');
         }
       },
       operationName: 'checkAndUpdateExpiredSubscriptions',
@@ -828,7 +829,7 @@ class FirestoreService {
   /// Save user with enhanced retry logic and validation
   Future<void> saveUserWithRetry(
     AppUser user, {
-    int maxRetries = MAX_RETRY_ATTEMPTS,
+    int maxRetries = maxRetryAttempts,
   }) async {
     if (!user.isValid()) {
       throw FirestoreServiceException('Cannot save invalid user data');
@@ -843,7 +844,7 @@ class FirestoreService {
 
         // Update cache
         _updateUserCache(user.uid, user);
-        print('✅ User saved to Firestore: ${user.uid}');
+        Log.d('User saved to Firestore: ${user.uid}');
       },
       operationName: 'saveUserWithRetry',
       maxRetries: maxRetries,
@@ -866,7 +867,7 @@ class FirestoreService {
 
       return true;
     } catch (e) {
-      print('⚠️ Firestore connection check failed: $e');
+      Log.d('Firestore connection check failed: $e');
       _isOffline = true;
       return false;
     }
@@ -887,14 +888,14 @@ class FirestoreService {
       _offlineQueue.removeAt(0);
     }
 
-    print('📦 Queued offline operation: $operation');
+    Log.d('Queued offline operation: $operation');
   }
 
   /// Process offline queue when connection is restored
   Future<void> _processOfflineQueue() async {
     if (_offlineQueue.isEmpty) return;
 
-    print('🔄 Processing ${_offlineQueue.length} offline operations...');
+    Log.d('Processing ${_offlineQueue.length} offline operations...');
 
     final operationsToProcess = List.from(_offlineQueue);
     _offlineQueue.clear();
@@ -903,7 +904,7 @@ class FirestoreService {
       try {
         await _executeOfflineOperation(operation);
       } catch (e) {
-        print('❌ Failed to process offline operation: $e');
+        Log.d('Failed to process offline operation: $e');
         // Re-queue failed operations (but limit retries)
         if (operation['retryCount'] == null || operation['retryCount'] < 3) {
           operation['retryCount'] = (operation['retryCount'] ?? 0) + 1;
@@ -912,7 +913,7 @@ class FirestoreService {
       }
     }
 
-    print('✅ Offline queue processing completed');
+    Log.d('Offline queue processing completed');
   }
 
   /// Execute individual offline operation
@@ -929,7 +930,7 @@ class FirestoreService {
         );
         break;
       default:
-        print('⚠️ Unknown offline operation: $operationType');
+        Log.d('Unknown offline operation: $operationType');
     }
   }
 
@@ -984,13 +985,13 @@ class FirestoreService {
     _cacheTimestamps.clear();
     _offlineQueue.clear();
     _isOffline = false;
-    print('🧹 All caches cleared');
+    Log.d('All caches cleared');
   }
 
   /// Dispose resources and cleanup
   void dispose() {
     clearAllCaches();
-    print('🧹 FirestoreService disposed');
+    Log.d('FirestoreService disposed');
   }
 }
 

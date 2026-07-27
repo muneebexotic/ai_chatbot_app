@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import '../components/welcome/welcome_header.dart';
 import '../components/welcome/welcome_actions.dart';
@@ -5,15 +6,16 @@ import '../components/welcome/welcome_social_login.dart';
 import '../controllers/welcome_controller.dart';
 import '../mixins/welcome_animations_mixin.dart';
 import '../constants/welcome_screen_constants.dart';
+import '../app/providers.dart';
 
-class WelcomeScreen extends StatefulWidget {
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen>
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     with SingleTickerProviderStateMixin, WelcomeAnimationsMixin {
   late WelcomeController _controller;
   bool _isGoogleSignInLoading = false;
@@ -21,7 +23,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   void initState() {
     super.initState();
-    _controller = WelcomeController(context);
+    _controller = WelcomeController(ref.read(authNotifierProvider));
     initializeWelcomeAnimations();
     startWelcomeAnimations();
   }
@@ -52,9 +54,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colorScheme.background,
               colorScheme.surface,
-              colorScheme.background,
+              colorScheme.surface,
+              colorScheme.surface,
             ],
             stops: const [0.0, 0.5, 1.0],
           ),
@@ -84,14 +86,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     WelcomeActions(
                       fadeAnimation: fadeAnimation,
                       buttonsSlideAnimation: buttonsSlideAnimation,
-                      onLoginPressed: _controller.navigateToLogin,
-                      onSignUpPressed: _controller.navigateToSignUp,
+                      onLoginPressed: () => _controller.navigateToLogin(context),
+                      onSignUpPressed: () => _controller.navigateToSignUp(context),
                     ),
 
                     WelcomeSocialLogin(
                       fadeAnimation: fadeAnimation,
                       buttonsSlideAnimation: buttonsSlideAnimation,
                       onGoogleSignIn: () => _controller.handleGoogleSignIn(
+                        context,
                         onLoadingChanged: _onLoadingChanged,
                       ),
                       isLoading: _isGoogleSignInLoading,  

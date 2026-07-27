@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class ThemeProvider with ChangeNotifier {
   bool _isDark = true;
@@ -33,7 +34,7 @@ class ThemeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // If SharedPreferences fails, keep default value
-      debugPrint('Failed to load theme preference: $e');
+      Log.d('Failed to load theme preference: $e');
     }
   }
 
@@ -42,7 +43,7 @@ class ThemeProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_themeKey, _isDark);
     } catch (e) {
-      debugPrint('Failed to save theme preference: $e');
+      Log.d('Failed to save theme preference: $e');
     }
   }
 }

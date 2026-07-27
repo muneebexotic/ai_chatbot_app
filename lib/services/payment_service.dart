@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class PaymentService {
   static final PaymentService _instance = PaymentService._internal();
@@ -31,12 +32,12 @@ class PaymentService {
   };
 
   // Free tier limits
-  static const int FREE_DAILY_MESSAGES =
+  static const int freeDailyMessages =
       SubscriptionConstants.freeMessagesPerDay;
-  static const int FREE_DAILY_IMAGES = SubscriptionConstants.freeImagesPerDay;
-  static const int FREE_DAILY_VOICE =
+  static const int freeDailyImages = SubscriptionConstants.freeImagesPerDay;
+  static const int freeDailyVoice =
       SubscriptionConstants.freeVoiceMinutesPerDay;
-  static const int FREE_PERSONAS_COUNT =
+  static const int freePersonasCount =
       SubscriptionConstants.maxConversationsForFreeUser;
 
   // State management
@@ -56,7 +57,7 @@ class PaymentService {
 
   // Cache management
   DateTime? _lastCacheUpdate;
-  static const Duration CACHE_DURATION = Duration(minutes: 5);
+  static const Duration cacheDuration = Duration(minutes: 5);
 
   // Offline queue for usage updates
   final List<Map<String, dynamic>> _pendingUsageUpdates = [];
@@ -77,13 +78,13 @@ class PaymentService {
 
   int get remainingMessages => _isPremium
       ? -1
-      : (FREE_DAILY_MESSAGES - dailyMessageCount).clamp(0, FREE_DAILY_MESSAGES);
+      : (freeDailyMessages - dailyMessageCount).clamp(0, freeDailyMessages);
   int get remainingImages => _isPremium
       ? -1
-      : (FREE_DAILY_IMAGES - dailyImageCount).clamp(0, FREE_DAILY_IMAGES);
+      : (freeDailyImages - dailyImageCount).clamp(0, freeDailyImages);
   int get remainingVoice => _isPremium
       ? -1
-      : (FREE_DAILY_VOICE - dailyVoiceCount).clamp(0, FREE_DAILY_VOICE);
+      : (freeDailyVoice - dailyVoiceCount).clamp(0, freeDailyVoice);
 
   // Callback functions
   Function(bool success, String message)? onPurchaseResult;
@@ -134,7 +135,7 @@ class PaymentService {
     if (_isInitialized) return;
 
     try {
-      print('🔄 Initializing PaymentService...');
+      Log.d('Initializing PaymentService...');
 
       // Check in-app purchase availability
       final bool available = await _inAppPurchase.isAvailable();
@@ -157,9 +158,9 @@ class PaymentService {
       _startPeriodicSync();
 
       _isInitialized = true;
-      print('✅ PaymentService initialized successfully');
+      Log.d('PaymentService initialized successfully');
     } catch (e) {
-      print('❌ PaymentService initialization failed: $e');
+      Log.d('PaymentService initialization failed: $e');
       rethrow;
     }
   }
@@ -171,10 +172,10 @@ class PaymentService {
     _purchaseSubscription = _inAppPurchase.purchaseStream.listen(
       _handlePurchaseUpdates,
       onError: (error) {
-        print('❌ Purchase stream error: $error');
+        Log.d('Purchase stream error: $error');
         _purchasePending = false;
       },
-      onDone: () => print('🔄 Purchase stream closed'),
+      onDone: () => Log.d('Purchase stream closed'),
     );
   }
 
@@ -186,10 +187,10 @@ class PaymentService {
       User? user,
     ) async {
       if (user?.uid != _currentUserId) {
-        print('👤 User changed: ${user?.uid}');
+        Log.d('User changed: ${user?.uid}');
         await _handleUserChange(user);
       }
-    }, onError: (error) => print('❌ Auth state listener error: $error'));
+    }, onError: (error) => Log.d('Auth state listener error: $error'));
   }
 
   /// Handle user authentication changes
@@ -201,17 +202,17 @@ class PaymentService {
         await initializeForUser(user.uid);
       }
     } catch (e) {
-      print('❌ Error handling user change: $e');
+      Log.d('Error handling user change: $e');
     }
   }
 
   /// Initialize for a specific user
   Future<void> initializeForUser(String userId) async {
     try {
-      print('🔄 Initializing for user: $userId');
+      Log.d('Initializing for user: $userId');
 
       if (_currentUserId == userId && _isCacheValid()) {
-        print('✅ Using cached data for user: $userId');
+        Log.d('Using cached data for user: $userId');
         return;
       }
 
@@ -225,9 +226,9 @@ class PaymentService {
         await _syncWithGooglePlay();
       }
 
-      print('✅ User initialization completed for: $userId');
+      Log.d('User initialization completed for: $userId');
     } catch (e) {
-      print('❌ Error initializing for user: $e');
+      Log.d('Error initializing for user: $e');
       throw PaymentServiceException('Failed to initialize user data: $e');
     }
   }
@@ -235,7 +236,7 @@ class PaymentService {
   /// Clear all user data
   Future<void> clearUserData() async {
     try {
-      print('🧹 Clearing user data...');
+      Log.d('Clearing user data...');
 
       _currentUserId = null;
       _isPremium = false;
@@ -246,16 +247,16 @@ class PaymentService {
       _lastCacheUpdate = null;
       _pendingUsageUpdates.clear();
 
-      print('✅ User data cleared');
+      Log.d('User data cleared');
     } catch (e) {
-      print('❌ Error clearing user data: $e');
+      Log.d('Error clearing user data: $e');
     }
   }
 
   /// Load products from store
   Future<void> _loadProducts() async {
     try {
-      print('🛍️ Loading products...');
+      Log.d('Loading products...');
 
       final ProductDetailsResponse response = await _inAppPurchase
           .queryProductDetails(productIds);
@@ -269,15 +270,15 @@ class PaymentService {
       _products = response.productDetails;
 
       if (_products.isEmpty) {
-        print('⚠️ No products found. Check store configuration.');
+        Log.d('No products found. Check store configuration.');
       } else {
-        print('✅ Loaded ${_products.length} products');
+        Log.d('Loaded ${_products.length} products');
         for (var product in _products) {
-          print('  - ${product.id}: ${product.title} (${product.price})');
+          Log.d('  - ${product.id}: ${product.title} (${product.price})');
         }
       }
     } catch (e) {
-      print('❌ Error loading products: $e');
+      Log.d('Error loading products: $e');
       throw PaymentServiceException('Failed to load products: $e');
     }
   }
@@ -309,7 +310,7 @@ class PaymentService {
 
         // Check if subscription has expired
         if (_subscriptionExpiryDate!.isBefore(DateTime.now())) {
-          print('⚠️ Subscription expired, updating status');
+          Log.d('Subscription expired, updating status');
           await _handleExpiredSubscription();
         }
       }
@@ -325,9 +326,9 @@ class PaymentService {
       }
 
       _lastCacheUpdate = DateTime.now();
-      print('✅ User data loaded from Firestore');
+      Log.d('User data loaded from Firestore');
     } catch (e) {
-      print('❌ Error loading user data: $e');
+      Log.d('Error loading user data: $e');
       _resetUserDataToDefaults();
     }
   }
@@ -344,7 +345,7 @@ class PaymentService {
         onSubscriptionStatusChanged?.call(false);
       }
     } catch (e) {
-      print('❌ Error handling expired subscription: $e');
+      Log.d('Error handling expired subscription: $e');
     }
   }
 
@@ -360,7 +361,7 @@ class PaymentService {
   /// Check if cache is valid
   bool _isCacheValid() {
     if (_lastCacheUpdate == null) return false;
-    return DateTime.now().difference(_lastCacheUpdate!) < CACHE_DURATION;
+    return DateTime.now().difference(_lastCacheUpdate!) < cacheDuration;
   }
 
   /// Check if we should sync with Google Play
@@ -378,7 +379,7 @@ class PaymentService {
   /// Sync subscription status with Google Play
   Future<void> _syncWithGooglePlay() async {
     try {
-      print('🔄 Syncing with Google Play...');
+      Log.d('Syncing with Google Play...');
 
       // Only restore if user has existing subscription record
       if (_isPremium && _currentSubscriptionType != null) {
@@ -390,9 +391,9 @@ class PaymentService {
         await _loadUserDataFromFirestore();
       }
 
-      print('✅ Google Play sync completed');
+      Log.d('Google Play sync completed');
     } catch (e) {
-      print('❌ Error syncing with Google Play: $e');
+      Log.d('Error syncing with Google Play: $e');
     }
   }
 
@@ -435,10 +436,10 @@ class PaymentService {
         throw PaymentServiceException('Failed to initiate purchase');
       }
 
-      print('🛒 Purchase initiated for: $productId');
+      Log.d('Purchase initiated for: $productId');
     } catch (e) {
       _purchasePending = false;
-      print('❌ Purchase error: $e');
+      Log.d('Purchase error: $e');
       onPurchaseResult?.call(false, _getErrorMessage(e));
     }
   }
@@ -476,7 +477,7 @@ class PaymentService {
           break;
       }
     } catch (e) {
-      print('❌ Error processing purchase: $e');
+      Log.d('Error processing purchase: $e');
       onPurchaseResult?.call(false, 'Purchase processing failed: $e');
     } finally {
       // Always complete the purchase
@@ -520,9 +521,9 @@ class PaymentService {
       onPurchaseResult?.call(true, message);
       onSubscriptionStatusChanged?.call(true);
 
-      print('✅ Purchase processed successfully');
+      Log.d('Purchase processed successfully');
     } catch (e) {
-      print('❌ Error handling successful purchase: $e');
+      Log.d('Error handling successful purchase: $e');
       onPurchaseResult?.call(false, 'Failed to process purchase: $e');
     }
   }
@@ -532,19 +533,19 @@ class PaymentService {
     try {
       // Validate product ID
       if (!productIds.contains(purchaseDetails.productID)) {
-        print('❌ Invalid product ID: ${purchaseDetails.productID}');
+        Log.d('Invalid product ID: ${purchaseDetails.productID}');
         return false;
       }
 
       // Validate purchase token
       if (purchaseDetails.verificationData.localVerificationData.isEmpty) {
-        print('❌ Missing verification data');
+        Log.d('Missing verification data');
         return false;
       }
 
       // Validate purchase ID
       if (purchaseDetails.purchaseID?.isEmpty ?? true) {
-        print('❌ Missing purchase ID');
+        Log.d('Missing purchase ID');
         return false;
       }
 
@@ -555,7 +556,7 @@ class PaymentService {
 
       return true;
     } catch (e) {
-      print('❌ Purchase validation error: $e');
+      Log.d('Purchase validation error: $e');
       return false;
     }
   }
@@ -572,7 +573,7 @@ class PaymentService {
           .get();
 
       if (!userDoc.exists) {
-        print('❌ No user record found for restore');
+        Log.d('No user record found for restore');
         return false;
       }
 
@@ -581,13 +582,13 @@ class PaymentService {
           userData['isPremium'] == true || userData['subscriptionType'] != null;
 
       if (!hadPreviousSubscription) {
-        print('❌ User never had a subscription');
+        Log.d('User never had a subscription');
         return false;
       }
 
       return true;
     } catch (e) {
-      print('❌ Restored purchase validation error: $e');
+      Log.d('Restored purchase validation error: $e');
       return false;
     }
   }
@@ -640,9 +641,9 @@ class PaymentService {
         });
       });
 
-      print('✅ Subscription saved to Firestore');
+      Log.d('Subscription saved to Firestore');
     } catch (e) {
-      print('❌ Error saving subscription: $e');
+      Log.d('Error saving subscription: $e');
       throw PaymentServiceException('Failed to save subscription: $e');
     }
   }
@@ -653,20 +654,20 @@ class PaymentService {
         ? _getReadableErrorMessage(purchaseDetails.error!)
         : 'Purchase failed with unknown error';
 
-    print('❌ Purchase failed: $errorMessage');
+    Log.d('Purchase failed: $errorMessage');
     onPurchaseResult?.call(false, errorMessage);
   }
 
   /// Handle purchase cancellation
   void _handlePurchaseCancelled() {
-    print('⚠️ Purchase cancelled by user');
+    Log.d('Purchase cancelled by user');
     onPurchaseResult?.call(false, 'Purchase cancelled');
   }
 
   /// Handle pending purchase
   void _handlePurchasePending() {
     _purchasePending = true;
-    print('⏳ Purchase pending approval');
+    Log.d('Purchase pending approval');
     onPurchaseResult?.call(
       false,
       'Purchase pending. Please wait for approval.',
@@ -706,7 +707,7 @@ class PaymentService {
     );
 
     if (today.isAfter(lastReset)) {
-      print('🔄 Resetting daily usage');
+      Log.d('Resetting daily usage');
       _dailyUsage = {'messages': 0, 'images': 0, 'voice': 0};
       _lastUsageReset = now;
 
@@ -716,9 +717,9 @@ class PaymentService {
 
   /// Usage validation methods
   bool canSendMessage() =>
-      _isPremium || dailyMessageCount < FREE_DAILY_MESSAGES;
-  bool canUploadImage() => _isPremium || dailyImageCount < FREE_DAILY_IMAGES;
-  bool canSendVoice() => _isPremium || dailyVoiceCount < FREE_DAILY_VOICE;
+      _isPremium || dailyMessageCount < freeDailyMessages;
+  bool canUploadImage() => _isPremium || dailyImageCount < freeDailyImages;
+  bool canSendVoice() => _isPremium || dailyVoiceCount < freeDailyVoice;
   bool canAccessAllPersonas() => _isPremium;
 
   /// Usage increment methods
@@ -757,9 +758,9 @@ class PaymentService {
             'lastUsageReset': Timestamp.fromDate(_lastUsageReset),
           });
 
-      print('✅ Usage saved to Firestore');
+      Log.d('Usage saved to Firestore');
     } catch (e) {
-      print('❌ Error saving usage: $e');
+      Log.d('Error saving usage: $e');
       _queueUsageUpdate();
     }
   }
@@ -784,9 +785,9 @@ class PaymentService {
       await _saveUsageToFirestore();
       _pendingUsageUpdates.clear();
 
-      print('✅ Processed ${_pendingUsageUpdates.length} pending updates');
+      Log.d('Processed ${_pendingUsageUpdates.length} pending updates');
     } catch (e) {
-      print('❌ Error processing pending updates: $e');
+      Log.d('Error processing pending updates: $e');
     }
   }
 
@@ -814,7 +815,7 @@ class PaymentService {
         await _syncWithGooglePlay();
       }
     } catch (e) {
-      print('❌ Periodic sync error: $e');
+      Log.d('Periodic sync error: $e');
     }
   }
 
@@ -829,9 +830,9 @@ class PaymentService {
       await Future.delayed(const Duration(seconds: 2));
       await _loadUserDataFromFirestore();
 
-      print('✅ Purchases restored');
+      Log.d('Purchases restored');
     } catch (e) {
-      print('❌ Error restoring purchases: $e');
+      Log.d('Error restoring purchases: $e');
       throw PaymentServiceException('Failed to restore purchases: $e');
     }
   }
@@ -858,9 +859,9 @@ class PaymentService {
   String getUsageText() {
     if (_isPremium) return 'Unlimited usage';
 
-    return 'Messages: ${dailyMessageCount}/$FREE_DAILY_MESSAGES, '
-        'Images: ${dailyImageCount}/$FREE_DAILY_IMAGES, '
-        'Voice: ${dailyVoiceCount}/$FREE_DAILY_VOICE';
+    return 'Messages: $dailyMessageCount/$freeDailyMessages, '
+        'Images: $dailyImageCount/$freeDailyImages, '
+        'Voice: $dailyVoiceCount/$freeDailyVoice';
   }
 
   /// Get error message
@@ -873,7 +874,7 @@ class PaymentService {
 
   /// Dispose resources
   void dispose() {
-    print('🧹 Disposing PaymentService...');
+    Log.d('Disposing PaymentService...');
 
     _purchaseSubscription?.cancel();
     _authSubscription?.cancel();
@@ -883,7 +884,7 @@ class PaymentService {
     _authSubscription = null;
     _syncTimer = null;
 
-    print('✅ PaymentService disposed');
+    Log.d('PaymentService disposed');
   }
 }
 

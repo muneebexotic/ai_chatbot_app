@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/validation_utils.dart'; // Changed from validation_service
 import '../constants/signup_constants.dart';
+import 'package:ai_chatbot_app/core/logging/log.dart';
 
 /// Controller for SignUp screen following clean architecture principles
 /// 
@@ -20,6 +20,9 @@ import '../constants/signup_constants.dart';
 /// - Memory leak prevention
 /// - Testable business logic
 class SignUpController extends ChangeNotifier {
+  /// Injected rather than looked up from a context (F3).
+  final AuthProvider _auth;
+
   
   // Form controllers
   late final TextEditingController _fullNameController;
@@ -40,7 +43,7 @@ class SignUpController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get obscurePassword => _obscurePassword;
 
-  SignUpController() {
+  SignUpController({required AuthProvider auth}) : _auth = auth {
     _initializeControllers();
     _logControllerCreation();
   }
@@ -56,7 +59,7 @@ class SignUpController extends ChangeNotifier {
   /// Log controller creation for debugging
   void _logControllerCreation() {
     if (kDebugMode) {
-      print('📝 SignUpController created at ${DateTime.now()}');
+      Log.d('SignUpController created at ${DateTime.now()}');
     }
   }
 
@@ -69,7 +72,7 @@ class SignUpController extends ChangeNotifier {
     super.dispose();
     
     if (kDebugMode) {
-      print('🗑️ SignUpController disposed at ${DateTime.now()}');
+      Log.d('SignUpController disposed at ${DateTime.now()}');
     }
   }
 
@@ -157,7 +160,7 @@ class SignUpController extends ChangeNotifier {
         throw Exception('Context not available');
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = _auth;
       
       final fullName = _fullNameController.text.trim();
       final email = _emailController.text.trim();
@@ -200,7 +203,7 @@ class SignUpController extends ChangeNotifier {
         throw Exception('Context not available');
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = _auth;
       
       _logGoogleSignUpAttempt();
 
@@ -263,7 +266,7 @@ class SignUpController extends ChangeNotifier {
     
     // Could trigger a refresh of auth state if needed
     if (kDebugMode) {
-      print('🔄 Refreshing auth state at ${DateTime.now()}');
+      Log.d('Refreshing auth state at ${DateTime.now()}');
     }
   }
 
@@ -293,37 +296,37 @@ class SignUpController extends ChangeNotifier {
   // Logging methods for debugging and monitoring
   void _logSignUpAttempt(String email) {
     if (kDebugMode) {
-      print('📝 Attempting email sign up for: ${_obfuscateEmail(email)}');
+      Log.d('Attempting email sign up for: ${_obfuscateEmail(email)}');
     }
   }
 
   void _logSignUpSuccess(String email) {
     if (kDebugMode) {
-      print('✅ Email sign up successful for: ${_obfuscateEmail(email)}');
+      Log.d('Email sign up successful for: ${_obfuscateEmail(email)}');
     }
   }
 
   void _logSignUpError(dynamic error) {
     if (kDebugMode) {
-      print('❌ Email sign up failed: $error');
+      Log.d('Email sign up failed: $error');
     }
   }
 
   void _logGoogleSignUpAttempt() {
     if (kDebugMode) {
-      print('📝 Attempting Google sign up');
+      Log.d('Attempting Google sign up');
     }
   }
 
   void _logGoogleSignUpSuccess() {
     if (kDebugMode) {
-      print('✅ Google sign up successful');
+      Log.d('Google sign up successful');
     }
   }
 
   void _logGoogleSignUpError(dynamic error) {
     if (kDebugMode) {
-      print('❌ Google sign up failed: $error');
+      Log.d('Google sign up failed: $error');
     }
   }
 

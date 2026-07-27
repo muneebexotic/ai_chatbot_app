@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:ai_chatbot_app/widgets/user_drawer_tile.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../providers/conversation_provider.dart';
-import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
+import '../app/providers.dart';
 
-class ConversationDrawer extends StatefulWidget {
+class ConversationDrawer extends ConsumerStatefulWidget {
   final Future<String?> Function(BuildContext, String) onRenameDialog;
   final VoidCallback? onDrawerClosed;
 
@@ -18,10 +18,10 @@ class ConversationDrawer extends StatefulWidget {
   });
 
   @override
-  State<ConversationDrawer> createState() => _ConversationDrawerState();
+  ConsumerState<ConversationDrawer> createState() => _ConversationDrawerState();
 }
 
-class _ConversationDrawerState extends State<ConversationDrawer>
+class _ConversationDrawerState extends ConsumerState<ConversationDrawer>
     with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -131,10 +131,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
       return;
     }
 
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final convoProvider = ref.read(conversationsNotifierProvider);
     
     // Simulate network delay for better UX (remove in production if not needed)
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -156,10 +153,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
   }
 
   void _clearSearchImmediate() {
-    final convoProvider = Provider.of<ConversationsProvider>(
-      context,
-      listen: false,
-    );
+    final convoProvider = ref.read(conversationsNotifierProvider);
     convoProvider.clearSearch();
     setState(() {
       _isSearching = false;
@@ -178,8 +172,12 @@ class _ConversationDrawerState extends State<ConversationDrawer>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<ChatProvider, ConversationsProvider, ThemeProvider>(
-      builder: (context, chatProvider, convoProvider, themeProvider, child) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final chatProvider = ref.watch(chatNotifierProvider);
+        final convoProvider = ref.watch(conversationsNotifierProvider);
+        final themeProvider = ref.watch(themeNotifierProvider);
+
         final isDark = themeProvider.isDark;
         
         return Drawer(
@@ -206,13 +204,13 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                        AppColors.getTextPrimary(isDark).withValues(alpha: 0.05),
                         Colors.transparent,
                       ],
                     ),
                     border: Border(
                       bottom: BorderSide(
-                        color: AppColors.getTextPrimary(isDark).withOpacity(0.06),
+                        color: AppColors.getTextPrimary(isDark).withValues(alpha: 0.06),
                         width: 1,
                       ),
                     ),
@@ -258,7 +256,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -295,20 +293,20 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _isSearchFocused
-                              ? AppColors.primary.withOpacity(0.5)
-                              : AppColors.getTextPrimary(isDark).withOpacity(0.08),
+                              ? AppColors.primary.withValues(alpha: 0.5)
+                              : AppColors.getTextPrimary(isDark).withValues(alpha: 0.08),
                           width: _isSearchFocused ? 2 : 1,
                         ),
                         boxShadow: _isSearchFocused
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.1),
+                                  color: AppColors.primary.withValues(alpha: 0.1),
                                   blurRadius: 20,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 4),
                                 ),
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 8,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 2),
@@ -316,7 +314,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                               ]
                             : [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                                   blurRadius: 8,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 2),
@@ -366,7 +364,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                   padding: const EdgeInsets.all(8),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                                      color: AppColors.getTextPrimary(isDark).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: IconButton(
@@ -435,7 +433,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                             blurRadius: 16,
                             spreadRadius: 0,
                             offset: const Offset(0, 4),
@@ -462,7 +460,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: AppColors.getTextPrimary(isDark).withOpacity(0.2),
+                                    color: AppColors.getTextPrimary(isDark).withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -524,14 +522,14 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                   borderRadius: BorderRadius.circular(12),
                                   border: isSelected
                                       ? Border.all(
-                                          color: AppColors.primary.withOpacity(0.3),
+                                          color: AppColors.primary.withValues(alpha: 0.3),
                                           width: 1,
                                         )
                                       : null,
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: AppColors.primary.withOpacity(0.1),
+                                            color: AppColors.primary.withValues(alpha: 0.1),
                                             blurRadius: 12,
                                             spreadRadius: 0,
                                             offset: const Offset(0, 2),
@@ -543,7 +541,7 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                   color: Colors.transparent,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(12),
-                                    hoverColor: AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                                    hoverColor: AppColors.getTextPrimary(isDark).withValues(alpha: 0.05),
                                     onTap: () async {
                                       Navigator.pop(context);
                                       _onDrawerClosed();
@@ -569,13 +567,13 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
                                                 colors: [
-                                                  AppColors.getTextPrimary(isDark).withOpacity(0.1),
-                                                  AppColors.getTextPrimary(isDark).withOpacity(0.05),
+                                                  AppColors.getTextPrimary(isDark).withValues(alpha: 0.1),
+                                                  AppColors.getTextPrimary(isDark).withValues(alpha: 0.05),
                                                 ],
                                               ),
                                               borderRadius: BorderRadius.circular(10),
                                               border: Border.all(
-                                                color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                                                color: AppColors.getTextPrimary(isDark).withValues(alpha: 0.1),
                                                 width: 1,
                                               ),
                                             ),
@@ -729,8 +727,8 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: isDestructive
-                        ? AppColors.error.withOpacity(0.1)
-                        : AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                        ? AppColors.error.withValues(alpha: 0.1)
+                        : AppColors.getTextPrimary(isDark).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -888,13 +886,13 @@ class _ConversationDrawerState extends State<ConversationDrawer>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.getTextPrimary(isDark).withOpacity(0.05),
-                      AppColors.getTextPrimary(isDark).withOpacity(0.02),
+                      AppColors.getTextPrimary(isDark).withValues(alpha: 0.05),
+                      AppColors.getTextPrimary(isDark).withValues(alpha: 0.02),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppColors.getTextPrimary(isDark).withOpacity(0.1),
+                    color: AppColors.getTextPrimary(isDark).withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
