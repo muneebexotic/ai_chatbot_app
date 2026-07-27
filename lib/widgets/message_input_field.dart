@@ -15,7 +15,6 @@ class MessageInputField extends StatefulWidget {
   final VoidCallback onSend;
   final Function(String)? onTextChanged;
   final Function(bool)? onTypingStatusChanged;
-  final VoidCallback? onImageGeneration;
 
   const MessageInputField({
     super.key,
@@ -25,9 +24,7 @@ class MessageInputField extends StatefulWidget {
     required this.onMicTap,
     required this.onSend,
     this.onTextChanged,
-    this.onTypingStatusChanged,
-    this.onImageGeneration, 
-  });
+    this.onTypingStatusChanged,});
 
   @override
   State<MessageInputField> createState() => _MessageInputFieldState();
@@ -62,19 +59,6 @@ class _MessageInputFieldState extends State<MessageInputField>
     _initializeAnimations();
     _setupListeners();
   }
-
-  Future<void> _handleImageGeneration() async {
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  final canGenerate = await authProvider.canGenerateImage(); // You may need to add this method to AuthProvider
-  
-  if (!canGenerate) {
-    _showUsageLimitDialog('image generation');
-    return;
-  }
-
-  // Call the callback function passed from chat_screen
-  widget.onImageGeneration?.call();
-}
 
   void _initializeAnimations() {
     _micAnimationController = AnimationController(
@@ -582,12 +566,6 @@ AnimatedBuilder(
         children: [
           if (!_hasText) ...[
             _buildIconButton(
-              icon: Icons.image_outlined, // New image generation icon
-              onPressed: _handleImageGeneration,
-              tooltip: 'Generate image',
-              isDark: isDark,
-            ),
-            _buildIconButton(
               icon: Icons.attach_file_rounded,
               onPressed: _handleImageUpload,
               tooltip: 'Attach file',
@@ -601,18 +579,6 @@ AnimatedBuilder(
             ),
           ],
           if (_hasText) ...[
-            Transform.scale(
-              scale: _expandAnimation?.value ?? 0.0,
-              child: Opacity(
-                opacity: _expandAnimation?.value ?? 0.0,
-                child: _buildIconButton(
-                  icon: Icons.image_outlined, // Image generation button when typing
-                  onPressed: _handleImageGeneration,
-                  tooltip: 'Generate image',
-                  isDark: isDark,
-                ),
-              ),
-            ),
             Transform.scale(
               scale: _expandAnimation?.value ?? 0.0,
               child: Opacity(

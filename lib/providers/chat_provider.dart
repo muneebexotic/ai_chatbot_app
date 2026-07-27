@@ -1,5 +1,4 @@
 import 'package:ai_chatbot_app/providers/conversation_provider.dart';
-import 'package:ai_chatbot_app/providers/image_generation_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
@@ -44,106 +43,6 @@ class ChatProvider with ChangeNotifier {
     if (text.length <= 30) return text;
     return '${text.substring(0, 30).split('\n').first}...';
   }
-
-  /// Detect if user input is requesting image generation
-bool _isImageGenerationRequest(String input) {
-  final lowerInput = input.toLowerCase().trim();
-  
-  // Common image generation phrases
-  final imageKeywords = [
-    'generate image',
-    'create image',
-    'make image',
-    'draw image',
-    'generate picture',
-    'create picture', 
-    'make picture',
-    'draw picture',
-    'generate photo',
-    'create photo',
-    'make a photo',
-    'draw a photo',
-    'image of',
-    'picture of',
-    'photo of',
-    'generate:',
-    'create:',
-    'draw:',
-    '/imagine',
-    '/generate',
-    '/image',
-  ];
-  
-  return imageKeywords.any((keyword) => lowerInput.contains(keyword));
-}
-
-/// Extract image prompt from user input
-String _extractImagePrompt(String input) {
-  final lowerInput = input.toLowerCase().trim();
-  
-  // Remove common prefixes
-  final prefixesToRemove = [
-    'generate image of',
-    'generate image:',
-    'generate image',
-    'create image of',
-    'create image:',
-    'create image',
-    'make image of',
-    'make image:',
-    'make image',
-    'draw image of',
-    'draw image:',
-    'draw image',
-    'generate picture of',
-    'generate picture:',
-    'generate picture',
-    'create picture of',
-    'create picture:',
-    'create picture',
-    'make picture of',
-    'make picture:',
-    'make picture',
-    'draw picture of',
-    'draw picture:',
-    'draw picture',
-    'generate photo of',
-    'generate photo:',
-    'generate photo',
-    'create photo of',
-    'create photo:',
-    'create photo',
-    'make a photo of',
-    'make photo of',
-    'make photo:',
-    'make photo',
-    'draw a photo of',
-    'draw photo of',
-    'draw photo:',
-    'draw photo',
-    'image of',
-    'picture of',
-    'photo of',
-    '/imagine',
-    '/generate',
-    '/image',
-  ];
-  
-  String cleanedInput = input.trim();
-  
-  for (final prefix in prefixesToRemove) {
-    if (lowerInput.startsWith(prefix)) {
-      cleanedInput = input.substring(prefix.length).trim();
-      break;
-    }
-  }
-  
-  // Remove colons and clean up
-  cleanedInput = cleanedInput.replaceAll(':', '').trim();
-  
-  return cleanedInput.isNotEmpty ? cleanedInput : input.trim();
-}
-
   Future<void> startNewConversation() async {
     _conversationId = await _firestoreService.createConversation(userId);
     _messages.clear();
@@ -343,15 +242,6 @@ Future<void> sendMessage(String userInput) async {
     await _showUsageLimitDialog('message');
     return;
   }
-
-  // NEW: Check if this is an image generation request
-  if (_isImageGenerationRequest(userInput)) {
-    final imagePrompt = _extractImagePrompt(userInput);
-    Log.d('Detected image generation request: "$imagePrompt"');
-    await generateImageMessage(imagePrompt);
-    return; // Exit early, don't process as text message
-  }
-
   // Continue with normal text message flow
   if (_conversationId == null) {
     _conversationId = await _firestoreService.createConversationWithTitle(
@@ -412,105 +302,6 @@ Future<void> sendMessage(String userInput) async {
     _setTyping(false);
   }
 }
-
-  /// NEW: Generate and add image message to chat
-  Future<void> generateImageMessage(String prompt) async {
-    // Resolved before any await — see the note in sendMessage.
-    final imageProvider = Provider.of<ImageGenerationProvider>(
-      context,
-      listen: false,
-    );
-
-    try {
-      // Check if user can generate images
-      final canGenerate = await canGenerateImage();
-      if (!canGenerate) {
-        await _showUsageLimitDialog('image generation');
-        return;
-      }
-
-      if (_conversationId == null) {
-        _conversationId = await _firestoreService.createConversationWithTitle(
-          userId,
-          'New Chat',
-        );
-        _messages.clear();
-        _titleGenerated = false;
-      }
-
-      // Add user request message
-      final userMessage = ChatMessage.text(
-        text: 'Generate image: $prompt',
-        sender: 'user',
-      );
-      _messages.add(userMessage);
-      _setTyping(true);
-      notifyListeners();
-
-      // Increment image usage
-      await incrementImageUsage();
-
-      // Save user message
-      await _firestoreService.saveMessage(userId, _conversationId!, userMessage);
-
-      // Generate image (imageProvider resolved at method entry). This one
-      // passes the context onward, so it genuinely needs the liveness check.
-      if (!context.mounted) return;
-      final generatedImage = await imageProvider.generateImage(context, prompt);
-
-      if (generatedImage != null) {
-        // Create image message
-        final imageMessage = ChatMessage.image(
-          image: generatedImage,
-          sender: 'bot',
-        );
-
-        _messages.add(imageMessage);
-        notifyListeners();
-
-        // Save image message
-        await _firestoreService.saveMessage(userId, _conversationId!, imageMessage);
-
-        Log.d('Image generated successfully: ${generatedImage.id}');
-      } else {
-        // Add error message if image generation failed
-        final errorMessage = ChatMessage.text(
-          text: "Sorry, I couldn't generate that image. Please try again with a different prompt.",
-          sender: 'bot',
-        );
-        _messages.add(errorMessage);
-        await _firestoreService.saveMessage(userId, _conversationId!, errorMessage);
-      }
-
-      // Generate title if needed
-      if (!_titleGenerated && _messages.length >= 4) {
-        await _generateConversationTitle();
-      }
-    } catch (e) {
-      Log.d('Error generating image: $e');
-      
-      final errorMessage = ChatMessage.text(
-        text: "Sorry, there was an error generating the image. Please try again later.",
-        sender: 'bot',
-      );
-      _messages.add(errorMessage);
-      notifyListeners();
-    } finally {
-      _setTyping(false);
-    }
-  }
-
-  /// Check if user can generate images
-  Future<bool> canGenerateImage() async {
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      return await authProvider.canUploadImage(); // Reuse image limit for generation
-    } catch (e) {
-      Log.d('Error checking image generation limit: $e');
-      return true;
-    }
-  }
-
   /// Check if user can upload images
   Future<bool> canUploadImage() async {
     try {

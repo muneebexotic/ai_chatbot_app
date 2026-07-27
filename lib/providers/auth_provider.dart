@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:ai_chatbot_app/core/ui/app_messenger.dart';
 
 import '../models/app_user.dart';
 import '../services/firestore_service.dart';
-import '../services/cloudinary_service.dart';
 import '../services/payment_service.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
 
@@ -17,7 +15,6 @@ class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirestoreService _firestoreService = FirestoreService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
   final PaymentService _paymentService = PaymentService();
 
   // State variables
@@ -527,33 +524,6 @@ class AuthProvider with ChangeNotifier {
 
   // USER PROFILE METHODS
 
-  /// Upload user photo
-  Future<void> uploadUserPhoto(File imageFile) async {
-    try {
-      if (_firebaseUser == null || _currentUser == null) {
-        throw AuthException('User not authenticated');
-      }
-
-      final downloadUrl = await _cloudinaryService.uploadImage(imageFile);
-      if (downloadUrl == null) {
-        throw AuthException('Image upload failed');
-      }
-
-      _currentUser = _currentUser!.copyWith(photoUrl: downloadUrl);
-      await _firestoreService.saveUserWithRetry(_currentUser!);
-
-      AppMessenger.show('Photo updated', tone: AppMessageTone.success);
-
-      notifyListeners();
-    } catch (e) {
-      Log.d('Photo upload error: $e');
-      AppMessenger.show(
-        "Photo didn't upload. Check your connection and try again.",
-        tone: AppMessageTone.failure,
-      );
-      throw AuthException('Photo upload failed: $e');
-    }
-  }
 
   /// Set user avatar
   Future<void> setUserAvatar(String avatarUrl) async {
@@ -648,11 +618,6 @@ class AuthProvider with ChangeNotifier {
   /// Increment voice usage
   Future<void> incrementVoiceUsage() async {
     await _incrementUsage('voice');
-  }
-
-  /// Increment image generation usage
-  Future<void> incrementImageGenerationUsage() async {
-    await _incrementUsage('images');
   }
 
   /// Generic usage increment

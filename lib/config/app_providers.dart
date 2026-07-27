@@ -7,7 +7,6 @@ import '../providers/themes_provider.dart';
 import '../providers/conversation_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
-import '../providers/image_generation_provider.dart'; // NEW: Import image generation provider
 import '../controllers/forgot_password_controller.dart';
 
 List<SingleChildWidget> buildAppProviders() {
@@ -15,11 +14,6 @@ List<SingleChildWidget> buildAppProviders() {
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => AuthProvider()),
     ChangeNotifierProvider(create: (_) => ForgotPasswordController()),
-    
-    // NEW: Add ImageGenerationProvider
-    ChangeNotifierProvider(
-      create: (_) => ImageGenerationProvider(),
-    ),
     
     ChangeNotifierProvider(
       create: (_) {

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/photo_service.dart';
-import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/themes_provider.dart';
 import '../components/ui/app_text.dart';
@@ -19,7 +18,6 @@ class PhotoUploadScreen extends StatefulWidget {
 
 class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
   final PhotoService _photoService = PhotoService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
   File? _selectedImage;
   String? _avatarUrl;
   bool _isLoading = false;
@@ -556,16 +554,20 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         throw Exception('❌ User is not authenticated.');
       }
 
-      // Upload image or set avatar
-      if (_selectedImage != null) {
-        final imageUrl = await _cloudinaryService.uploadImage(_selectedImage!);
-        if (imageUrl != null) {
-          await authProvider.setUserAvatar(imageUrl);
-        } else {
-          throw Exception('❌ Cloudinary upload failed');
-        }
-      } else if (_avatarUrl != null) {
-        await authProvider.setUserAvatar(_avatarUrl!);
+      // PRD §2.2 removes Cloudinary, and there is no replacement store until
+      // Supabase Storage lands in Milestone 2. R5.3.1 also settles the
+      // question for v1: an avatar is a generated mark, not an uploaded
+      // photo. So a picked photo is used as the user's intent to have *an*
+      // avatar, and a generated one is set instead of silently doing nothing.
+      //
+      // The picker itself should go when Milestone 2 rebuilds this screen;
+      // logged in CRITIQUE.md.
+      var avatarUrl = _avatarUrl;
+      if (avatarUrl == null && _selectedImage != null) {
+        avatarUrl = await _photoService.generateRandomAvatar();
+      }
+      if (avatarUrl != null) {
+        await authProvider.setUserAvatar(avatarUrl);
       }
 
       if (mounted) {

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -140,33 +139,5 @@ class PhotoService {
       return false;
     }
   }
-
-  // Upload image to Cloudinary
-Future<String?> uploadToCloudinary(File imageFile) async {
-  try {
-    final cloudName = 'drbt1cndv';
-    final uploadPreset = 'unsigned_preset';
-
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-
-    final request = http.MultipartRequest('POST', url)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-
-    final response = await request.send();
-    final resBody = await response.stream.bytesToString();
-
-    if (response.statusCode == 200) {
-      final data = json.decode(resBody);
-      return data['secure_url']; // return hosted image URL
-    } else {
-      Log.d('Cloudinary upload failed: ${response.statusCode}');
-      return null;
-    }
-  } catch (e) {
-    Log.d('Upload error: $e');
-    return null;
-  }
-}
 
 }
