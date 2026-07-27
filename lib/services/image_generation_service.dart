@@ -18,15 +18,24 @@ extension MapExtensions on Map<String, dynamic> {
 }
 
 class ImageGenerationService {
-  // API configuration - move these to environment variables in production
+  // TRANSITIONAL — Milestone 0 only.
+  //
+  // A live Hugging Face token was hardcoded here and published; treat it as
+  // burned (see SECURITY-REMEDIATION.md). Keys are now build-time inputs so
+  // that no secret exists in source.
+  //
+  // This entire file is DELETED in Milestone 1: PRD §2.2 cuts multi-provider
+  // image generation outright (no free path, largest cost risk, not the
+  // product). Image *understanding* survives via the gateway (§5.4). Do not
+  // build on this class.
   static const String _openAIApiUrl = 'https://api.openai.com/v1/images/generations';
-  static const String _openAIApiKey = 'your_openai_api_key_here';
-  
+  static const String _openAIApiKey = String.fromEnvironment('OPENAI_API_KEY');
+
   static const String _hfApiBaseUrl = 'https://api-inference.huggingface.co/models/'; // Made base URL
-  static const String _hfApiKey = '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';
-  
+  static const String _hfApiKey = String.fromEnvironment('HUGGING_FACE_TOKEN');
+
   static const String _stabilityApiUrl = 'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image';
-  static const String _stabilityApiKey = 'your_stability_api_key_here';
+  static const String _stabilityApiKey = String.fromEnvironment('STABILITY_API_KEY');
 
   bool _isCancelled = false;
 

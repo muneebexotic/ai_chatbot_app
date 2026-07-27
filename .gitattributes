@@ -1,0 +1,31 @@
+# Normalise text files to LF in the repository.
+* text=auto eol=lf
+
+# Shell scripts and git hooks MUST be LF, always, on every platform.
+# A CRLF line ending after the shebang makes the kernel look for an
+# interpreter literally named "bash\r", which fails with a confusing
+# "bad interpreter: No such file or directory". Checking these out as CRLF on
+# Windows silently disables the secret-scanning hook — exactly the failure
+# this repository can least afford.
+*.sh            text eol=lf
+.githooks/*     text eol=lf
+
+# Windows-native scripts keep CRLF.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+
+# Binary assets: never touch, never diff as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.ttf  binary
+*.otf  binary
+*.woff binary
+*.woff2 binary
+*.jks  binary
+*.keystore binary
+*.aab  binary
+*.apk  binary
