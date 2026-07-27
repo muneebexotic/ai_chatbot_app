@@ -4,14 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import '../design/tokens/app_colors.dart';
+
 class AppBootstrap {
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // System UI style
+    // System UI style, for the frames before the stored theme is known.
+    //
+    // This runs before SharedPreferences is read, so it cannot know whether
+    // the user is in light or dark. It sets the dark default (ThemeProvider
+    // also defaults to dark); the AnnotatedRegion in main.dart takes over from
+    // the first frame and follows the real theme. Do not add light-mode values
+    // here — this is the pre-theme default, not a second source of truth.
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Color(0xFF0A0A0A),
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: AppColors.dark.bg,
         systemNavigationBarIconBrightness: Brightness.light,
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,

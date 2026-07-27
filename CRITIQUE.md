@@ -109,6 +109,168 @@ checklist.
 one at a time with screenshots, starting with the smallest. That is real work
 and should be scheduled explicitly rather than assumed.
 
+#### Status update — root wiring landed *(partial fix, device verification pending)*
+
+`main.dart` now passes `KalaamTheme.light` / `KalaamTheme.dark` instead of
+`AppTheme.lightTheme` / `AppTheme.darkTheme`. Root only: no screen was
+restyled, because §7.4 rewrites the chat surface and Milestone 2 rewrites the
+auth screens. `flutter analyze` is clean and all 57 tests pass.
+
+This changes the honest description of W1.1 from "renders nowhere" to "renders
+underneath everything". The tokens now reach anything that reads the ambient
+theme — `ColorScheme`, `TextTheme`, `AppBar`, inputs, dialogs, snackbars,
+switches, `scaffoldBackgroundColor`, and `AppColors.of(context)`. They do not
+reach the roughly 20 files that still call the old `utils/app_theme.dart`
+statics (`AppColors.getSurface(isDark)`, `AppColors.primary`) or that hardcode
+colours inline.
+
+**That mixture is the point of the exercise, not an oversight.** The app is now
+in the state most likely to expose real problems: new tokens and old indigo
+sitting on the same screen, so anything that only ever looked correct in the
+contrast table has nowhere to hide.
+
+#### Device pass — 12 screenshots, OnePlus LE2115, 1080×2400, both modes
+
+Two seams were predicted before capture. One was right, one was wrong, and
+being wrong about the second is the more useful result.
+
+**Predicted and confirmed:** the system navigation bar stayed black in every
+light-mode screenshot, because `bootstrap.dart` sets it unconditionally.
+
+**Predicted and wrong:** I expected Settings to go *too* amber, since it reads
+`Theme.of(context).primaryColor` 24 times. The screenshots showed the exact
+opposite — in dark mode there was no amber anywhere in the app. The prediction
+inverted the failure, which is a decent illustration of why the device pass was
+owed rather than optional.
+
+##### F1 — `primaryColor` silently inverts in dark mode *(FIXED)*
+
+Material 3 resolves an unset `ThemeData.primaryColor` to `colorScheme.surface`
+when the scheme is dark, and to `colorScheme.primary` only when it is light
+(`primarySurfaceColor` in the framework's `ThemeData` constructor). `KalaamTheme`
+never set it. So the theme was correct in light and inverted in dark, and 61
+call sites across 9 files read `Theme.of(context).primaryColor`.
+
+In dark mode that meant painting `#141619` on a `#0A0B0D` background:
+
+- Every primary button had no visible fill. On Welcome, the *secondary*
+  "Sign Up" button — which has a `line` border — read more clearly than the
+  primary action next to it.
+- The entire Settings icon column was invisible. Six icons and their tinted
+  containers, all `primaryColor` and `primaryColor.withValues(alpha: 0.1)`.
+- **The theme switch itself was invisible.** `Switch(activeThumbColor:
+  primaryColor, activeTrackColor: primaryColor.withValues(alpha: 0.3))`, on a
+  `#141619` card, while switched on. The app's only light/dark control could
+  not be seen in the app's default mode.
+- User chat bubbles are `LinearGradient([primaryColor, colorScheme.secondary])`
+  with `onPrimary` text — so `#141619 → #FFB627` under `#0A0B0D` text. At the
+  top-left corner of every bubble that is **1.09:1**, against a 4.5:1 floor.
+  The user's own words were unreadable for the first third of each bubble.
+
+None of this was visible to `contrast_test.dart`, because the failing colour
+was never a token. The tokens were all correct. The theme assembled from them
+was not.
+
+**Fixed:** `primaryColor: c.signal` in `kalaam_theme.dart`, plus
+`test/design/theme_test.dart` — ten assertions on the *assembled* `ThemeData`
+rather than on the tokens, including a 3:1 floor for `primaryColor` against the
+scaffold and 4.5:1 for `onPrimary` on `primaryColor`. Both would have failed
+before the fix.
+
+##### F2 — the system navigation bar ignores the theme *(FIXED, confirmed)*
+
+Black nav bar under a `#EEF0F2` app in all six light screenshots. `bootstrap.dart`
+runs before SharedPreferences is read, so it cannot know the mode. Fixed with an
+`AnnotatedRegion<SystemUiOverlayStyle>` at the root of `MyApp` that follows the
+theme; `bootstrap` keeps the dark value as the explicit pre-theme default.
+Confirmed on the second device pass: light mode now ends in a light nav bar with
+a dark pill.
+
+##### F7 — the fix for F1 made every primary button label unreadable *(FIXED, confirmed)*
+
+Caught only because the fixes were re-photographed rather than assumed, and
+confirmed the same way: a third pass shows the label at `#0A0B0D` on `#FFB627`
+on both Welcome and Login.
+
+`AppButton` hardcodes `textColor: Colors.white` over a `primaryColor` fill.
+While `primaryColor` was `#141619` that read as white-on-near-black — wrong, but
+legible. Making `primaryColor` amber turned it into **white on `#FFB627`, or
+1.75:1** — a button that is now impossible to miss and impossible to read. The
+Login screen's primary action was the clearest example.
+
+The same line exists on the destructive style, where dark mode paints white on
+`#FF8A80` at **2.28:1**. No screen in either device pass shows a destructive
+button, so that one was found by reading rather than by looking.
+
+**Fixed:** both now use `colorScheme.onPrimary` / `onError` — 11.22:1 and
+comfortably passing respectively.
+
+**The general lesson is worth more than the fix.** A hardcoded colour beside a
+themed one is a latent contrast bug that stays invisible until the theme
+changes. `grep -rn "Colors.white" lib/components lib/widgets` still returns six
+more, in `message_input_field.dart` and two dialogs. None appeared in either
+capture, so none are confirmed — but they are the same shape, and the sweep is
+owed before Milestone 2 calls this area done.
+
+##### F3 — fenced code blocks clip horizontally *(NOT FIXED)*
+
+`session 04 · 6m 12s · fillers 7/min · pace 1` is cut mid-word at the right
+edge in **both** modes, with no horizontal scroll. Inline code was additionally
+invisible in dark, which F1 fixes; the clipping is independent of F1 and
+survives it. Left standing because §7.4 rewrites the chat surface in Milestone 3
+and `app_message_bubble.dart` is deleted there (D4).
+
+##### F4 — the splash spinner is indigo, and is a spinner *(NOT FIXED)*
+
+`progressIndicatorTheme` sets `signal`, so the splash indicator is hardcoded to
+the old palette and bypasses the theme entirely. It is also a spinner, which
+§16 bans outright where the waveform can idle instead — and the `Waveform` that
+should replace it already exists, tested, from this same milestone. That is W1.1
+in a single widget.
+
+##### F5 — the drawer's primary action is a blue-to-cyan gradient *(NOT FIXED)*
+
+"New Chat" is hardcoded, identical in both modes, and is a gradient — banned by
+§7.1.2 outside the waveform — in a hue the anti-brief names explicitly. It is
+the most off-brand element in the app and it is untouched by the theme.
+
+##### F6 — copy violations visible on first launch *(NOT FIXED)*
+
+The splash reads "AI-Powered Conversations"; §7.6 bans "AI-powered" by name.
+The empty drawer reads "Start a new chat to begin your journey" where the PRD's
+own example is "No sessions yet. The first one takes 60 seconds."
+
+##### What the screenshots did *not* show
+
+No type was too small or too light at real density — 1080×2400 held the 15sp
+and 13sp sizes fine, and nothing hit the R7.2.2 hairline rule. No spacing
+collapsed. **Every failure in this pass was colour, and all but one came from a
+single unset property.** The one type-level observation is negative and already
+recorded above: Newsreader appears nowhere, because no screen uses
+`AppTypography` yet.
+
+##### Two things the fix made worse, kept anyway
+
+Now that `primaryColor` is amber, two shadows that were previously invisible are
+not. Chat bubbles carry `boxShadow: primaryColor.withValues(alpha: 0.2)` and the
+Settings profile card `alpha: 0.3`, so both now glow amber — and §7.3 allows one
+soft shadow, reserved for sheets and the floating session control, with no
+shadow on flat cards. Settings also now shows an amber hairline on every card,
+which is correct per token but pushes at R7.1.2's 10%-accent ration.
+
+Neither is a regression against the pre-milestone app; both are pre-existing
+decoration that was hidden by the F1 bug and is now doing what it always said it
+would. Both live in files Milestones 2 and 3 delete. Recorded rather than fixed
+so the next person does not read the glow as intentional.
+
+**Fixed before moving on: F1, F2, and F7.** F1 was a defect introduced by the
+root wiring itself, which makes it a regression rather than inherited debt — the
+screens were legible before this milestone touched them. F7 was introduced by
+the fix for F1, which is the honest reason this entry lists three fixes instead
+of one: the first repair was verified by eye, and the verification is what found
+the second defect. F3–F6 are all in code scheduled for deletion in Milestones 2
+and 3, and fixing them would be styling work thrown away twice.
+
 ### W1.2 — Riverpod is structurally complete but delivers little of its value *(NOT FIXED — deliberate, D5)*
 
 `package:provider` is gone and the graph is Riverpod, but the six state classes

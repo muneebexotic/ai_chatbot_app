@@ -288,7 +288,11 @@ class AppButton extends StatelessWidget {
       case AppButtonStyle.primary:
         return _ButtonStyleData(
           backgroundColor: primaryColor,
-          textColor: Colors.white,
+          // NOT Colors.white. The fill follows the theme, so the label has to
+          // as well: white on dark-mode `signal` (#FFB627) is 1.75:1, against
+          // a 4.5:1 floor. Caught on a device — the button was legible in
+          // light and its label was not in dark.
+          textColor: colorScheme.onPrimary,
           disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
           disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
@@ -327,7 +331,11 @@ class AppButton extends StatelessWidget {
       case AppButtonStyle.destructive:
         return _ButtonStyleData(
           backgroundColor: colorScheme.error,
-          textColor: Colors.white,
+          // Same bug as `primary` above: the dark-mode error colour is a light
+          // red (#FF8A80) and white on it is 2.28:1. Not captured in the device
+          // pass — no screen in it shows a destructive button — but it is the
+          // identical defect and was fixed at the same time.
+          textColor: colorScheme.onError,
           disabledBackgroundColor: colorScheme.onSurface.withValues(alpha: 0.12),
           disabledTextColor: colorScheme.onSurface.withValues(alpha: 0.38),
           elevation: 0,
