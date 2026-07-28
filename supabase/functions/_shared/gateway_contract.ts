@@ -22,6 +22,20 @@ export interface GatewayRequest {
   threadId: string | null;
   partnerId: string;
   text: string;
+
+  /// Set when this turn is spoken rather than typed (Milestone 4, §4.2).
+  ///
+  /// It does NOT let the client choose which budget to spend — that would be
+  /// F2 again, in a new coat. The server looks the session up, requires it to
+  /// belong to the caller and to be open, and only then treats the turn as
+  /// voice. A forged or foreign id is a 400, and a *missing* one simply makes
+  /// the turn typed, which is the more expensive of the two for the caller.
+  ///
+  /// Why the distinction has to exist at all: §8 gives a free user 30 typed
+  /// messages AND 10 spoken minutes. Charging a spoken turn to the message
+  /// counter would end a ten-minute session at message 30 and would spend the
+  /// user's typed allowance on a feature that has its own.
+  sessionId: string | null;
 }
 
 /// Error codes, chosen to map one-to-one onto `AppFailure` in the client.
@@ -78,18 +92,24 @@ export function validateRequest(body: unknown): ValidationResult {
   // `{"tier": "pro"}` looks to the sender exactly like an accepted-and-honoured
   // one, and §14 requires proving a forged premium claim is rejected — not
   // merely that it has no effect.
-  const allowed = new Set(['threadId', 'partnerId', 'text']);
+  const allowed = new Set(['threadId', 'partnerId', 'text', 'sessionId']);
   for (const key of Object.keys(record)) {
     if (!allowed.has(key)) {
       return { ok: false, error: { code: 'invalid_request', field: key } };
     }
   }
 
-  const { threadId, partnerId, text } = record;
+  const { threadId, partnerId, text, sessionId } = record;
 
   if (threadId !== null && threadId !== undefined) {
     if (typeof threadId !== 'string' || !UUID.test(threadId)) {
       return { ok: false, error: { code: 'invalid_request', field: 'threadId' } };
+    }
+  }
+
+  if (sessionId !== null && sessionId !== undefined) {
+    if (typeof sessionId !== 'string' || !UUID.test(sessionId)) {
+      return { ok: false, error: { code: 'invalid_request', field: 'sessionId' } };
     }
   }
 
@@ -112,6 +132,149 @@ export function validateRequest(body: unknown): ValidationResult {
       threadId: (threadId as string | null | undefined) ?? null,
       partnerId,
       text: trimmed,
+      sessionId: (sessionId as string | null | undefined) ?? null,
+    },
+  };
+}
+
+/// What the client may send to the `session` function (Milestone 4, §4.2).
+///
+/// The same allowlist discipline as `GatewayRequest`, and for the same reason:
+/// this endpoint decides how many minutes a user has left, so every field it
+/// reads is a field an attacker gets to choose.
+///
+/// **There is no duration field anywhere in this type.** F2 requires quota to
+/// be computed server-side, and a client-reported "I spoke for 12 seconds" is
+/// the exact shape of the defect. Seconds are measured by the database clock in
+/// `meter_voice_session`.
+export type SessionAction = 'open' | 'heartbeat' | 'close';
+
+export interface SessionRequest {
+  action: SessionAction;
+  /// Required for heartbeat and close, absent for open.
+  sessionId: string | null;
+  /// Required for open.
+  partnerId: string | null;
+  threadId: string | null;
+  /// R4.1.3's optional one-line goal ("I have a frontend interview on
+  /// Tuesday"), stored on the session record and passed into the prompt.
+  goal: string | null;
+  /// R4.3.1 metrics, computed on the device. Stored, never trusted for quota.
+  metrics: Record<string, unknown> | null;
+  /// The session length the user saw, for the report. Also not trusted for
+  /// quota — `metered_seconds` is.
+  durationSeconds: number | null;
+}
+
+/// R4.1.3: "an optional one-line goal". One line, and short enough that it
+/// cannot become a prompt-injection payload smuggled in as a goal.
+export const MAX_GOAL_LENGTH = 200;
+
+export type SessionValidation =
+  | { ok: true; value: SessionRequest }
+  | { ok: false; error: GatewayError };
+
+export function validateSessionRequest(body: unknown): SessionValidation {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { ok: false, error: { code: 'invalid_request', field: 'body' } };
+  }
+
+  const record = body as Record<string, unknown>;
+
+  const allowed = new Set([
+    'action',
+    'sessionId',
+    'partnerId',
+    'threadId',
+    'goal',
+    'metrics',
+    'durationSeconds',
+  ]);
+  for (const key of Object.keys(record)) {
+    if (!allowed.has(key)) {
+      return { ok: false, error: { code: 'invalid_request', field: key } };
+    }
+  }
+
+  const action = record.action;
+  if (action !== 'open' && action !== 'heartbeat' && action !== 'close') {
+    return { ok: false, error: { code: 'invalid_request', field: 'action' } };
+  }
+
+  const optionalUuid = (value: unknown, field: string): GatewayError | null => {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'string' || !UUID.test(value)) {
+      return { code: 'invalid_request', field };
+    }
+    return null;
+  };
+
+  for (const [value, field] of [
+    [record.sessionId, 'sessionId'],
+    [record.partnerId, 'partnerId'],
+    [record.threadId, 'threadId'],
+  ] as const) {
+    const error = optionalUuid(value, field);
+    if (error) return { ok: false, error };
+  }
+
+  // `open` needs a partner; `heartbeat` and `close` need a session. Checking
+  // this here rather than in the handler keeps the whole shape in one testable
+  // function (§14).
+  if (action === 'open' && typeof record.partnerId !== 'string') {
+    return { ok: false, error: { code: 'invalid_request', field: 'partnerId' } };
+  }
+  if (action !== 'open' && typeof record.sessionId !== 'string') {
+    return { ok: false, error: { code: 'invalid_request', field: 'sessionId' } };
+  }
+
+  let goal: string | null = null;
+  if (record.goal !== null && record.goal !== undefined) {
+    if (typeof record.goal !== 'string') {
+      return { ok: false, error: { code: 'invalid_request', field: 'goal' } };
+    }
+    // Collapse newlines: R4.1.3 says one line, and a multi-line "goal" is the
+    // natural place to paste an instruction block at the partner prompt.
+    goal = record.goal.replace(/\s+/g, ' ').trim();
+    if (goal.length > MAX_GOAL_LENGTH) {
+      return { ok: false, error: { code: 'invalid_request', field: 'goal' } };
+    }
+    if (goal.length === 0) goal = null;
+  }
+
+  let metrics: Record<string, unknown> | null = null;
+  if (record.metrics !== null && record.metrics !== undefined) {
+    if (
+      typeof record.metrics !== 'object' ||
+      Array.isArray(record.metrics)
+    ) {
+      return { ok: false, error: { code: 'invalid_request', field: 'metrics' } };
+    }
+    metrics = record.metrics as Record<string, unknown>;
+  }
+
+  let durationSeconds: number | null = null;
+  if (record.durationSeconds !== null && record.durationSeconds !== undefined) {
+    const value = record.durationSeconds;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      return {
+        ok: false,
+        error: { code: 'invalid_request', field: 'durationSeconds' },
+      };
+    }
+    durationSeconds = Math.floor(value);
+  }
+
+  return {
+    ok: true,
+    value: {
+      action,
+      sessionId: (record.sessionId as string | null | undefined) ?? null,
+      partnerId: (record.partnerId as string | null | undefined) ?? null,
+      threadId: (record.threadId as string | null | undefined) ?? null,
+      goal,
+      metrics,
+      durationSeconds,
     },
   };
 }
