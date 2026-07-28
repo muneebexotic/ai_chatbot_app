@@ -192,20 +192,17 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
-  /// Not available yet.
+  /// Hands off to Google in the system browser.
   ///
-  /// Google sign-in requires an OAuth client configured in Google Cloud and
-  /// registered with the Supabase project; §9.2 requires it and it is the one
-  /// part of Milestone 2 that cannot be done from the repository. Returning a
-  /// typed failure rather than throwing keeps the call sites honest: the UI
-  /// shows a specific message instead of a spinner that never resolves.
+  /// An [Ok] here means the browser opened, **not** that anyone is signed in.
+  /// The session arrives later through the auth stream, when Android routes
+  /// the `com.muscodes.kalaam://login-callback/` redirect back to the app.
   ///
-  /// TODO(muneeb): configure the Google OAuth client, then replace this with
-  /// `signInWithOAuth(OAuthProvider.google)`.
-  Future<Result<AuthUser>> signInWithGoogle() async {
-    Log.w('Google sign-in attempted before the OAuth client is configured');
-    return const Err(AuthFailure(AuthFailureReason.signUpDisabled));
-  }
+  /// So callers must not do `await signInWithGoogle(); if (isLoggedIn) ...` —
+  /// that reads false every time, because the user has not seen the consent
+  /// screen yet. Watch [isLoggedIn] via the listener instead, which is exactly
+  /// what the existing screens already do while they wait.
+  Future<Result<void>> signInWithGoogle() => _repository.signInWithGoogle();
 
   Future<Result<void>> logout() async {
     final result = await _repository.signOut();

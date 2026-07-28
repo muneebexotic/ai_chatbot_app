@@ -46,6 +46,28 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- OAuth return leg (PRD §9.2). Google redirects to Supabase,
+                 Supabase redirects here, and this filter is what lets Android
+                 hand the callback back to the app instead of leaving the user
+                 staring at a browser tab.
+
+                 The scheme is the applicationId, so it cannot collide with
+                 another app on the device. It must match the Redirect URL
+                 registered on the Supabase project exactly, including the
+                 trailing slash on the host path:
+                     com.muscodes.kalaam://login-callback/
+
+                 `singleTop` above means the running activity is reused rather
+                 than a second one being stacked on the return trip. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="com.muscodes.kalaam"
+                    android:host="login-callback" />
+            </intent-filter>
         </activity>
 
         <meta-data
