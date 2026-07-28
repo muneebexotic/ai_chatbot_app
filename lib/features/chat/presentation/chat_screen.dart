@@ -12,7 +12,6 @@ import 'package:ai_chatbot_app/features/chat/presentation/widgets/chat_failure_b
 import 'package:ai_chatbot_app/features/chat/presentation/widgets/composer.dart';
 import 'package:ai_chatbot_app/features/chat/presentation/widgets/thread_drawer.dart';
 import 'package:ai_chatbot_app/features/chat/presentation/widgets/user_turn.dart';
-import 'package:ai_chatbot_app/features/partners/application/partner_providers.dart';
 import 'package:ai_chatbot_app/features/partners/presentation/partner_picker.dart';
 import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 
@@ -75,11 +74,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
 
-    final partner = ref
-        .watch(partnersProvider)
-        .valueOrNull
-        ?.where((p) => p.id == state.partnerId)
-        .firstOrNull;
+    final partner = ref.watch(activePartnerProvider);
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -94,7 +89,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: InkWell(
           borderRadius: Radii.controlAll,
           onTap: () async {
-            final chosen = await showPartnerPicker(context, state.partnerId);
+            final chosen = await showPartnerPicker(context, partner?.id);
             if (chosen != null) controller.selectPartner(chosen.id);
           },
           child: Padding(
@@ -154,7 +149,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
             ),
           Composer(
-            enabled: !state.isStreaming && state.partnerId != null,
+            enabled: !state.isStreaming && partner != null,
             onSend: (text) {
               _lastSent = text;
               controller.send(text);
@@ -216,13 +211,27 @@ class _ThinkingIndicator extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, Space.sm),
-      child: SizedBox(
-        width: 72,
-        child: Waveform(
-          mode: WaveformMode.idle,
-          height: 24,
-          barCount: 14,
-          semanticLabel: l10n.chatThinking,
+      // `Align` is load-bearing, not decoration.
+      //
+      // A ListView gives every item a TIGHT cross-axis constraint, and
+      // `SizedBox` enforces its own constraints *within* the incoming ones —
+      // so `SizedBox(width: 72)` inside a list item clamps 72 back up to the
+      // full viewport width and does nothing. The first device pass showed a
+      // row of fourteen fat amber pills stretched across the screen where a
+      // small idle wave should have been.
+      //
+      // `Align` loosens the constraint first, which is what lets the SizedBox
+      // mean what it says.
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 72,
+          child: Waveform(
+            mode: WaveformMode.idle,
+            height: 24,
+            barCount: 14,
+            semanticLabel: l10n.chatThinking,
+          ),
         ),
       ),
     );

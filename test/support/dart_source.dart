@@ -40,6 +40,7 @@ class DartString {
     required this.value,
     required this.owner,
     required this.argument,
+    this.isKey = false,
   });
 
   /// Repo-relative, with forward slashes on every platform.
@@ -59,6 +60,14 @@ class DartString {
   /// The nearest enclosing named argument, e.g. `hintText`, `semanticLabel`.
   /// Empty for a positional argument.
   final String argument;
+
+  /// The literal is a lookup key or a map key, not a value.
+  ///
+  /// `content: row['content'] as String` reaches a named argument called
+  /// `content`, so a rule that only looks at the argument name concludes the
+  /// column name is copy. It is a database column, and it is the same string in
+  /// every language.
+  final bool isKey;
 
   String get location => '$path:$line';
 
@@ -203,23 +212,66 @@ const _textArguments = {
   'description',
 };
 
+/// Names that mark a constant as copy rather than configuration.
+///
+/// Only consulted inside `lib/constants/`, where there is no syntax to read.
+final _copyishName = RegExp(
+  r'(text|title|subtitle|label|message|hint|error|copy|caption|body|'
+  r'heading|description|placeholder|prompt|tagline|greeting)$',
+  caseSensitive: false,
+);
+
 /// True when [literal] is copy rather than code.
 ///
-/// Judged by *syntactic position*, never by how the words look. "Rate limited"
-/// and "rate_limited" are both prose-shaped; only one of them is on a screen.
-/// A word-shape heuristic would have to guess about `Log.d('Signing out')`,
-/// `throw Exception('User not authenticated')`, and every asset path, and it
-/// would guess wrong often enough to get itself deleted.
+/// Judged by *syntactic position* wherever there is syntax to judge. "Rate
+/// limited" and "rate_limited" are both prose-shaped; only one of them is on a
+/// screen. A word-shape heuristic would have to guess about
+/// `Log.d('Signing out')`, `throw Exception('User not authenticated')`, and
+/// every asset path, and it would guess wrong often enough to get itself
+/// deleted.
+///
+/// ## The exception, and why it exists
+///
+/// A constant has no syntax around it. `static const welcomeTitle = 'Welcome
+/// to ChadGPT';` is a bare literal in a variable declaration, indistinguishable
+/// to a parser from a route name or a Firestore collection key — and it is
+/// **the exact hiding place this whole file was written because of**. The two
+/// image-generation chips lived in a constants list. So did "Welcome to
+/// ChadGPT", which reached the first screen of Milestone 3 and was found by
+/// opening a screenshot rather than by any rule here.
+///
+/// So inside `lib/constants/` the test falls back to the declaration's *name*.
+/// `welcomeTitle` and `passwordHint` are copy; `chatRoute` and
+/// `animationDuration` are not. It is a weaker signal than syntax and it is
+/// applied in exactly one folder, which is the folder where the stronger
+/// signal does not exist.
 bool isUserFacing(DartString literal) {
   final value = literal.value.trim();
   // Empty and punctuation-only literals are spacing, not copy: `Text('')` is a
   // layout placeholder and `Text('·')` is a separator. Neither needs Urdu.
   if (value.isEmpty || !RegExp(r'[A-Za-z]').hasMatch(value)) return false;
 
+  // A column name is the same string in every language.
+  if (literal.isKey) return false;
+
   if (_textArguments.contains(literal.argument)) return true;
 
   final owner = literal.owner.split('.').first;
-  return _textOwners.contains(owner);
+  if (_textOwners.contains(owner)) return true;
+
+  if (literal.path.startsWith('lib/constants/') &&
+      literal.owner.startsWith('=')) {
+    final name = literal.owner.substring(1);
+    // A route or an id is named like one and is never shown to anyone.
+    if (RegExp(r'(route|id|key|url|path|collection|field|code)$',
+            caseSensitive: false)
+        .hasMatch(name)) {
+      return false;
+    }
+    return _copyishName.hasMatch(name);
+  }
+
+  return false;
 }
 
 /// Hardcoded copy in [file] — the R11.7 violations.
@@ -314,8 +366,21 @@ class _StringVisitor extends RecursiveAstVisitor<void> {
         value: value,
         owner: owner,
         argument: argument,
+        isKey: _isKey(node),
       ),
     );
+  }
+
+  /// A lookup key rather than a value: `row['content']`, `{'role': x}`.
+  ///
+  /// Checked at the literal's immediate parent, so it distinguishes the key of
+  /// a map entry from its value — `{'label': 'Brainstorm'}` has one of each,
+  /// and only the second is copy.
+  bool _isKey(AstNode node) {
+    final parent = node.parent;
+    if (parent is IndexExpression) return identical(parent.index, node);
+    if (parent is MapLiteralEntry) return identical(parent.key, node);
+    return false;
   }
 
   /// Walks outward to the nearest invocation and the nearest named argument.
@@ -341,8 +406,14 @@ class _StringVisitor extends RecursiveAstVisitor<void> {
             : p.methodName.name;
         break;
       }
-      // A closure body, a statement, or a declaration: the literal belongs to
-      // whatever is inside, not to the enclosing call.
+      // `static const welcomeTitle = '...'` has no call around it at all. The
+      // declared name is the only signal there is, so it is reported with a
+      // leading `=` to mark it as a name rather than an invocation — see
+      // `isUserFacing`, which uses it only inside lib/constants/.
+      if (p is VariableDeclaration) return ('=${p.name.lexeme}', argument);
+
+      // A closure body, a statement, or any other declaration: the literal
+      // belongs to whatever is inside, not to the enclosing call.
       if (p is FunctionBody || p is Declaration || p is Statement) break;
     }
     return (owner, argument);

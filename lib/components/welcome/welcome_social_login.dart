@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 import '../ui/app_text.dart';
 import '../ui/social_button.dart';
 import '../../constants/welcome_screen_constants.dart';
@@ -73,7 +75,7 @@ class WelcomeSocialLogin extends StatelessWidget {
             horizontal: WelcomeScreenConstants.dividerHorizontalSpacing,
           ),
           child: AppText.bodyMedium(
-            WelcomeScreenConstants.dividerText,
+            AppLocalizations.of(context).authContinueWith,
             color: colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),

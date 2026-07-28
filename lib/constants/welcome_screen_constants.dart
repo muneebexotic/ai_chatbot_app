@@ -55,12 +55,13 @@ class WelcomeScreenConstants {
   static const String signupRoute = '/signup';
   static const String chatRoute = '/chat';
   
-  // UI Text
-  static const String welcomeTitle = 'Welcome to ChadGPT';
-  static const String welcomeSubtitle = 'Your AI companion for intelligent conversations';
-  static const String loginButtonText = 'Login';
-  static const String signupButtonText = 'Sign Up';
-  static const String dividerText = 'or continue with';
+  // UI text lives in lib/l10n/app_en.arb (R11.7), not here.
+  //
+  // It used to live here, and that is how "Welcome to ChadGPT" survived into
+  // Milestone 3 — a product name nothing else in the app still used, on the
+  // first screen a new user sees. A constant in `lib/constants/` is invisible
+  // to a rule that looks at what gets passed to a Text widget, which is why
+  // the R11.7 detector now reads prose out of this folder too.
   
   // Error Messages
   static const String googleSignInFailedPrefix = 'Google Sign-In failed: ';

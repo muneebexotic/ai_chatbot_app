@@ -47,51 +47,56 @@ class AiTurn extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, Space.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // The signal rule. `IntrinsicHeight` is avoided by stretching the Row
-          // instead — it is O(n) in subtree depth and this sits inside a list
-          // that has to hold 60fps (R11.2).
-          Container(
-            width: 2,
-            margin: const EdgeInsets.only(right: Space.sm, top: 4, bottom: 4),
-            decoration: BoxDecoration(
-              color: colors.signal,
-              borderRadius: Radii.fullAll,
-            ),
+      // The signal rule is a LEFT BORDER on the text, not a sibling bar.
+      //
+      // The first version was a `Row(crossAxisAlignment: stretch)` with a 2dp
+      // Container beside the text, and the comment above it claimed this
+      // avoided `IntrinsicHeight`. It did — by not rendering. `stretch` gives
+      // children a tight cross-axis constraint taken from the Row's own height,
+      // and a Row inside a vertical ListView has no bounded height to take it
+      // from, so every AI turn collapsed to zero and the reply was invisible.
+      //
+      // The server had stored it correctly the whole time. Found by sending a
+      // message on a device and seeing nothing come back — no error, no text,
+      // exactly the silent failure that is hardest to diagnose from logs.
+      //
+      // A border sizes itself to the content for free, costs no extra layout
+      // pass, and keeps R11.2's 60fps budget intact.
+      child: Container(
+        padding: const EdgeInsets.only(left: Space.sm),
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color: colors.signal, width: 2),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Selectable so a user can quote what the partner said. §5.1
-                // asks for a copy button on code blocks; the whole turn being
-                // selectable is the cheaper, more general answer for prose.
-                SelectionArea(
-                  child: GptMarkdown(
-                    text,
-                    style: AppTypography.transcriptAi.copyWith(color: colors.ink),
-                    codeBuilder: (context, name, code, closed) =>
-                        _CodeBlock(code: code, language: name),
-                    highlightBuilder: (context, inline, style) => _InlineCode(
-                      text: inline,
-                      style: style,
-                    ),
-                  ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Selectable so a user can quote what the partner said. §5.1 asks
+            // for a copy button on code blocks; the whole turn being selectable
+            // is the cheaper, more general answer for prose.
+            SelectionArea(
+              child: GptMarkdown(
+                text,
+                style: AppTypography.transcriptAi.copyWith(color: colors.ink),
+                codeBuilder: (context, name, code, closed) =>
+                    _CodeBlock(code: code, language: name),
+                highlightBuilder: (context, inline, style) => _InlineCode(
+                  text: inline,
+                  style: style,
                 ),
-                if (truncated && !message.isStreaming)
-                  Padding(
-                    padding: const EdgeInsets.only(top: Space.xs),
-                    child: Text(
-                      l10n.chatReplyTruncated,
-                      style: AppTypography.micro.copyWith(color: colors.muted),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ],
+            if (truncated && !message.isStreaming)
+              Padding(
+                padding: const EdgeInsets.only(top: Space.xs),
+                child: Text(
+                  l10n.chatReplyTruncated,
+                  style: AppTypography.micro.copyWith(color: colors.muted),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

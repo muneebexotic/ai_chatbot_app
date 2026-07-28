@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 import '../ui/app_logo.dart';
 import '../ui/app_text.dart';
 import '../../constants/welcome_screen_constants.dart';
@@ -44,7 +46,7 @@ class WelcomeHeader extends StatelessWidget {
           child: SlideTransition(
             position: titleSlideAnimation,
             child: AppText.displayMedium(
-              WelcomeScreenConstants.welcomeTitle,
+              AppLocalizations.of(context).welcomeTitle,
               color: colorScheme.onSurface, // Use theme-aware color
               textAlign: TextAlign.center,
             ),
@@ -57,7 +59,7 @@ class WelcomeHeader extends StatelessWidget {
         FadeTransition(
           opacity: subtitleFadeAnimation,
           child: AppText.bodyLarge(
-            WelcomeScreenConstants.welcomeSubtitle,
+            AppLocalizations.of(context).welcomeSubtitle,
             color: colorScheme.onSurface.withValues(alpha: 0.7), // Theme-aware secondary color
             textAlign: TextAlign.center,
           ),

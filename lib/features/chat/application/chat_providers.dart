@@ -6,6 +6,8 @@ import 'package:ai_chatbot_app/features/chat/application/chat_state.dart';
 import 'package:ai_chatbot_app/features/chat/data/chat_repository.dart';
 import 'package:ai_chatbot_app/features/chat/data/gateway_client.dart';
 import 'package:ai_chatbot_app/features/chat/domain/chat_thread.dart';
+import 'package:ai_chatbot_app/features/partners/application/partner_providers.dart';
+import 'package:ai_chatbot_app/features/partners/domain/partner.dart';
 
 /// The chat feature's slice of the graph (PRD F5, §9.1).
 
@@ -33,6 +35,21 @@ final accessTokenProvider = Provider<String?>((ref) {
 final chatControllerProvider = NotifierProvider<ChatController, ChatState>(
   ChatController.new,
 );
+
+/// The partner the next message goes to.
+///
+/// Derived rather than stored, so a partner list that reloads cannot reset the
+/// conversation — see the note in `ChatController.build`. Falls back to the
+/// first of the sorted list, which is Free Talk: a new account should meet the
+/// gentlest partner first, not Debate Opponent.
+final activePartnerProvider = Provider<Partner?>((ref) {
+  final partners = ref.watch(partnersProvider).valueOrNull;
+  if (partners == null || partners.isEmpty) return null;
+
+  final chosen = ref.watch(chatControllerProvider).partnerId;
+  if (chosen == null) return partners.first;
+  return partners.where((p) => p.id == chosen).firstOrNull ?? partners.first;
+});
 
 /// The conversation list.
 ///

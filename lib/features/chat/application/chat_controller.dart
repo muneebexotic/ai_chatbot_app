@@ -38,12 +38,27 @@ class ChatController extends Notifier<ChatState> {
     // watching any more.
     ref.onDispose(() => _subscription?.cancel());
 
-    // The default partner is whichever the rail lists first — Free Talk, the
-    // easiest. Watched rather than read so the first message after partners
-    // load is not sent with a null partner.
-    final partners = ref.watch(partnersProvider).valueOrNull;
-    return ChatState(partnerId: partners?.firstOrNull?.id);
+    // NOTHING IS WATCHED HERE, deliberately.
+    //
+    // The first version read `ref.watch(partnersProvider)` to seed a default
+    // partner. `Notifier.build` re-runs whenever a watched provider changes and
+    // **discards the state it returned last time** — so anything that
+    // invalidated the partner list mid-conversation would silently wipe the
+    // transcript. It reloads on every auth event, which includes a routine
+    // token refresh.
+    //
+    // The default partner is derived instead, in [activePartnerProvider],
+    // where recomputing costs nothing.
+    return const ChatState();
   }
+
+  /// Which partner the next message actually goes to.
+  ///
+  /// The explicit choice if there is one, otherwise the first of the sorted
+  /// list — Free Talk. Null only while partners are still loading.
+  String? _resolvePartnerId() =>
+      state.partnerId ??
+      ref.read(partnersProvider).valueOrNull?.firstOrNull?.id;
 
   void selectPartner(String partnerId) {
     state = state.copyWith(partnerId: partnerId);
@@ -87,7 +102,7 @@ class ChatController extends Notifier<ChatState> {
   /// R11.5 requires the words to stay on screen anyway rather than vanish.
   Future<void> send(String text) async {
     final trimmed = text.trim();
-    final partnerId = state.partnerId;
+    final partnerId = _resolvePartnerId();
     if (trimmed.isEmpty || state.isStreaming || partnerId == null) return;
 
     final token = ref.read(accessTokenProvider);

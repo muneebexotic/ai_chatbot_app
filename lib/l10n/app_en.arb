@@ -11,6 +11,31 @@
     "description": "Subtitle under the product name on the splash screen. Replaced 'AI-Powered Conversations', which §7.6 bans by name. States what the product does, not what it is built from."
   },
 
+  "welcomeTitle": "Welcome to Kalaam",
+  "@welcomeTitle": {
+    "description": "Heading on the first screen a signed-out user sees. Read 'Welcome to ChadGPT' until Milestone 3 — a product name nothing else in the app used any more. Found on a device screenshot, not by a test."
+  },
+
+  "welcomeSubtitle": "Practise speaking out loud, and find out how you sounded.",
+  "@welcomeSubtitle": {
+    "description": "Sub-heading under welcomeTitle. Replaced 'Your AI companion for intelligent conversations', which described a chat wrapper rather than this product — §3 is explicit that competing as a general chatbot is the losing position."
+  },
+
+  "authLogin": "Login",
+  "@authLogin": {
+    "description": "Primary action on the welcome screen and the label on the login form's submit button."
+  },
+
+  "authSignUp": "Sign Up",
+  "@authSignUp": {
+    "description": "Secondary action on the welcome screen; creates an account."
+  },
+
+  "authContinueWith": "or continue with",
+  "@authContinueWith": {
+    "description": "Divider above the third-party sign-in buttons."
+  },
+
   "authInvalidCredentials": "That email and password do not match. Check both, or reset your password.",
   "@authInvalidCredentials": {
     "description": "Sign-in refused. Deliberately covers both a wrong password and an unknown email: distinguishing them would tell an anonymous caller which addresses have accounts."

@@ -1,7 +1,14 @@
 
 
 plugins {
-    id("com.google.gms.google-services")
+    // `com.google.gms.google-services` was here. Removed in Milestone 3 with
+    // the last Firebase package: the plugin hard-fails the build when
+    // google-services.json is absent, and that file is gitignored and must
+    // stay that way (it was one of the four credentials this repo leaked).
+    //
+    // Worth stating plainly, because it wasted a build: deleting the Dart
+    // packages does not remove the Gradle plugin. The APK kept requiring a
+    // Firebase config for an app with no Firebase in it.
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
