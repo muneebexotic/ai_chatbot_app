@@ -315,6 +315,84 @@ accommodate the work, and that is the failure mode R0.5.5 exists to catch.
 
 ---
 
+## Milestone 2 — Backend and auth
+
+### W2.1 — Every real defect this milestone was found by looking, not by testing *(NOT FIXED — this is the process, not a bug)*
+
+Four things were caught in this milestone, all by opening a screenshot or
+reading a logcat line. None were reachable by the analyzer or the 80-test
+suite, and every one of them was live in the shipped app at the time:
+
+- **`primaryColor` inverted in dark mode**, so primary buttons, the Settings
+  icon column, the theme switch itself, and the user's own chat bubbles were
+  painted at 1.09:1. The contrast table passed throughout, because the failing
+  colour was never a token.
+- **The white-on-amber button label** that the *fix* for the above introduced,
+  at 1.75:1. Caught only because the fix was re-photographed rather than
+  assumed correct.
+- **"Generate Avatar" on the profile-photo screen**, offering image generation
+  — banned by §16 — on the first screen a new account saw, on a screen that
+  could not save anything because `profiles` has no avatar column.
+- **"Create Image" and "Generate Images"** on the chat empty state, same ban,
+  still live because deleting the generation *services* in Milestone 1 left no
+  compile error behind in a constants list.
+
+**Why it is weak.** The suite is not testing what the app offers. It tests
+what the code says, and those are different questions. Two of the four were
+Never-do-list violations sitting in the first thirty seconds of the product,
+and the milestone that banned them shipped four milestones ago.
+
+**What would fix it.** Golden tests over the screens, and a test that asserts
+no suggestion, chip, or menu entry references image generation. The second is
+about ten lines and would have caught two of the four. It is not written yet,
+which is why this entry is not marked fixed.
+
+### W2.2 — The auth port shrank the problem instead of solving it *(NOT FIXED — deliberate)*
+
+`AuthProvider` lost two thirds of its body, and most of that was not migrated
+anywhere. Usage counters and entitlements still sit on `PaymentService`,
+counted locally, resettable by reinstalling.
+
+**Why it is weak.** F2 says entitlements are server truth. Today they are a
+number in local storage, and `isPremium` is a local boolean with a comment
+asking callers not to trust it. A comment is not an access control.
+
+**Why it was not fixed.** There is nothing to migrate *to*. `usage_daily` and
+`entitlements` are service-role write only (R9.5.1) precisely so a client
+cannot write them, and the thing that will write them — the gateway, recording
+usage atomically with the response (R9.3.4) — is Milestone 3. Building a
+client-writable interim would have meant building the exact design the schema
+was written to refuse.
+
+**Status.** Honest and time-boxed, but it means Milestone 2 did not deliver
+server-truth entitlements, and anyone reading "backend and auth: done" should
+know that.
+
+### W2.3 — RLS is proven for users, assumed for the service role *(NOT FIXED)*
+
+Fourteen tests prove one authenticated user cannot reach another's rows, and
+a probe proves all ten tables deny anonymous writes on both projects. Two
+tables are only half-covered: `entitlements` and `usage_daily` are proven to
+refuse client writes, but their read-own policies are unproven, because
+creating a row to read requires the service-role key by design.
+
+**Why it is weak.** The half that is untested is the half that decides whether
+a paying user can see what they paid for. A read-own policy that silently
+returns nothing would look identical to "no subscription" in the UI.
+
+**Why it was not fixed.** Seeding those rows needs the service key, which the
+test suite deliberately does not hold. It becomes testable in Milestone 3,
+when the gateway can create one.
+
+**Fixed before moving on: nothing, and that is the honest answer.** W2.1 is a
+process weakness whose fix is a test that does not exist yet; W2.2 and W2.3
+are both blocked on Milestone 3 by design rather than by neglect. The four
+defects W2.1 describes were each fixed as they were found — but fixing the
+instances is not the same as fixing the gap that let them ship, and counting
+them here would be claiming credit for the wrong thing.
+
+---
+
 ## Standing items not yet counted against a milestone
 
 - **No screen has a widget test.** All 58 tests are unit or architectural.
