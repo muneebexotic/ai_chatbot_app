@@ -7,6 +7,7 @@ import '../constants/signup_constants.dart';
 import 'package:ai_chatbot_app/core/logging/log.dart';
 import 'package:ai_chatbot_app/core/result/result.dart';
 import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 
 /// Controller for SignUp screen following clean architecture principles
 /// 
@@ -134,22 +135,9 @@ class SignUpController extends ChangeNotifier {
     );
   }
 
-  /// Navigate to photo upload for new users - FIXED
-  void navigateToPhotoUpload() {
-    final context = _formKey.currentContext;
-    if (context == null || !context.mounted) return;
-    
-    // Clear stack and go to photo upload
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/photo-upload',
-      (route) => false,
-    );
-  }
-
   /// Sign up with email and password
   Future<void> signUpWithEmail({
-    required Function(bool isNewUser) onSuccess,
+    required VoidCallback onSuccess,
     required Function(String error) onError,
   }) async {
     if (_isDisposed || _isLoading) return;
@@ -161,9 +149,14 @@ class SignUpController extends ChangeNotifier {
       if (context == null) {
         throw Exception('Context not available');
       }
+      // Resolved before the first await, not after. The failure message is
+      // needed on the far side of a network call, and reaching back through a
+      // context there is the async-gap defect the analyzer names — the copy
+      // itself does not change while the request is in flight.
+      final l10n = AppLocalizations.of(context);
 
       final authProvider = _auth;
-      
+
       final fullName = _fullNameController.text.trim();
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -179,7 +172,7 @@ class SignUpController extends ChangeNotifier {
       switch (result) {
         case Err(:final failure):
           _logSignUpError(failure);
-          onError(authFailureMessage(failure));
+          onError(authFailureMessage(l10n, failure));
           return;
         case Ok():
           break;
@@ -190,9 +183,11 @@ class SignUpController extends ChangeNotifier {
 
       if (authProvider.isLoggedIn && authProvider.currentUser != null) {
         _logSignUpSuccess(email);
-        // Sign-up always produces a new account; the old `isNewUser` flag came
-        // from Firebase's additionalUserInfo and was always true here.
-        onSuccess(true);
+        // The old `isNewUser` flag came from Firebase's additionalUserInfo and
+        // existed only to route new accounts to the profile-photo screen. That
+        // screen is deleted (§16 — it offered image generation), so both paths
+        // end in the same place and the flag carries no information.
+        onSuccess();
       } else {
         throw Exception('Authentication succeeded but user state is incomplete');
       }
@@ -207,7 +202,7 @@ class SignUpController extends ChangeNotifier {
 
   /// Sign up with Google
   Future<void> signUpWithGoogle({
-    required Function(bool isNewUser) onSuccess,
+    required VoidCallback onSuccess,
     required Function(String error) onError,
   }) async {
     if (_isDisposed || _isLoading) return;
@@ -231,7 +226,7 @@ class SignUpController extends ChangeNotifier {
 
       if (authProvider.isLoggedIn && authProvider.currentUser != null) {
         _logGoogleSignUpSuccess();
-        onSuccess(false); // Google users are not considered "new" for flow purposes
+        onSuccess();
       } else {
         throw Exception('Google authentication succeeded but user state is incomplete');
       }

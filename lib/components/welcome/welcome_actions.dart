@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 import '../ui/app_button.dart';
 import '../../constants/welcome_screen_constants.dart';
 
@@ -26,7 +28,7 @@ class WelcomeActions extends StatelessWidget {
           children: [
             // Login Button
             AppButton.primary(
-              text: WelcomeScreenConstants.loginButtonText,
+              text: AppLocalizations.of(context).authLogin,
               onPressed: onLoginPressed,
               isFullWidth: true,
             ),
@@ -35,7 +37,7 @@ class WelcomeActions extends StatelessWidget {
 
             // Sign Up Button
             AppButton.secondary(
-              text: WelcomeScreenConstants.signupButtonText,
+              text: AppLocalizations.of(context).authSignUp,
               onPressed: onSignUpPressed,
               isFullWidth: true,
             ),

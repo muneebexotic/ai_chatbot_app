@@ -1,0 +1,420 @@
+{
+  "@@locale": "en",
+
+  "appName": "Kalaam",
+  "@appName": {
+    "description": "The product name. A proper noun (Urdu: speech) — transliterate rather than translate. TODO(muneeb): PRD §17.1 leaves the final name open; changing it here changes it everywhere except the package id, which cannot change after publishing."
+  },
+
+  "splashTagline": "Speak. Hear how you sounded.",
+  "@splashTagline": {
+    "description": "Subtitle under the product name on the splash screen. Replaced 'AI-Powered Conversations', which §7.6 bans by name. States what the product does, not what it is built from."
+  },
+
+  "welcomeTitle": "Welcome to Kalaam",
+  "@welcomeTitle": {
+    "description": "Heading on the first screen a signed-out user sees. Read 'Welcome to ChadGPT' until Milestone 3 — a product name nothing else in the app used any more. Found on a device screenshot, not by a test."
+  },
+
+  "welcomeSubtitle": "Practise speaking out loud, and find out how you sounded.",
+  "@welcomeSubtitle": {
+    "description": "Sub-heading under welcomeTitle. Replaced 'Your AI companion for intelligent conversations', which described a chat wrapper rather than this product — §3 is explicit that competing as a general chatbot is the losing position."
+  },
+
+  "authLogin": "Login",
+  "@authLogin": {
+    "description": "Primary action on the welcome screen and the label on the login form's submit button."
+  },
+
+  "authSignUp": "Sign Up",
+  "@authSignUp": {
+    "description": "Secondary action on the welcome screen; creates an account."
+  },
+
+  "authContinueWith": "or continue with",
+  "@authContinueWith": {
+    "description": "Divider above the third-party sign-in buttons."
+  },
+
+  "authInvalidCredentials": "That email and password do not match. Check both, or reset your password.",
+  "@authInvalidCredentials": {
+    "description": "Sign-in refused. Deliberately covers both a wrong password and an unknown email: distinguishing them would tell an anonymous caller which addresses have accounts."
+  },
+
+  "authEmailAlreadyRegistered": "That email already has an account. Sign in instead, or reset the password.",
+  "@authEmailAlreadyRegistered": {
+    "description": "Sign-up refused because the address is in use."
+  },
+
+  "authWeakPassword": "That password is too short. Use at least eight characters.",
+  "@authWeakPassword": {
+    "description": "Sign-up refused for password length. States the actual minimum, because an error has to state its fix (§7.6)."
+  },
+
+  "authEmailNotConfirmed": "Check your email and open the confirmation link, then sign in.",
+  "@authEmailNotConfirmed": {
+    "description": "Credentials were correct but the address is unconfirmed."
+  },
+
+  "authInvalidEmail": "That does not look like an email address.",
+  "@authInvalidEmail": {
+    "description": "The address failed format validation."
+  },
+
+  "authGoogleUnavailable": "Google sign-in is not available yet. Use an email address and password.",
+  "@authGoogleUnavailable": {
+    "description": "Shown when the project has sign-ups disabled, reused for Google sign-in being unavailable. Honest about the state of the world rather than letting the tap appear to do nothing."
+  },
+
+  "failureOffline": "No internet connection. Your details are not sent until you reconnect.",
+  "@failureOffline": {
+    "description": "No usable network. Must never read as though the user lost work (R11.5)."
+  },
+
+  "failureRateLimited": "Too many attempts. Wait a minute and try again.",
+  "@failureRateLimited": {
+    "description": "Going too fast, and the server did not say for how long."
+  },
+
+  "failureRateLimitedFor": "Too many attempts. Try again in {seconds} seconds.",
+  "@failureRateLimitedFor": {
+    "description": "Going too fast, and the server said how long to wait.",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+
+  "failureUnauthorized": "Your session ended. Sign in again.",
+  "@failureUnauthorized": {
+    "description": "The caller is not authenticated, or the token expired."
+  },
+
+  "failureInvalidRequest": "That did not go through. Check the details and try again.",
+  "@failureInvalidRequest": {
+    "description": "The server rejected the request shape. Usually a bug in this client, so it stays generic to the user and loud in the log."
+  },
+
+  "failureStorage": "Could not save to this device. Check your available storage.",
+  "@failureStorage": {
+    "description": "Local persistence failed."
+  },
+
+  "failureDevice": "This device would not allow {capability}.",
+  "@failureDevice": {
+    "description": "A device capability was refused or is missing: microphone permission, a speech recogniser, a text-to-speech voice.",
+    "placeholders": {
+      "capability": {
+        "type": "String",
+        "example": "the microphone"
+      }
+    }
+  },
+
+  "failureQuotaExceeded": "You have used your allowance for today.",
+  "@failureQuotaExceeded": {
+    "description": "The daily cap is reached. Never a dead end — free users still have unlimited Drill Mode (§8, DECISIONS D2)."
+  },
+
+  "failureSafetyBlocked": "That request was refused.",
+  "@failureSafetyBlocked": {
+    "description": "The provider's safety system refused the request or response. Plain and non-judgemental by requirement (R10.5)."
+  },
+
+  "failureAtCapacity": "The service is at capacity right now. Try again shortly.",
+  "@failureAtCapacity": {
+    "description": "The global circuit breaker tripped (R10.4). Not the user's fault and not fixed by upgrading."
+  },
+
+  "failureUnknown": "Something failed and we do not yet know what. Try again; if it keeps happening, it is a bug worth reporting.",
+  "@failureUnknown": {
+    "description": "Unclassified failure. Every occurrence is a gap in the AppFailure taxonomy."
+  },
+
+  "actionKeep": "Keep",
+  "@actionKeep": {
+    "description": "Declines a destructive action in a confirmation dialog. The safe choice is named for what it does, not 'Cancel' — 'Cancel' is ambiguous when the thing being confirmed is itself a cancellation."
+  },
+
+  "chatComposerHint": "Type a message",
+  "@chatComposerHint": {
+    "description": "Placeholder in the chat input field."
+  },
+
+  "chatSend": "Send",
+  "@chatSend": {
+    "description": "Accessibility label for the send button, which is an arrow icon with no visible text."
+  },
+
+  "chatNewConversation": "New conversation",
+  "@chatNewConversation": {
+    "description": "Tooltip on the action that abandons the current thread and starts a fresh one."
+  },
+
+  "chatThinking": "Thinking",
+  "@chatThinking": {
+    "description": "Screen-reader label for the waveform shown while waiting for the first word of a reply. Sighted users see the waveform idle; this is the only channel a screen reader has."
+  },
+
+  "chatCopy": "Copy",
+  "@chatCopy": {
+    "description": "Copies a code block to the clipboard."
+  },
+
+  "chatCopied": "Copied",
+  "@chatCopied": {
+    "description": "Replaces the copy label for two seconds after a successful copy. Confirmation in place, not a snackbar over the conversation."
+  },
+
+  "chatCodeBlock": "code",
+  "@chatCodeBlock": {
+    "description": "Header on a fenced code block whose language the model did not state."
+  },
+
+  "chatReplyTruncated": "The reply stopped at its length limit.",
+  "@chatReplyTruncated": {
+    "description": "Shown under a reply that hit the token ceiling rather than finishing. Said plainly because a paragraph ending mid-thought otherwise reads as a bug."
+  },
+
+  "chatRetry": "Try again",
+  "@chatRetry": {
+    "description": "Resends the last message after a recoverable failure."
+  },
+
+  "chatSeePro": "See Pro",
+  "@chatSeePro": {
+    "description": "Opens the subscription screen from the quota message. Shown ONLY when upgrading would actually lift the limit — never for the fair-use ceiling, where it would be selling something that changes nothing (§16)."
+  },
+
+  "chatDismiss": "Dismiss",
+  "@chatDismiss": {
+    "description": "Closes the error bar."
+  },
+
+  "chatErrorOffline": "No internet. Your message is not sent yet, and nothing is lost.",
+  "@chatErrorOffline": {
+    "description": "The request never reached the server. R11.5: must never read as though the user lost their words."
+  },
+
+  "chatErrorAtCapacity": "At capacity right now. Your conversation is saved. Try again in a few minutes.",
+  "@chatErrorAtCapacity": {
+    "description": "The global circuit breaker tripped, or the provider refused (R10.4). Not the user's fault and not fixed by upgrading, so it says neither."
+  },
+
+  "chatErrorSafetyBlocked": "That one was refused. Try asking it a different way.",
+  "@chatErrorSafetyBlocked": {
+    "description": "The provider's safety system refused. R10.5 requires plain and non-judgemental, with no automatic retry."
+  },
+
+  "chatErrorSignedOut": "Your session ended. Sign in again to keep going.",
+  "@chatErrorSignedOut": {
+    "description": "The token expired or was revoked mid-conversation."
+  },
+
+  "chatErrorEmailNotConfirmed": "Confirm your email address first. Check your inbox for the link.",
+  "@chatErrorEmailNotConfirmed": {
+    "description": "R10.2 requires a verified address before any model call."
+  },
+
+  "chatErrorRateLimited": "Too many messages too quickly. Wait a minute and carry on.",
+  "@chatErrorRateLimited": {
+    "description": "R10.1 hourly fair use, with no wait time from the server."
+  },
+
+  "chatErrorRateLimitedFor": "Too many messages too quickly. Carry on in about {minutes} minutes.",
+  "@chatErrorRateLimitedFor": {
+    "description": "R10.1 hourly fair use, with a server-supplied wait.",
+    "placeholders": {
+      "minutes": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+
+  "chatErrorQuotaFree": "That is your last message for today. It resets at midnight.",
+  "@chatErrorQuotaFree": {
+    "description": "The free daily allowance is spent (§8). Paired with the only See Pro button in the chat surface — R8.3 permits the paywall at exactly two moments and this is one of them."
+  },
+
+  "chatErrorQuotaFairUse": "You have hit the daily fair-use ceiling. It resets at midnight.",
+  "@chatErrorQuotaFairUse": {
+    "description": "A Pro user at the R10.1 ceiling. Deliberately offers no upgrade: there is nothing above this tier, and offering one anyway would be a dark pattern."
+  },
+
+  "chatErrorInvalid": "That did not go through. Try sending it again.",
+  "@chatErrorInvalid": {
+    "description": "The server rejected the request shape — a bug in this client, so it stays generic to the user and loud in the log."
+  },
+
+  "chatErrorUnknown": "That did not work, and we do not yet know why.",
+  "@chatErrorUnknown": {
+    "description": "Unclassified gateway failure."
+  },
+
+  "chatEmptyTitle": "Say something.",
+  "@chatEmptyTitle": {
+    "description": "Empty chat, before partners have loaded. Replaced a row of image-generation suggestion chips (§16)."
+  },
+
+  "chatEmptyTitleWithPartner": "{partner} is listening.",
+  "@chatEmptyTitleWithPartner": {
+    "description": "Empty chat, naming the selected partner. §7.6: an empty state invites an action.",
+    "placeholders": {
+      "partner": {
+        "type": "String",
+        "example": "Interviewer"
+      }
+    }
+  },
+
+  "chatEmptyBody": "Type below, or tap the name above to talk to someone else.",
+  "@chatEmptyBody": {
+    "description": "Empty chat, second line. Points at the two things this screen can do."
+  },
+
+  "chatMessagesRemaining": "{count, plural, =1{1 message left today} other{{count} messages left today}}",
+  "@chatMessagesRemaining": {
+    "description": "Shown only in the last five messages of the daily allowance. A counter visible from the first message would be manufactured scarcity (§16).",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "compact"
+      }
+    }
+  },
+
+  "partnersTitle": "Who are you talking to",
+  "@partnersTitle": {
+    "description": "Header of the partner picker sheet. A question without a question mark — §7.6 is plain and a little dry."
+  },
+
+  "partnersUnavailable": "Could not load partners. Check your connection.",
+  "@partnersUnavailable": {
+    "description": "The partner list failed to load."
+  },
+
+  "threadsTitle": "Conversations",
+  "@threadsTitle": {
+    "description": "Header of the history drawer."
+  },
+
+  "threadsEmpty": "No conversations yet. The first one starts when you send a message.",
+  "@threadsEmpty": {
+    "description": "Empty history. §7.6's model for an empty state is 'No sessions yet. The first one takes 60 seconds.'"
+  },
+
+  "threadsUnavailable": "Could not load your conversations. Check your connection.",
+  "@threadsUnavailable": {
+    "description": "The thread list failed to load."
+  },
+
+  "threadUntitled": "Untitled",
+  "@threadUntitled": {
+    "description": "A thread whose title is empty, which should not happen — the server derives one from the first message."
+  },
+
+  "threadDelete": "Delete",
+  "@threadDelete": {
+    "description": "Deletes a conversation and its messages."
+  },
+
+  "threadDeleteTitle": "Delete this conversation",
+  "@threadDeleteTitle": {
+    "description": "Confirmation dialog title."
+  },
+
+  "threadDeleteBody": "The messages go with it. This cannot be undone.",
+  "@threadDeleteBody": {
+    "description": "Confirmation dialog body. States the consequence rather than asking 'Are you sure?', which conveys nothing."
+  },
+
+  "dateToday": "Today",
+  "@dateToday": {
+    "description": "Relative date on a conversation row."
+  },
+
+  "dateYesterday": "Yesterday",
+  "@dateYesterday": {
+    "description": "Relative date on a conversation row."
+  },
+
+  "dateDaysAgo": "{days} days ago",
+  "@dateDaysAgo": {
+    "description": "Relative date on a conversation row, for the last week.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings entry in the drawer."
+  },
+
+  "memoryTitle": "Memory",
+  "@memoryTitle": {
+    "description": "The screen listing what the app has stored about the user."
+  },
+
+  "memoryExplainer": "Your partner remembers these between conversations, so you do not have to repeat yourself. Remove anything you would rather it forgot.",
+  "@memoryExplainer": {
+    "description": "Opening line of the Memory screen. Answers 'why does it know this' before listing anything."
+  },
+
+  "memoryNeverStored": "Never stored, whatever you say: health, religion, politics, sexual orientation, money, ID numbers, your address, or anything about other people.",
+  "@memoryNeverStored": {
+    "description": "R5.2.4's eight forbidden categories in plain words. A promise the implementation keeps with a deny-instruction in the extraction prompt and a keyword filter over every candidate — not boilerplate."
+  },
+
+  "memoryEmpty": "Nothing stored yet. Facts appear here after a few exchanges.",
+  "@memoryEmpty": {
+    "description": "Empty Memory screen."
+  },
+
+  "memoryUnavailable": "Could not load your memory. Check your connection.",
+  "@memoryUnavailable": {
+    "description": "The memory list failed to load."
+  },
+
+  "memoryForgetOne": "Forget this",
+  "@memoryForgetOne": {
+    "description": "Tooltip on the delete button for a single stored fact."
+  },
+
+  "memoryForgetAll": "Forget everything",
+  "@memoryForgetAll": {
+    "description": "R5.2.2 names this action explicitly."
+  },
+
+  "memoryForgetAllTitle": "Forget everything",
+  "@memoryForgetAllTitle": {
+    "description": "Confirmation dialog title for clearing all memory."
+  },
+
+  "memoryForgetAllBody": "Your partner starts from nothing next time. Your conversations stay.",
+  "@memoryForgetAllBody": {
+    "description": "Confirmation dialog body. The second sentence matters: people expect 'forget everything' to delete their transcripts too, and it does not."
+  },
+
+  "waveformLive": "LIVE",
+  "@waveformLive": {
+    "description": "Drawn beside the waveform while the microphone is capturing. The TEXT channel of the live indicator — with it, mic state is legible without perceiving colour at all (WCAG 1.4.1). Keep it short and uppercase; it is read at a glance from across a room."
+  },
+
+  "waveformLiveSemantics": "Microphone live, recording. {context}",
+  "@waveformLiveSemantics": {
+    "description": "Screen-reader announcement while the microphone is capturing. The mic being hot is the one state a non-sighted user cannot infer any other way (§11.6), so it comes first and the caller's own label follows. {context} is often empty.",
+    "placeholders": {
+      "context": {
+        "type": "String",
+        "example": "Session with Interviewer"
+      }
+    }
+  }
+}

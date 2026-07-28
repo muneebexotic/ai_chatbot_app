@@ -137,6 +137,19 @@ void main() {
       // ── partners ───────────────────────────────────────────────────────────
 
       test('partners: private partners are invisible to other users', () async {
+        // `select()` — no column list — used to work here and now returns
+        // 42501. That is deliberate: Milestone 3 revoked SELECT on
+        // `partners.system_prompt` from `authenticated`, because R9.3.2 makes
+        // the prompt server-decided and §6.2 will eventually put user-authored
+        // text in that column for other users to see.
+        //
+        // A column-level revoke cannot subtract from a table-level grant, so
+        // the fix was to drop the table grant and grant columns back — which
+        // makes an unqualified select fail loudly instead of silently
+        // returning one column too many. Naming the columns is the cost, and a
+        // loud failure is the point.
+        const readable = 'id, owner_id, name, description, visibility';
+
         final created = await alice
             .from('partners')
             .insert({
@@ -144,14 +157,33 @@ void main() {
               'name': 'Alice private',
               'system_prompt': 'x',
             })
-            .select()
+            .select(readable)
             .single();
 
         final seenByBob = await bob
             .from('partners')
-            .select()
+            .select(readable)
             .eq('id', created['id']);
         expect(seenByBob, isEmpty);
+      });
+
+      test('partners: system_prompt is unreadable even for your own row', () async {
+        // The owner has no more claim to read a prompt than anyone else. The
+        // gateway builds the prompt under service role; nothing in the client
+        // needs it, and a partner prompt in the client's hands is the first
+        // half of working out how to talk around it.
+        await alice.from('partners').insert({
+          'owner_id': aliceId,
+          'name': 'Alice prompt check',
+          'system_prompt': 'x',
+        });
+
+        await expectLater(
+          alice.from('partners').select('id, system_prompt').eq('owner_id', aliceId),
+          throwsA(
+            isA<PostgrestException>().having((e) => e.code, 'code', '42501'),
+          ),
+        );
       });
 
       test('partners: a user cannot forge a built-in', () async {

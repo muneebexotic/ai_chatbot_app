@@ -3,8 +3,11 @@ buildscript {
         google()
         mavenCentral()
     }
+    // The google-services classpath entry lived here. Gone with Firebase
+    // (Milestone 3, DECISIONS D0). Nothing else needs a buildscript block, but
+    // it is kept empty rather than deleted so the repositories above stay
+    // declared for any plugin added later.
     dependencies {
-        classpath 'com.google.gms:google-services:4.4.0'
     }
 }
 

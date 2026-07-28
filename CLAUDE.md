@@ -34,40 +34,53 @@ why the report is the flagship.
 ## Current state — read this before believing any file
 
 This is a **rebuild in progress on a live codebase**, not a greenfield project.
-The repo currently contains the *old* app. Only Milestone 0 is done.
+Half the app is now the new one; the other half is the pre-rebuild app waiting
+for its milestone.
 
 | | Now | Target (PRD) |
 |---|---|---|
-| State | Riverpod (state classes still `ChangeNotifier`, D5) | Riverpod `Notifier` throughout |
-| Auth | **Supabase** (M2 done) | Supabase |
-| Data | Firestore for chat/conversations only | Supabase Postgres + RLS |
-| Model calls | Direct from client | Server gateway only, key server-side |
-| Layout | `lib/screens|providers|services|…` | `lib/app|core|design|features/*|l10n` (PRD §13) |
-| Type | Poppins + Urbanist | Newsreader + General Sans + Geist Mono |
-| Errors | `null` returns | `Result<T>` / sealed `AppFailure` |
-| Images | Generation (DALL·E/HF/Stability) | Understanding only, via gateway |
+| State | Riverpod. `chat`/`partners`/`memory` are real `Notifier`s; four `ChangeNotifier` shims remain (D5) | Riverpod `Notifier` throughout |
+| Auth | **Supabase** (M2) | Supabase |
+| Data | **Supabase Postgres + RLS.** Firebase is gone entirely (M3) | Supabase Postgres + RLS |
+| Model calls | **Server gateway only, key server-side** (M3) | Server gateway only |
+| Layout | `features/{chat,partners,memory,auth}` are PRD-shaped; `screens/`, `providers/`, `services/` still hold auth, settings, subscription | `lib/app`, `core`, `design`, `features/*`, `l10n` (§13) |
+| Type | Newsreader + General Sans + Geist Mono, rendering on the chat surface | same |
+| Errors | `Result<T>` / sealed `AppFailure` | same |
+| Copy | ARB from `lib/l10n`, with a ratchet over the 127 strings still hardcoded | no hardcoded strings in `lib/` |
+| Images | Understanding only, not yet built | Understanding only, via gateway |
 
 **`.kiro/steering/*.md` describes the OLD architecture** (Provider, Firebase,
 Poppins). It is stale and contradicts the PRD. Do not follow it; the PRD wins.
-Delete or rewrite it in Milestone 1.
 
-Milestone status: **0, 1, 2 done.** 3–8 not started. Do them in order
+Milestone status: **0, 1, 2, 3 done.** 4–8 not started. Do them in order
 (PRD §15); the order is a closed ceiling.
 
-What M2 landed: schema + RLS on both projects with an RLS test per table,
-Supabase auth (email/password and Google), account deletion via Edge Function,
-package renamed to `com.muscodes.kalaam`. What it deliberately did not: usage
-counters and entitlements are still local on `PaymentService`, because
-`usage_daily` and `entitlements` are service-role write only and the gateway
-that writes them is M3 (CRITIQUE W2.2).
+What M3 landed: the gateway Edge Function (JWT, entitlement, quota, §10 abuse
+checks, Groq streaming, atomic usage recording), typed chat rebuilt on §7.4,
+partners as rows, memory extraction and the Memory screen, `flutter_localizations`
++ ARB, and Firebase deleted. **No model key ships in the APK any more** — the
+built artefact contains no key and does not mention `api.groq.com`
+(`qa/m3-device-pass.md`), which closes CRITIQUE W0.3.
+
+What M3 deliberately did not: a purchase now grants **nothing**. R8.2 and §14
+forbid granting on an unverified token, `entitlements` is service-role write
+only, and `verify-purchase` is M6 — so the paywall is reachable and inert
+(CRITIQUE W3.3). Read "monetization" as absent, not partial.
 
 ## Stack
 
 - Flutter 3.38.6 / Dart 3.10.7 (SDK constraint `^3.8.1`)
 - Riverpod for state and DI — services never touch `BuildContext`
 - Supabase: Auth, Postgres with RLS, Edge Functions (Deno/TypeScript), Storage
-- Drift (SQLite) for local threads/messages/sessions/reports;
-  `shared_preferences` for settings only
+- **Groq** for model calls, reached only through the gateway (D3). The client
+  has no provider SDK and no provider hostname; swapping providers is a row in
+  `gateway_config`, not a release.
+- Deno 2.x to run the Edge Function tests. Not on PATH — installed at
+  `~/.deno/bin/deno.exe`.
+- Drift (SQLite) for local threads/messages/sessions/reports — **not added
+  yet**; §9.4 offline history arrives with Milestone 4. Today the client reads
+  Postgres directly and has no offline story. `shared_preferences` for settings
+  only.
 - `speech_to_text` and `flutter_tts` — both **on-device**. This is the whole
   business model: a spoken minute costs zero, so voice practice is free to run
   for a solo developer and expensive for a funded competitor. Never replace
@@ -75,30 +88,44 @@ that writes them is M3 (CRITIQUE W2.2).
 - `gpt_markdown` — the single markdown renderer. Not `markdown`,
   `flutter_markdown`, `markdown_widget`, or `flutter_highlight`.
 - Targets: **Android first, iOS kept compiling.** No web, Windows, macOS, or
-  Linux — those folders get deleted in Milestone 1.
+  Linux; those folders are gone and `architecture_test.dart` fails if one
+  returns.
 
 ## Commands
 
 ```bash
-flutter pub get
+flutter pub get                     # also runs gen-l10n (pubspec `generate: true`)
 flutter analyze                     # must be clean, no ignored rules (§14)
-flutter test
 flutter test --coverage             # domain + application ≥70% (§14)
-# Supabase config is required. Point it at kalaam-dev while developing.
-flutter run --dart-define=GEMINI_API_KEY=<key> \n  --dart-define=SUPABASE_URL=https://<ref>.supabase.co \n  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
-flutter test                        # 80 offline; integration tests self-skip
+# Only two defines now. There is no model key here any more — the gateway holds
+# it as a Supabase Function secret, which is the whole point of R9.3.
+# Point them at kalaam-dev while developing.
+flutter run \
+  --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+
+flutter test                        # 119 offline; integration tests self-skip
 flutter test --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
-                                    # +24 against kalaam-dev (RLS + auth)
+                                    # +34 against kalaam-dev (RLS, auth, gateway)
+
+~/.deno/bin/deno.exe test --allow-read --allow-net supabase/functions/tests/
+                                    # 29 Edge Function tests (§14)
+
+dart run test/tool/update_l10n_baseline.dart   # after extracting strings, never
+                                               # to make a failing test pass
 
 npx supabase link --project-ref <ref>   # dev: sbwaiindthrluqoypvqc
 npx supabase db push                    # prod: kneiwapwjuuaxcenlfsu
+npx supabase functions deploy gateway
+npx supabase functions deploy extract-memory
 npx supabase functions deploy delete-account
+npx supabase secrets set GROQ_API_KEY=...   # server-only, never a --dart-define
 flutter build apk --split-per-abi   # per-ABI under 30MB (R11.1)
 
 bash scripts/check-secrets.sh       # staged content; runs from pre-commit
 bash scripts/check-secrets.sh --all # whole tracked tree; use in CI
-bash scripts/check-secrets.test.sh  # 30 cases, must stay green
+bash scripts/check-secrets.test.sh  # 40 cases, must stay green
 ```
 
 First thing in a new clone:
@@ -118,9 +145,13 @@ Full policy in `SECURITY.md`; incident history and the owner's runbook in
 - **No secret in the client, ever.** Not in source, not in a committed `.env`,
   not obfuscated. An APK is a zip; every string in it is public. This repo
   leaked four credentials for ~12 months. Do not add a fifth.
-- `--dart-define` keeps keys out of *source*, not out of the *binary*. It is a
-  Milestone 0–2 stopgap. The fix is the gateway (R9.3): server holds the key,
-  client holds a user JWT.
+- `--dart-define` keeps keys out of *source*, not out of the *binary*. That is
+  why it was only ever a stopgap, and why CRITIQUE W0.3 refused to call
+  Milestone 0 a fix. **The gateway (R9.3) is the fix and it landed in Milestone
+  3**: the server holds the model key, the client holds a user JWT, and the
+  built APK contains no key and no provider hostname (`qa/m3-device-pass.md`).
+  The two defines that remain are the Supabase URL and publishable key, which
+  R9.6 says are public by design — security there comes from RLS.
 - **Entitlements are server-truth** (F2). The client displays; it never
   enforces. Purchases verified against the Play Developer API before any
   entitlement is written.
@@ -169,7 +200,18 @@ data          (repositories, remote + local data sources)
   specific for each (F4, R11.5).
 - No `print()`. Use the `Log` utility, which no-ops in release.
 - No hardcoded user-facing strings anywhere in `lib/` — everything through
-  `l10n/` ARB files from day one (R11.7).
+  `l10n/` ARB files (R11.7). Enforced by `test/l10n_test.dart` as a **ratchet**:
+  a file not in `test/l10n_baseline.txt` must have zero, so everything written
+  from Milestone 3 on is localized from birth. The baseline may only shrink.
+- **Anything user-facing must be verified by running the app.** Not a
+  suggestion: every real defect in Milestones 1, 2 and 3 was found by looking
+  at a screen, and none was reachable by the analyzer or the suite (CRITIQUE
+  W1.1, W2.1, W3.1). Layout bugs in particular are invisible to every static
+  rule in this repo — `Row(crossAxisAlignment: stretch)` inside a `ListView`
+  rendered every AI reply at zero height while analyze was clean.
+- **Pump widget tests inside the parent they actually have.** A `ListView`
+  gives its items a tight cross-axis constraint and an unbounded main-axis one.
+  Both Milestone 3 layout bugs pass in a bare `Scaffold`.
 - Migrate Provider → Riverpod screen by screen, but never leave the app
   half-migrated at the end of a milestone (F5).
 - All schema changes are committed migration files in `supabase/migrations/`.
@@ -275,6 +317,7 @@ emoji in UI copy, no "AI-powered", no congratulating the user for existing.
 - Floor before ceiling, within every milestone. Never leave a PRD requirement
   unmet to build something more interesting (R0.5.4).
 - Owner decisions are marked `TODO(muneeb)` and collected in `README.md` with
-  file paths. Open ones: final app name, package id (currently
-  `com.example.ai_chatbot_app`, which **cannot be published to Play**), price
-  points, second locale.
+  file paths. Still open: **final app name** (the app now says "Kalaam" on the
+  splash, the welcome screen, and the task switcher, all from one ARB key —
+  changing it is one string), **price points**, and the **second locale**.
+  Closed: the package id, which became `com.muscodes.kalaam` in Milestone 2.

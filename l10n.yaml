@@ -1,0 +1,31 @@
+# Localization codegen — PRD R11.7.
+#
+# "Localization scaffolding from day one (`flutter_localizations`, ARB files),
+# shipping English only in v1, with Urdu marked as the first follow-up. No
+# hardcoded user-facing strings anywhere in `lib/`."
+#
+# The generated `AppLocalizations` lands in `lib/l10n/` beside the ARB files —
+# Flutter removed the synthetic `package:flutter_gen` output, so generated code
+# now sits inside `lib/`. It is a build artefact and is gitignored; the ARB
+# files are the source. `flutter pub get` regenerates it (pubspec's
+# `generate: true`), as does `flutter gen-l10n`.
+#
+# Because it lives in `lib/`, every rule in this repo that scans `lib/` must
+# skip it. `test/support/dart_source.dart` does, in one place.
+
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+
+# Non-nullable getter: `AppLocalizations.of(context)` returns the delegate or
+# throws, rather than handing back a null every call site has to defend
+# against. The delegate is registered in main.dart, so a null here would mean
+# a wiring bug, and a crash is the right way to learn about a wiring bug.
+nullable-getter: false
+
+# ICU escaping is OFF. With it on, every literal apostrophe in English copy
+# has to be doubled ("don''t"), which is a silent-corruption trap: forget it
+# once and the reader sees the raw ICU syntax. §7.6's voice has little use for
+# apostrophes, and none of the current strings need braces.
+use-escaping: false

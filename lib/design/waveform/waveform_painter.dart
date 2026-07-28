@@ -158,8 +158,18 @@ class WaveformPainter extends CustomPainter {
       final t = barCount == 1 ? 0.0 : i / (barCount - 1);
       final amplitude = _amplitudeAt(i, t);
 
-      // Keep a visible floor so the component never reads as broken or empty.
-      final barHeight = math.max(2.0, amplitude * maxAmplitude);
+      // Keep a visible floor so the component never reads as broken or empty —
+      // but a floor proportional to the height, not a fixed 2.0.
+      //
+      // A fixed floor is invisible at the 96dp session size and total at the
+      // 24dp loading size: idle amplitude tops out at 0.22, so on a 24dp
+      // waveform every bar computed between 0.24 and 2.64 and `max(2.0, …)`
+      // flattened almost all of them to exactly 2.0. The chat "thinking"
+      // indicator drew fourteen identical bars — a pulsing block where §7.5.2
+      // asks for "a calm idle oscillation". Found by looking at it on a phone;
+      // the maths reads fine either way.
+      final floor = math.max(1.0, size.height * 0.03);
+      final barHeight = math.max(floor, amplitude * maxAmplitude);
       final x = barsLeft + slot * i + slot / 2;
 
       paint.color = _colorFor(t);

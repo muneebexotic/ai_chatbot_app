@@ -128,11 +128,13 @@ class PurchaseConfirmationDialog extends ConsumerWidget {
         color: AppColors.getSurfaceVariant(isDark),
         borderRadius: BorderRadius.circular(8),
       ),
+      // TODO(m6): same rewrite as subscription_screen's list — PRD §8's Pro
+      // column, once Milestone 6 rebuilds the paywall. "Unlimited image
+      // generation" was the third bullet here; §16 bans the feature.
       child: AppText.bodySmall(
         'This will give you access to:\n'
         '• Unlimited messages and conversations\n'
         '• All AI personas and personalities\n'
-        '• Unlimited image generation\n'
         '• Unlimited voice interactions\n'
         '• Priority customer support',
         color: AppColors.getTextSecondary(isDark),

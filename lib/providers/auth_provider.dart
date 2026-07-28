@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
 import 'package:ai_chatbot_app/core/result/result.dart';
 import 'package:ai_chatbot_app/features/auth/data/auth_repository.dart';
 import 'package:ai_chatbot_app/features/auth/domain/auth_user.dart';
@@ -230,15 +229,11 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
-  /// No avatar field exists in `profiles` (§9.5), so this cannot persist.
-  ///
-  /// Kept as a no-op returning a typed failure rather than deleted, because
-  /// the photo-upload screen still calls it and deleting the method would move
-  /// a compile error into a screen Milestone 3 replaces anyway.
-  Future<Result<void>> setUserAvatar(String avatarUrl) async {
-    Log.w('setUserAvatar: profiles has no avatar column (§9.5)');
-    return const Err(InvalidRequestFailure(field: 'photoUrl'));
-  }
+  // `setUserAvatar` lived here as a no-op returning a typed failure, for the
+  // profile-photo screen alone. Both are gone: `profiles` has no avatar column
+  // (§9.5), the screen's "Generate Avatar" option was image generation banned
+  // by §16, and nothing else ever called it. R5.3.1 settles what an avatar is
+  // in v1 — a generated geometric mark on a partner, not a user photo.
 
   // ── Usage, local until the gateway lands ───────────────────────────────────
   //
