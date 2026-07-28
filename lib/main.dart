@@ -6,6 +6,7 @@ import 'design/tokens/app_colors.dart';
 import 'core/ui/app_messenger.dart';
 import 'config/bootstrap.dart';
 import 'config/app_router.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/themes_provider.dart';
 import 'providers/auth_provider.dart';
 import 'design/theme/kalaam_theme.dart';
@@ -60,7 +61,14 @@ class MyApp extends ConsumerWidget {
             isDark ? Brightness.light : Brightness.dark,
       ),
       child: MaterialApp(
-        title: 'AI Chatbot',
+        // R11.7. `onGenerateTitle` rather than `title` because the delegate is
+        // only resolvable below MaterialApp — and because this string is real
+        // UI: Android shows it in the task switcher, and it read
+        // "AI Chatbot" while the package said com.muscodes.kalaam.
+        onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        // English only in v1; Urdu is the first follow-up (R11.7, §17.4).
+        supportedLocales: AppLocalizations.supportedLocales,
         debugShowCheckedModeBanner: false,
         // Lets non-widget code surface a message without holding a
         // BuildContext (PRD §9.1). Without this key every AppMessenger

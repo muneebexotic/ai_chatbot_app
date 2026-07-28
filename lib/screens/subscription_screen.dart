@@ -600,15 +600,22 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     );
   }
 
+  // TODO(m6): rebuild this list from PRD §8's Pro column. It currently sells
+  // things that do not exist, which is the paywall's own version of the §16
+  // problem. Milestone 6 replaces this screen; the one line that could not
+  // wait is gone below.
+  //
+  // "Unlimited image generation" was here, on the screen a user pays from,
+  // through four milestones — §2.2 cut the feature and §16 bans it outright.
+  // The identifier rule in architecture_test.dart went green the whole time
+  // because nothing referenced a deleted symbol. The string rule found it in
+  // its first run.
   Widget _buildFeaturesList(Color textColor, bool isYearly) {
     final features = isYearly ? [
       'Unlimited conversations',
       'All AI personalities',
-      'Unlimited image generation',
       'Unlimited voice interactions',
       'Priority customer support',
-      'Advanced AI models',
-      'Custom conversation settings',
       'Export conversation history',
     ] : [
       'Unlimited conversations',

@@ -7,6 +7,7 @@ import '../mixins/splash_animations_mixin.dart';
 import '../constants/splash_constants.dart';
 import '../utils/app_theme.dart';
 import '../app/providers.dart';
+import '../l10n/app_localizations.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -159,7 +160,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       child: SlideTransition(
         position: slideAnimation,
         child: AppText.displayLarge(
-          'ChadGPT',
+          // TODO(muneeb): final app name (README, PRD §17.1). 'Kalaam' is the
+          // working name and already the package id (com.muscodes.kalaam); the
+          // old 'ChadGPT' here contradicted both on the first frame.
+          AppLocalizations.of(context).appName,
           color: AppColors.getTextPrimary(isDark),
           textAlign: TextAlign.center,
           fontWeight: FontWeight.bold,
@@ -172,7 +176,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return FadeTransition(
       opacity: subtitleAnimation,
       child: AppText.bodyMedium(
-        'AI-Powered Conversations',
+        // Was 'AI-Powered Conversations'. §7.6 bans "AI-powered" by name, and
+        // it was the first copy a user ever read. This says what the product
+        // does instead of what it is built from.
+        AppLocalizations.of(context).splashTagline,
         color: AppColors.getTextSecondary(isDark),
         textAlign: TextAlign.center,
         fontWeight: FontWeight.w400,

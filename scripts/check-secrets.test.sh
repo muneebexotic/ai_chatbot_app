@@ -116,6 +116,16 @@ run_case "password error copy"           pass lib/k.dart \
   "static const passwordWeakError = 'Password must contain letters and numbers';"
 run_case "String.fromEnvironment"        pass lib/s.dart \
   "static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');"
+# R11.7's ARB file blocked a real commit on the message a user reads when
+# their password is too short. The value is a sentence; credentials are not.
+run_case "ARB message about a password"  pass lib/l10n/app_en.arb \
+  '"authWeakPassword": "That password is too short. Use at least eight characters.",'
+run_case "ARB message about a secret"    pass lib/l10n/app_en.arb \
+  '"settingsSecretHint": "Your api key is never stored on this device.",'
+# The narrowing above must not become a way through: a value with no spaces is
+# still a credential shape whatever the key says about it.
+run_case "no-space value still caught"   catch lib/s.dart \
+  "const password = 'hunter2hunter2hunter2';"
 run_case "Bearer with interpolation"     pass lib/s.dart \
   "'Authorization': 'Bearer \$_hfApiKey',"
 run_case "placeholder value"             pass lib/s.dart \

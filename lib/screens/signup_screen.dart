@@ -64,7 +64,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
     if (!_controller.validateForm()) return;
 
     _controller.signUpWithEmail(
-      onSuccess: (isNewUser) => _navigateAfterAuth(isNewUser),
+      onSuccess: _navigateAfterAuth,
       onError: _showErrorSnackBar,
     );
   }
@@ -72,28 +72,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
   /// Handle Google sign up
   void _handleGoogleSignUp() {
     _controller.signUpWithGoogle(
-      onSuccess: (_) => _navigateAfterAuth(false),
+      onSuccess: _navigateAfterAuth,
       onError: _showErrorSnackBar,
     );
   }
 
   /// Straight to chat, for new and returning users alike.
   ///
-  /// New accounts used to land on the profile-photo screen. That screen is now
-  /// dead three times over:
+  /// New accounts used to land on the profile-photo screen. Milestone 2 took
+  /// it off this path; Milestone 3 deleted the screen, its service, and its
+  /// route. It was dead three times over:
   ///
-  /// * `profiles` has no avatar column (§9.5), so nothing it collects can be
-  ///   saved — `AuthProvider.setUserAvatar` returns a typed failure.
+  /// * `profiles` has no avatar column (§9.5), so nothing it collected could
+  ///   be saved.
   /// * Its "Generate Avatar" option is image generation, which §2.2 cut and
-  ///   §16 bans outright. Leaving it in the first thirty seconds of the
-  ///   product is the worst possible place for a banned feature to survive.
-  /// * It is still drawn in the old indigo palette, so it is the least
+  ///   §16 bans outright. The first thirty seconds of the product is the worst
+  ///   possible place for a banned feature to survive.
+  /// * It was still drawn in the old indigo palette, so it was the least
   ///   on-brand screen a new user could be shown first.
-  ///
-  /// The route stays registered so nothing breaks that still pushes it; it is
-  /// simply no longer on the path anyone travels. The screen itself goes with
-  /// the Milestone 3 rewrite.
-  void _navigateAfterAuth(bool isNewUser) {
+  void _navigateAfterAuth() {
     if (!mounted) return;
     _controller.navigateToChat();
   }

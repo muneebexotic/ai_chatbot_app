@@ -10,6 +10,7 @@ import 'welcome_screen.dart';
 import '../app/providers.dart';
 import 'package:ai_chatbot_app/core/result/result.dart';
 import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -604,7 +605,9 @@ class SettingsScreen extends ConsumerWidget {
         // data is gone when it is not has been misled about the one thing this
         // screen exists to promise.
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authFailureMessage(failure))),
+          SnackBar(
+            content: Text(authFailureMessage(AppLocalizations.of(context), failure)),
+          ),
         );
     }
   }

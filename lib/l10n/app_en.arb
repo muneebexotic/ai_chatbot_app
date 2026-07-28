@@ -1,0 +1,110 @@
+{
+  "@@locale": "en",
+
+  "appName": "Kalaam",
+  "@appName": {
+    "description": "The product name. A proper noun (Urdu: speech) — transliterate rather than translate. TODO(muneeb): PRD §17.1 leaves the final name open; changing it here changes it everywhere except the package id, which cannot change after publishing."
+  },
+
+  "splashTagline": "Speak. Hear how you sounded.",
+  "@splashTagline": {
+    "description": "Subtitle under the product name on the splash screen. Replaced 'AI-Powered Conversations', which §7.6 bans by name. States what the product does, not what it is built from."
+  },
+
+  "authInvalidCredentials": "That email and password do not match. Check both, or reset your password.",
+  "@authInvalidCredentials": {
+    "description": "Sign-in refused. Deliberately covers both a wrong password and an unknown email: distinguishing them would tell an anonymous caller which addresses have accounts."
+  },
+
+  "authEmailAlreadyRegistered": "That email already has an account. Sign in instead, or reset the password.",
+  "@authEmailAlreadyRegistered": {
+    "description": "Sign-up refused because the address is in use."
+  },
+
+  "authWeakPassword": "That password is too short. Use at least eight characters.",
+  "@authWeakPassword": {
+    "description": "Sign-up refused for password length. States the actual minimum, because an error has to state its fix (§7.6)."
+  },
+
+  "authEmailNotConfirmed": "Check your email and open the confirmation link, then sign in.",
+  "@authEmailNotConfirmed": {
+    "description": "Credentials were correct but the address is unconfirmed."
+  },
+
+  "authInvalidEmail": "That does not look like an email address.",
+  "@authInvalidEmail": {
+    "description": "The address failed format validation."
+  },
+
+  "authGoogleUnavailable": "Google sign-in is not available yet. Use an email address and password.",
+  "@authGoogleUnavailable": {
+    "description": "Shown when the project has sign-ups disabled, reused for Google sign-in being unavailable. Honest about the state of the world rather than letting the tap appear to do nothing."
+  },
+
+  "failureOffline": "No internet connection. Your details are not sent until you reconnect.",
+  "@failureOffline": {
+    "description": "No usable network. Must never read as though the user lost work (R11.5)."
+  },
+
+  "failureRateLimited": "Too many attempts. Wait a minute and try again.",
+  "@failureRateLimited": {
+    "description": "Going too fast, and the server did not say for how long."
+  },
+
+  "failureRateLimitedFor": "Too many attempts. Try again in {seconds} seconds.",
+  "@failureRateLimitedFor": {
+    "description": "Going too fast, and the server said how long to wait.",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+
+  "failureUnauthorized": "Your session ended. Sign in again.",
+  "@failureUnauthorized": {
+    "description": "The caller is not authenticated, or the token expired."
+  },
+
+  "failureInvalidRequest": "That did not go through. Check the details and try again.",
+  "@failureInvalidRequest": {
+    "description": "The server rejected the request shape. Usually a bug in this client, so it stays generic to the user and loud in the log."
+  },
+
+  "failureStorage": "Could not save to this device. Check your available storage.",
+  "@failureStorage": {
+    "description": "Local persistence failed."
+  },
+
+  "failureDevice": "This device would not allow {capability}.",
+  "@failureDevice": {
+    "description": "A device capability was refused or is missing: microphone permission, a speech recogniser, a text-to-speech voice.",
+    "placeholders": {
+      "capability": {
+        "type": "String",
+        "example": "the microphone"
+      }
+    }
+  },
+
+  "failureQuotaExceeded": "You have used your allowance for today.",
+  "@failureQuotaExceeded": {
+    "description": "The daily cap is reached. Never a dead end — free users still have unlimited Drill Mode (§8, DECISIONS D2)."
+  },
+
+  "failureSafetyBlocked": "That request was refused.",
+  "@failureSafetyBlocked": {
+    "description": "The provider's safety system refused the request or response. Plain and non-judgemental by requirement (R10.5)."
+  },
+
+  "failureAtCapacity": "The service is at capacity right now. Try again shortly.",
+  "@failureAtCapacity": {
+    "description": "The global circuit breaker tripped (R10.4). Not the user's fault and not fixed by upgrading."
+  },
+
+  "failureUnknown": "Something failed and we do not yet know what. Try again; if it keeps happening, it is a bug worth reporting.",
+  "@failureUnknown": {
+    "description": "Unclassified failure. Every occurrence is a gap in the AppFailure taxonomy."
+  }
+}

@@ -916,9 +916,11 @@ class _ConversationDrawerState extends ConsumerState<ConversationDrawer>
               ),
               const SizedBox(height: 8),
               Text(
+                // §7.6: an empty state invites an action. The old line —
+                // "Start a new chat to begin your journey" — did neither.
                 isSearching
-                    ? 'Try adjusting your search terms'
-                    : 'Start a new chat to begin your journey',
+                    ? 'Try a shorter search term.'
+                    : 'No conversations yet. Start one and it appears here.',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.getTextTertiary(isDark),

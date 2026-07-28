@@ -163,7 +163,23 @@ mongodb(\+srv)?://[^:@/[:space:]]+:[^@[:space:]]+@~MongoDB URL with inline passw
 # Requiring the operator is what excludes `passwordController`, `passwordHint`,
 # `validatePassword`, `errors['password']`, and every other identifier.
 TIER2_KEYS='api_?key|apikey|secret|client_secret|password|passwd|access_token|auth_token|refresh_token|private_key|service_role'
-TIER2_RE="(${TIER2_KEYS})[\"']?[[:space:]]*[:=]+[[:space:]]*[\"'][^\"']{8,}[\"']"
+# The value must contain no whitespace. Every credential class this project
+# handles — API keys, bearer tokens, service-role keys, Play purchase tokens —
+# is a single unbroken run of characters, while a value with spaces in it is
+# almost always prose that happens to sit beside one of the keywords above.
+#
+# Added after the ARB file for R11.7 blocked a commit on
+#   "authWeakPassword": "That password is too short. Use at least eight..."
+# which is the error message shown when a password IS too short. The
+# alternative was to exempt `lib/l10n/`, and W0.2 in CRITIQUE.md is already
+# about how the exemption list is a hole by construction — better to make the
+# rule right than to make the file invisible.
+#
+# The cost, stated plainly: a passphrase containing spaces would now slip past
+# Tier 2. Tier 1 still matches the shaped credentials regardless of context,
+# and a space-separated passphrase in source is not a shape this repo has ever
+# leaked. Reconsider if one ever appears.
+TIER2_RE="(${TIER2_KEYS})[\"']?[[:space:]]*[:=]+[[:space:]]*[\"'][^\"'[:space:]]{8,}[\"']"
 
 # Values that are obviously not live credentials.
 TIER2_ALLOW='your_|_here|YOUR_|placeholder|example|EXAMPLE|changeme|CHANGEME|xxxx|XXXX|<[^>]*>|\$\{|\$[A-Za-z_]|String\.fromEnvironment|dotenv|process\.env|Deno\.env|=[[:space:]]*"env\([A-Za-z0-9_]+\)"[[:space:]]*(#.*)?$|TODO|FIXME|\*\*\*|\.\.\.'
