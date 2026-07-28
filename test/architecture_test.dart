@@ -77,6 +77,24 @@ const _expectedOrphans = <String, String>{
   'lib/services/speech_service.dart': 'M4 — the live session screen',
   'lib/services/voice_service.dart': 'M4 — the live session screen',
 
+  // The R4.3.1 metrics engine, landed ahead of the screen that feeds it.
+  //
+  // These entries are IN-MILESTONE and short-lived, which is different from
+  // every other entry in this map. DECISIONS D2 requires the engine to be "a
+  // standalone, independently testable module with Drill Mode as a known
+  // consumer" — so it is written and proved against a hand-checked transcript
+  // (§14) before anything consumes it, rather than growing inside the session
+  // controller where Drill Mode could not reach it in Milestone 5.
+  //
+  // The session controller imports all five. If these entries are still here
+  // when Milestone 4 closes, the engine was never wired up and the milestone
+  // is not done.
+  'lib/core/speech_metrics/metrics_engine.dart': 'M4 — awaiting the session controller',
+  'lib/core/speech_metrics/speech_metrics.dart': 'M4 — awaiting the session controller',
+  'lib/core/speech_metrics/transcript.dart': 'M4 — awaiting the session controller',
+  'lib/core/speech_metrics/filler_lexicon.dart': 'M4 — awaiting the session controller',
+  'lib/core/speech_metrics/pace_band.dart': 'M4 — awaiting the session controller',
+
   // Paywall debris. §14 and R0.5.6 both put the paywall on the list of screens
   // that must not ship as the default, so Milestone 6 rebuilds rather than
   // rewires these.
