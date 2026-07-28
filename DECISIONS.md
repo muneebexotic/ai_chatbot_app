@@ -8,6 +8,68 @@ would reverse it.
 
 ---
 
+## D8 — The read-own policies on `entitlements` and `usage_daily` are proven through the gateway, not with a service key in the test suite
+
+**Date:** 2026-07-28 · **Status:** accepted · **Closes:** CRITIQUE W2.3 ·
+**Implements:** PRD R9.5.1, R9.3.4, §14
+
+**The gap.** Fourteen RLS tests prove one user cannot reach another's rows,
+and an anon-write probe covers all ten tables. Two tables are only half
+covered: `entitlements` and `usage_daily` are proven to *refuse* client
+writes, but their read-own policies are unproven, because creating a row to
+read requires the service-role key. W2.3 states why that matters — the untested
+half is the half that decides whether a paying user can see what they paid for,
+and a read-own policy that silently returns nothing looks exactly like "no
+subscription" in the UI.
+
+**The two options.** Either give the test suite a dev service-role key, or wait
+for something that legitimately holds one.
+
+**Chosen: wait, and then use the gateway.** The gateway (§9.3) writes
+`usage_daily` under service role, atomically with the response it accounts for
+(R9.3.4), and reads or creates the caller's `entitlements` row on every call
+(R9.3.1). So the sequence a test needs already exists in production code:
+
+1. Sign in to `kalaam-dev` as a throwaway user.
+2. Send one message through the gateway with that user's JWT.
+3. Read `usage_daily` and `entitlements` back **as that user**, through the
+   anon key and therefore through RLS.
+
+A row appears, the user can read it, and neither the test nor the developer
+running it ever holds a key that bypasses RLS.
+
+**Why this is better than a dev service key, not merely cheaper.**
+
+- **A service key in a test suite is a service key on every developer's disk
+  and in CI.** It bypasses RLS by definition, which makes it the single
+  credential in this project whose leak would be unrecoverable without rotating
+  the database. §1 exists because this repo leaked four credentials for eleven
+  months. Adding a fifth to prove a `select` works is a poor trade.
+- **It tests the wrong thing.** A row seeded by the test suite proves the
+  policy accepts a row the test knows how to shape. A row written by the
+  gateway proves the policy accepts *the row the product actually writes* —
+  which is the claim W2.3 is worried about.
+- **It closes a second gap for free.** §14 requires proving that "a patched
+  client cannot gain Pro". The same test, run with a forged `tier: pro` in the
+  request body, shows the gateway ignores it.
+
+**Cost.** The coverage gap stays open for the length of Milestone 3 rather than
+being closed immediately, and the test is an integration test that self-skips
+without `--dart-define=SUPABASE_URL`, so it does not run on a machine with no
+network. That is the same shape as the existing 24 integration tests and is
+recorded in `CLAUDE.md` under commands.
+
+**Not deferred indefinitely.** This is a Milestone 3 deliverable, not a
+milestone-4 hope. If Milestone 3 closes without it, W2.3 is re-entered in
+`CRITIQUE.md` as unfixed twice, which is a different and worse finding.
+
+**Reverses if:** the gateway turns out not to write `usage_daily` on a typed
+message — for instance if §8's message counter moves somewhere else. Then the
+choice is between seeding through some other service-role function and
+accepting the key, and it should be re-argued rather than assumed.
+
+---
+
 ## D7 — `abuse_events` is service-role write and no client read
 
 **Date:** 2026-07-27 · **Status:** accepted · **Interprets:** PRD R9.5.1, §10
