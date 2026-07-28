@@ -520,3 +520,19 @@ was not done. W3.3 is blocked on a milestone, by design rather than neglect.
 - **`_expectedOrphans` in `architecture_test.dart` has four entries** — two for
   Milestone 4's voice services, two for Milestone 6's paywall. It should be
   empty by the end of Milestone 6. If it is not, that is a finding.
+- **Sign out clears the session but does not navigate.** Found during the
+  SpeakWise OAuth verification: tapping Sign out in Settings dismisses the
+  dialog and leaves you on Settings, apparently signed in. The session really
+  is gone — a restart lands on Welcome — so every tap in between is operating
+  on a dead session and would fail with "your session ended". In
+  `settings_screen.dart`, which Milestone 6 rebuilds; the fix is a
+  `pushNamedAndRemoveUntil('/welcome')` after the sign-out completes.
+- **An error that is only a snackbar is an error nobody can read.** Two
+  email sign-up attempts on device appeared to do nothing: spinner, then back
+  to the form, no message. The likely cause was the phone's network, which
+  died outright a minute later — but that is a guess, because whatever the
+  controller reported went to a snackbar that had vanished before the
+  screenshot. The chat surface already learned this (`ChatFailureBar` is a
+  persistent bar precisely so a failure can be read and acted on); the auth
+  screens still use `_showErrorSnackBar` and should adopt the same shape when
+  they are next touched.
