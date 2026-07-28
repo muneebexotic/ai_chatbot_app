@@ -13,22 +13,46 @@ import 'package:speakwise/l10n/app_localizations.dart';
 /// A partner's generated mark (R5.3.1), drawn by the app's one visualization.
 ///
 /// See `Partner.markAmplitudes` for why this is a waveform and not an icon.
-class PartnerMark extends StatelessWidget {
+class PartnerMark extends StatefulWidget {
   const PartnerMark({super.key, required this.partner, this.width = 44});
 
   final Partner partner;
   final double width;
 
   @override
+  State<PartnerMark> createState() => _PartnerMarkState();
+}
+
+class _PartnerMarkState extends State<PartnerMark> {
+  /// Held rather than rebuilt.
+  ///
+  /// `AmplitudeWindow.fixed` never notifies, so a painter bound to it is never
+  /// asked to repaint — but a *new* window on each build is a new identity, and
+  /// `shouldRepaint` compares the window by identity. Caching it is what keeps
+  /// a scrolling list of partner rows from repainting every mark on every
+  /// frame of the scroll.
+  late AmplitudeWindow _mark = AmplitudeWindow.fixed(
+    widget.partner.markAmplitudes(12),
+  );
+
+  @override
+  void didUpdateWidget(covariant PartnerMark old) {
+    super.didUpdateWidget(old);
+    if (old.partner.id != widget.partner.id) {
+      _mark = AmplitudeWindow.fixed(widget.partner.markAmplitudes(12));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: width,
+      width: widget.width,
       // Static mode: no ticker, so a list of these costs nothing per frame.
       child: Waveform(
-        amplitudes: partner.markAmplitudes(12),
+        amplitudes: _mark,
         mode: WaveformMode.static_,
         barCount: 12,
-        height: width * 0.6,
+        height: widget.width * 0.6,
       ),
     );
   }

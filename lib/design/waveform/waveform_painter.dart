@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:speakwise/design/waveform/amplitude_window.dart';
+
 /// What the waveform is currently expressing.
 ///
 /// The mode drives colour and behaviour together, because in this app they
@@ -36,26 +38,43 @@ enum WaveformMode {
 ///
 /// ## Amplitude source
 ///
-/// [amplitudes] is a rolling window of normalised loudness in `0.0..1.0`,
-/// oldest first. It comes from one of three places, and the painter neither
-/// knows nor cares which:
+/// [amplitudes] is an [AmplitudeWindow] of normalised loudness in `0.0..1.0`,
+/// oldest first. It carries one of three things, and the painter neither knows
+/// nor cares which:
 ///
 /// * **Live capture** — `speech_to_text`'s `onSoundLevelChange`, normalised.
-///   That callback reports roughly `-2..10` on Android, so the caller maps it;
-///   the mapping lives with the caller because it is platform-specific and
-///   this class must stay pure.
-/// * **Playback** — the stored per-bar envelope of a past session.
-/// * **Idle** — an empty list. The painter then synthesises a calm wave from
-///   [phase] alone, so callers never special-case "no data".
+///   That callback reports roughly `-2..10` on Android, so the *caller* maps
+///   it; the mapping lives in `SpeechRecognitionService` because it is
+///   platform-specific and this class must stay pure.
+/// * **Playback** — the stored per-bar envelope of a past session, as
+///   `AmplitudeWindow.fixed`.
+/// * **Idle** — a window with no data. The painter then synthesises a calm wave
+///   from [phase] alone, so callers never special-case "nothing to draw".
 ///
-/// ## Performance
+/// ## Performance — this is the R11.2 mechanism, not an implementation detail
 ///
-/// R11.2 requires a steady 60fps and repaint via a painter driven by a single
-/// ticker, never by rebuilding widgets per frame. This class holds no state
-/// and allocates no objects per frame beyond the `Paint` it must; [shouldRepaint]
-/// compares cheaply.
+/// R11.2: "The waveform MUST repaint via a `CustomPainter` driven by a single
+/// ticker, **never by rebuilding widgets per frame**."
+///
+/// Both [phase] and [amplitudes] are `Listenable`s, and they are handed to
+/// `CustomPainter`'s `repaint:` constructor argument. A painter built that way
+/// is repainted by the framework when the listenable fires, marking only the
+/// `RenderCustomPaint` dirty — no `setState`, no element rebuild, no new
+/// painter object, and no new `List` per frame.
+///
+/// The previous version wrapped the `CustomPaint` in an `AnimatedBuilder` and
+/// passed a `double phase` and a `List<double>`. That rebuilt a widget and
+/// allocated a painter sixty times a second, which is the exact thing the
+/// requirement names. Reading the values through listenables at paint time is
+/// what removes it.
+///
+/// Consequence worth stating: [phase] and [amplitudes] are read inside [paint],
+/// so they must not be captured into local fields at construction, and
+/// [shouldRepaint] does not compare them — the `repaint:` listenable already
+/// covers changes to their *values*, and comparing a mutable buffer by identity
+/// would always say "unchanged".
 class WaveformPainter extends CustomPainter {
-  const WaveformPainter({
+  WaveformPainter({
     required this.amplitudes,
     required this.mode,
     required this.phase,
@@ -65,16 +84,16 @@ class WaveformPainter extends CustomPainter {
     this.barCount = 48,
     this.reduceMotion = false,
     this.progress,
-  });
+  }) : super(repaint: Listenable.merge([phase, amplitudes]));
 
-  /// Rolling amplitude window, oldest first, each `0.0..1.0`. May be empty.
-  final List<double> amplitudes;
+  /// Rolling amplitude window. Read at paint time, never copied.
+  final AmplitudeWindow amplitudes;
 
   final WaveformMode mode;
 
-  /// Monotonically increasing animation phase in radians, from the owning
-  /// ticker. Only used for synthesised motion (idle/speaking).
-  final double phase;
+  /// The owning ticker, as a listenable `0..1`. Converted to radians in
+  /// [paint]. Only used for synthesised motion (idle/speaking).
+  final Animation<double> phase;
 
   final Color signalColor;
   final Color liveColor;
@@ -154,9 +173,12 @@ class WaveformPainter extends CustomPainter {
       ..strokeWidth = barWidth
       ..style = PaintingStyle.stroke;
 
+    // Read once per frame, not once per bar.
+    final radians = phase.value * 2 * math.pi;
+
     for (var i = 0; i < barCount; i++) {
       final t = barCount == 1 ? 0.0 : i / (barCount - 1);
-      final amplitude = _amplitudeAt(i, t);
+      final amplitude = _amplitudeAt(t, radians);
 
       // Keep a visible floor so the component never reads as broken or empty —
       // but a floor proportional to the height, not a fixed 2.0.
@@ -182,17 +204,14 @@ class WaveformPainter extends CustomPainter {
     }
   }
 
-  /// Normalised amplitude for bar [i], where [t] is its position `0..1`.
-  double _amplitudeAt(int i, double t) {
-    if (amplitudes.isNotEmpty) {
-      // Map bar index onto the amplitude window. Nearest-sample rather than
-      // interpolated: interpolation smooths away the transients that make a
-      // voice look like a voice.
-      final index = ((amplitudes.length - 1) * t).round().clamp(
-        0,
-        amplitudes.length - 1,
-      );
-      return amplitudes[index].clamp(0.0, 1.0);
+  /// Normalised amplitude for the bar at position [t] (`0..1`).
+  double _amplitudeAt(double t, double radians) {
+    if (amplitudes.hasData) {
+      // Nearest-sample rather than interpolated: interpolation across bars
+      // smooths away the transients that make a voice look like a voice. The
+      // smoothing that does happen is temporal and lives in AmplitudeWindow,
+      // where it is one exponential step per frame toward the real reading.
+      return amplitudes.sample(t).clamp(0.0, 1.0);
     }
 
     // No data. Static modes get a flat level bar; R7.7.4 requires the same
@@ -206,8 +225,8 @@ class WaveformPainter extends CustomPainter {
     // ends — a wave that runs flat into the edges looks clipped.
     final envelope = math.sin(t * math.pi);
     final wave =
-        math.sin(t * math.pi * 3 - phase) * 0.6 +
-        math.sin(t * math.pi * 5.3 - phase * 1.7) * 0.4;
+        math.sin(t * math.pi * 3 - radians) * 0.6 +
+        math.sin(t * math.pi * 5.3 - radians * 1.7) * 0.4;
 
     final scale = switch (mode) {
       WaveformMode.idle => 0.22,
@@ -225,9 +244,15 @@ class WaveformPainter extends CustomPainter {
     return _activeColor;
   }
 
+  /// Only the *configuration* is compared here.
+  ///
+  /// [phase] and [amplitudes] are deliberately absent: their changing values
+  /// already drive repaints through the `repaint:` listenable passed to the
+  /// superclass, and comparing a mutable buffer by identity would report
+  /// "unchanged" on every frame while its contents moved. Comparing them by
+  /// value would allocate, per frame, to answer a question already answered.
   @override
   bool shouldRepaint(covariant WaveformPainter old) =>
-      old.phase != phase ||
       old.mode != mode ||
       old.progress != progress ||
       old.barCount != barCount ||
@@ -235,6 +260,7 @@ class WaveformPainter extends CustomPainter {
       old.signalColor != signalColor ||
       old.liveColor != liveColor ||
       old.mutedColor != mutedColor ||
+      !identical(old.phase, phase) ||
       !identical(old.amplitudes, amplitudes);
 
   @override
