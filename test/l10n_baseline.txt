@@ -5,31 +5,23 @@
 # have zero, which is what makes every new file localized from
 # birth. These counts may only go down.
 #
-# Total: 165 in 21 files.
+# Total: 75 in 13 files.
 #
 # Nearly all of it is the pre-rebuild app. PRD §15 deletes
 # these files milestone by milestone, so the honest way to
 # empty this list is to finish the rebuild, not to translate
 # copy that §7.6 is about to rewrite.
 
-lib/components/ui/app_message_bubble.dart                    3
 lib/controllers/forgot_password_controller.dart              1
-lib/design/waveform/waveform.dart                            1
-lib/models/chat_message.dart                                 1
-lib/models/conversation.dart                                 2
+lib/features/chat/domain/chat_message.dart                   1
+lib/features/chat/domain/chat_thread.dart                    1
+lib/features/memory/domain/memory_item.dart                  1
+lib/features/partners/domain/partner.dart                    1
 lib/models/subscription_models.dart                          10
-lib/providers/chat_provider.dart                             2
-lib/providers/conversation_provider.dart                     1
-lib/screens/chat_screen.dart                                 29
 lib/screens/forgot_password_screen.dart                      11
-lib/screens/personas_screen.dart                             18
 lib/screens/settings_screen.dart                             14
 lib/screens/splash_screen.dart                               1
 lib/screens/subscription_screen.dart                         19
 lib/utils/subscription_utils.dart                            1
-lib/widgets/conversation_drawer.dart                         11
-lib/widgets/message_input_field.dart                         17
-lib/widgets/rename_conversation_dialog.dart                  7
 lib/widgets/subscription/purchase_confirmation_dialog.dart   5
 lib/widgets/subscription_widgets.dart                        9
-lib/widgets/typing_indicator.dart                            2

@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import '../services/firestore_service.dart';
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:ai_chatbot_app/core/logging/log.dart';
 
 class PaymentService {
@@ -14,7 +13,6 @@ class PaymentService {
 
   // Core services
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
-  final FirestoreService _firestoreService = FirestoreService();
 
   // Stream subscriptions for proper cleanup
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
@@ -47,12 +45,12 @@ class PaymentService {
   bool _isInitialized = false;
   String? _currentUserId;
 
-  // Subscription data (cached from Firestore)
+  // Entitlement, read from the server and never written here (F2).
   bool _isPremium = false;
   DateTime? _subscriptionExpiryDate;
   String? _currentSubscriptionType;
 
-  // Usage tracking (cached from Firestore)
+  // Display-only counters. Superseded by ChatUsage from the gateway.
   Map<String, int> _dailyUsage = {'messages': 0, 'images': 0, 'voice': 0};
   DateTime _lastUsageReset = DateTime.now();
 
@@ -209,7 +207,7 @@ class PaymentService {
       }
 
       _currentUserId = userId;
-      await _loadUserDataFromFirestore();
+      await _loadUserData();
       await _checkAndResetDailyUsage();
       await _processPendingUpdates();
 
@@ -275,71 +273,65 @@ class PaymentService {
     }
   }
 
-  /// Load user data from Firestore
-  Future<void> _loadUserDataFromFirestore() async {
+  /// Reads the entitlement the server holds (PRD F2).
+  ///
+  /// Was `_loadUserDataFromFirestore`, which read `users/{id}` — a document the
+  /// client also **wrote**, which is the whole of F2's complaint: an
+  /// entitlement a client can write is an entitlement a client can grant
+  /// itself.
+  ///
+  /// `entitlements` is service-role write only (R9.5.1). This reads its own row
+  /// through the read-own policy and can do nothing else with it, which is
+  /// exactly the shape F2 asks for: **the client displays, the server decides.**
+  ///
+  /// Usage counters are no longer read here at all. The gateway owns them and
+  /// reports them on every reply (`ChatUsage`), so a second, staler copy in
+  /// this object would only be something to disagree with.
+  Future<void> _loadUserData() async {
     if (_currentUserId == null) return;
 
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUserId!)
-          .get();
+      final row = await Supabase.instance.client
+          .from('entitlements')
+          .select('tier, state, expires_at')
+          .eq('user_id', _currentUserId!)
+          .maybeSingle();
 
-      if (!userDoc.exists || userDoc.data() == null) {
+      if (row == null) {
         _resetUserDataToDefaults();
         return;
       }
 
-      final data = userDoc.data()!;
+      final expiresAt = row['expires_at'] as String?;
+      _subscriptionExpiryDate = expiresAt == null
+          ? null
+          : DateTime.tryParse(expiresAt)?.toLocal();
 
-      // Load subscription data
-      _isPremium = data['isPremium'] ?? false;
-      _currentSubscriptionType = data['subscriptionType'];
+      // Mirrors the server's own reading in `consume_model_call`: a 'pro' row
+      // that is cancelled, on hold, or past its expiry is a free user. Only
+      // 'active' and 'grace' are live (§8.2).
+      final state = row['state'] as String?;
+      _isPremium =
+          row['tier'] == 'pro' &&
+          (state == 'active' || state == 'grace') &&
+          (_subscriptionExpiryDate == null ||
+              _subscriptionExpiryDate!.isAfter(DateTime.now()));
 
-      if (data['subscriptionExpiryDate'] != null) {
-        _subscriptionExpiryDate = (data['subscriptionExpiryDate'] as Timestamp)
-            .toDate();
-
-        // Check if subscription has expired
-        if (_subscriptionExpiryDate!.isBefore(DateTime.now())) {
-          Log.d('Subscription expired, updating status');
-          await _handleExpiredSubscription();
-        }
-      }
-
-      // Load usage data
-      final usageData = data['dailyUsage'] as Map<String, dynamic>?;
-      if (usageData != null) {
-        _dailyUsage = Map<String, int>.from(usageData);
-      }
-
-      if (data['lastUsageReset'] != null) {
-        _lastUsageReset = (data['lastUsageReset'] as Timestamp).toDate();
-      }
-
+      _currentSubscriptionType = _isPremium ? row['tier'] as String? : null;
       _lastCacheUpdate = DateTime.now();
-      Log.d('User data loaded from Firestore');
+      Log.d('Entitlement loaded from the server: premium=$_isPremium');
     } catch (e) {
-      Log.d('Error loading user data: $e');
+      // Fail closed. An unreadable entitlement is not a reason to assume Pro.
+      Log.d('Error loading entitlement: $e');
       _resetUserDataToDefaults();
     }
   }
 
-  /// Handle expired subscription
-  Future<void> _handleExpiredSubscription() async {
-    try {
-      _isPremium = false;
-      _currentSubscriptionType = null;
-      _subscriptionExpiryDate = null;
-
-      if (_currentUserId != null) {
-        await _firestoreService.cancelUserSubscription(_currentUserId!);
-        onSubscriptionStatusChanged?.call(false);
-      }
-    } catch (e) {
-      Log.d('Error handling expired subscription: $e');
-    }
-  }
+  // `_handleExpiredSubscription` stood here. It flipped the local premium
+  // flag and wrote a cancellation to Firestore. Expiry is now decided in one
+  // place, `consume_model_call`, which treats a 'pro' row that is cancelled,
+  // on hold, or past its expiry as free — so there is nothing for a client to
+  // decide and nowhere for it to write the decision.
 
   /// Reset user data to defaults
   void _resetUserDataToDefaults() {
@@ -380,7 +372,7 @@ class PaymentService {
         await Future.delayed(const Duration(seconds: 2));
 
         // Reload data after restore
-        await _loadUserDataFromFirestore();
+        await _loadUserData();
       }
 
       Log.d('Google Play sync completed');
@@ -493,27 +485,29 @@ class PaymentService {
         throw PaymentServiceException('Purchase validation failed');
       }
 
-      // Calculate subscription dates
-      final subscriptionData = _calculateSubscriptionDates(purchaseDetails);
+      // NOTHING IS GRANTED HERE, AND THAT IS THE POINT.
+      //
+      // This used to write `isPremium: true` to Firestore and set the local
+      // flag, on the strength of a purchase token the client had checked was
+      // non-empty. F2 and R8.2 both forbid it: "An unverified purchase MUST NOT
+      // grant access", and §14 requires proving that an unverified Play token
+      // grants nothing.
+      //
+      // The verification path — client sends the token to the gateway, the
+      // gateway checks it against the Google Play Developer API with a service
+      // account, writes the `entitlements` row, and acknowledges the purchase —
+      // is Milestone 6. Until it exists, a purchase deliberately does nothing,
+      // which is a visible gap rather than a silent bypass. `entitlements` is
+      // service-role write only, so this is also the only behaviour the schema
+      // permits.
+      //
+      // TODO(m6): POST the token to verify-purchase and re-read the row.
+      Log.w(
+        'Purchase received but not verifiable yet (§8.2, Milestone 6). '
+        'No entitlement granted.',
+      );
 
-      // Save to Firestore
-      await _saveSubscriptionToFirestore(purchaseDetails, subscriptionData);
-
-      // Update local cache
-      _isPremium = true;
-      _currentSubscriptionType = purchaseDetails.productID;
-      _subscriptionExpiryDate = subscriptionData['expiryDate'];
-      _lastCacheUpdate = DateTime.now();
-
-      final isRestored = purchaseDetails.status == PurchaseStatus.restored;
-      final message = isRestored
-          ? 'Subscription restored successfully!'
-          : 'Subscription activated successfully!';
-
-      onPurchaseResult?.call(true, message);
-      onSubscriptionStatusChanged?.call(true);
-
-      Log.d('Purchase processed successfully');
+      onPurchaseResult?.call(false, 'Purchases are not available yet.');
     } catch (e) {
       Log.d('Error handling successful purchase: $e');
       onPurchaseResult?.call(false, 'Failed to process purchase: $e');
@@ -554,91 +548,28 @@ class PaymentService {
   }
 
   /// Validate restored purchase
+  /// Restore is not possible without server verification (R8.2, §14).
+  ///
+  /// This used to read the user's own Firestore document and grant a restore
+  /// if it said `isPremium: true` — a client asking a client-writable record
+  /// whether the client is premium. §14 requires proving "a patched client
+  /// cannot gain Pro", and that check was the patch.
+  ///
+  /// A real restore re-verifies the token against the Play Developer API and
+  /// re-reads `entitlements`. That is Milestone 6. Refusing until then is the
+  /// correct answer rather than a stub: granting on an unverified token is the
+  /// exact thing R8.2 forbids.
   Future<bool> _validateRestoredPurchase(
     PurchaseDetails purchaseDetails,
   ) async {
-    try {
-      // Only allow restore if user previously had a subscription
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUserId!)
-          .get();
-
-      if (!userDoc.exists) {
-        Log.d('No user record found for restore');
-        return false;
-      }
-
-      final userData = userDoc.data()!;
-      final hadPreviousSubscription =
-          userData['isPremium'] == true || userData['subscriptionType'] != null;
-
-      if (!hadPreviousSubscription) {
-        Log.d('User never had a subscription');
-        return false;
-      }
-
-      return true;
-    } catch (e) {
-      Log.d('Restored purchase validation error: $e');
-      return false;
-    }
+    Log.w('Restore requires server verification (§8.2, Milestone 6)');
+    return false;
   }
 
-  /// Calculate subscription dates based on product type
-  Map<String, DateTime> _calculateSubscriptionDates(
-    PurchaseDetails purchaseDetails,
-  ) {
-    final now = DateTime.now();
-    final duration = purchaseDetails.productID == monthlySubscriptionId
-        ? const Duration(days: 30)
-        : const Duration(days: 365);
-
-    return {'startDate': now, 'expiryDate': now.add(duration)};
-  }
-
-  /// Save subscription to Firestore
-  Future<void> _saveSubscriptionToFirestore(
-    PurchaseDetails purchaseDetails,
-    Map<String, DateTime> dates,
-  ) async {
-    if (_currentUserId == null) return;
-
-    try {
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final userRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(_currentUserId!);
-
-        final subscriptionData = {
-          'isPremium': true,
-          'subscriptionType': purchaseDetails.productID,
-          'subscriptionStartDate': Timestamp.fromDate(dates['startDate']!),
-          'subscriptionExpiryDate': Timestamp.fromDate(dates['expiryDate']!),
-          'purchaseToken':
-              purchaseDetails.verificationData.localVerificationData,
-          'purchaseId': purchaseDetails.purchaseID,
-          'lastPurchaseDate': Timestamp.fromDate(DateTime.now()),
-          'platform': Platform.isAndroid ? 'android' : 'ios',
-          'verified': true,
-        };
-
-        transaction.update(userRef, subscriptionData);
-
-        // Store purchase history
-        final historyRef = userRef.collection('subscription_history').doc();
-        transaction.set(historyRef, {
-          ...subscriptionData,
-          'purchaseTimestamp': Timestamp.fromDate(DateTime.now()),
-        });
-      });
-
-      Log.d('Subscription saved to Firestore');
-    } catch (e) {
-      Log.d('Error saving subscription: $e');
-      throw PaymentServiceException('Failed to save subscription: $e');
-    }
-  }
+  // `_saveSubscriptionToFirestore` stood here. It wrote isPremium, the
+  // subscription type, the expiry, and the purchase token into a document the
+  // client owned. Deleted with Firestore itself; `entitlements` is
+  // service-role write only precisely so this shape cannot exist (R9.5.1).
 
   /// Handle purchase error
   void _handlePurchaseError(PurchaseDetails purchaseDetails) {
@@ -703,7 +634,7 @@ class PaymentService {
       _dailyUsage = {'messages': 0, 'images': 0, 'voice': 0};
       _lastUsageReset = now;
 
-      await _saveUsageToFirestore();
+      // Nothing to persist: usage_daily is the gateway's (R9.3.4).
     }
   }
 
@@ -727,7 +658,7 @@ class PaymentService {
 
     // Immediate save to Firestore
     try {
-      await _saveUsageToFirestore();
+      // Nothing to persist: usage_daily is the gateway's (R9.3.4).
     } catch (e) {
       // Queue for later if offline
       _queueUsageUpdate();
@@ -735,27 +666,10 @@ class PaymentService {
   }
 
   /// Save usage to Firestore
-  Future<void> _saveUsageToFirestore() async {
-    if (_currentUserId == null) {
-      _queueUsageUpdate();
-      return;
-    }
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUserId!)
-          .update({
-            'dailyUsage': _dailyUsage,
-            'lastUsageReset': Timestamp.fromDate(_lastUsageReset),
-          });
-
-      Log.d('Usage saved to Firestore');
-    } catch (e) {
-      Log.d('Error saving usage: $e');
-      _queueUsageUpdate();
-    }
-  }
+  // `_saveUsageToFirestore` stood here. Usage is the gateway's now, recorded
+  // atomically with the response it accounts for (R9.3.4) in a table no client
+  // can write. The counters left in this object are display-only and are
+  // superseded by `ChatUsage`, which comes back on every reply.
 
   /// Queue usage update for later
   void _queueUsageUpdate() {
@@ -774,7 +688,7 @@ class PaymentService {
       final latestUpdate = _pendingUsageUpdates.last;
       _dailyUsage = Map<String, int>.from(latestUpdate['usage']);
 
-      await _saveUsageToFirestore();
+      // Nothing to persist: usage_daily is the gateway's (R9.3.4).
       _pendingUsageUpdates.clear();
 
       Log.d('Processed ${_pendingUsageUpdates.length} pending updates');
@@ -797,7 +711,7 @@ class PaymentService {
       if (_currentUserId == null) return;
 
       // Refresh subscription status
-      await _loadUserDataFromFirestore();
+      await _loadUserData();
 
       // Process pending updates
       await _processPendingUpdates();
@@ -820,7 +734,7 @@ class PaymentService {
 
       await _inAppPurchase.restorePurchases();
       await Future.delayed(const Duration(seconds: 2));
-      await _loadUserDataFromFirestore();
+      await _loadUserData();
 
       Log.d('Purchases restored');
     } catch (e) {

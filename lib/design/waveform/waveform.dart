@@ -4,6 +4,7 @@ import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
 import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
 import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
 import 'package:ai_chatbot_app/design/waveform/waveform_painter.dart';
+import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 
 export 'package:ai_chatbot_app/design/waveform/waveform_painter.dart'
     show WaveformMode;
@@ -135,7 +136,9 @@ class _WaveformState extends State<Waveform>
       // The mic being live is the one state a non-sighted user cannot infer
       // any other way.
       label: isCapturing
-          ? 'Microphone live, recording. ${widget.semanticLabel ?? ''}'.trim()
+          ? AppLocalizations.of(context)
+                .waveformLiveSemantics(widget.semanticLabel ?? '')
+                .trim()
           : widget.semanticLabel,
       liveRegion: isCapturing,
       // The bars are a per-frame readout; describing them frame by frame would
@@ -154,7 +157,7 @@ class _WaveformState extends State<Waveform>
             Padding(
               padding: const EdgeInsets.only(bottom: Space.xxs),
               child: Text(
-                'LIVE',
+                AppLocalizations.of(context).waveformLive,
                 style: AppTypography.micro.copyWith(
                   color: colors.live,
                   letterSpacing: 1.5,

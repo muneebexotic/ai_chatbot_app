@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 import '../core/config/app_config.dart';
@@ -29,21 +28,18 @@ class AppBootstrap {
       ),
     );
 
-    // Firebase. Auth is gone from it as of Milestone 2 — nothing in lib/
-    // imports firebase_auth — but Firestore still backs chat history and the
-    // conversation list, so the SDK still has to start.
-    //
-    // TODO(m3-delete): retagged from m2. Milestone 3 rebuilds chat on Postgres
-    // (§9.5 threads/messages), and this call goes with the last Firestore
-    // reference. Leaving it labelled m2 would have made a marker that was
-    // already overdue on the day the milestone closed.
-    await Firebase.initializeApp();
+    // Firebase.initializeApp() stood here, tagged TODO(m3-delete) because
+    // Firestore still backed chat history. Milestone 3 moved chat to Postgres
+    // (§9.5 threads/messages), so the call, the three SDK packages, and the
+    // last Firestore reference in the app went together. DECISIONS.md D0 has
+    // the history: the project was suspended by Google, not migrated from.
 
-    // Supabase (PRD §9.2). Tolerates being unconfigured so the app still runs
-    // from an IDE with no --dart-define set — Firebase carries it until the
-    // port completes. `AuthRepository` is what fails loudly when a Supabase
-    // call is actually attempted without configuration, which is the moment
-    // the error is useful.
+    // Supabase (PRD §9.2). Nothing else backs the app now, so an unconfigured
+    // build reaches a signed-out shell and nothing beyond it. It is still
+    // tolerated rather than fatal here, because failing during bootstrap
+    // produces a blank screen with no way to read the reason;
+    // `AppConfig.assertConfigured` fails loudly at the first real call, which
+    // is the moment the message is useful.
     if (AppConfig.hasSupabase) {
       await Supabase.initialize(
         url: AppConfig.supabaseUrl,
@@ -60,9 +56,9 @@ class AppBootstrap {
       Log.i('Supabase initialised');
     } else {
       Log.w(
-        'Supabase not configured — running on Firebase only. Pass '
-        '--dart-define=SUPABASE_URL and --dart-define=SUPABASE_PUBLISHABLE_KEY '
-        'to exercise the Milestone 2 auth path.',
+        'Supabase not configured — nothing will load. Pass '
+        '--dart-define=SUPABASE_URL and --dart-define=SUPABASE_PUBLISHABLE_KEY. '
+        'Point them at kalaam-dev while developing.',
       );
     }
 

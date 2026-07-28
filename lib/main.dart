@@ -11,7 +11,7 @@ import 'providers/themes_provider.dart';
 import 'providers/auth_provider.dart';
 import 'design/theme/kalaam_theme.dart';
 import 'screens/splash_screen.dart';
-import 'screens/chat_screen.dart';
+import 'features/chat/presentation/chat_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'app/providers.dart';
 

@@ -69,27 +69,29 @@ final _bannedInCopy = <String, RegExp>{
 /// It should be empty by the end of Milestone 6. If it is not, that is a
 /// finding for `CRITIQUE.md`, not a reason to relax the rule.
 const _expectedOrphans = <String, String>{
-  // W1.1's central complaint, in executable form: the signature element of the
-  // design system renders on no screen. §7.5.2 makes the waveform the loading
-  // state — "a calm idle oscillation, never a spinner" — so the chat rebuild
-  // in Milestone 3 is where it first has somewhere to go.
-  'lib/design/waveform/waveform.dart': 'M3 — §7.5.2 loading state in chat',
-  'lib/design/waveform/waveform_painter.dart': 'M3 — used by waveform.dart',
-
-  // Personas move from a hardcoded map to rows in `partners` this milestone
-  // (§5.3.2, "built-ins ship as data, not code"). The file goes with the
-  // GeminiService it fed.
-  'lib/constants/personas.dart': 'M3 — replaced by the partners table',
-
-  // The Firestore-era conversation model. Milestone 3 rebuilds the thread list
-  // on Supabase `threads`, and this goes with the drawer that used it.
-  'lib/models/conversation.dart': 'M3 — replaced by threads',
+  // Voice. Both were reachable only through the old chat surface, which had a
+  // microphone button beside the text field. Milestone 4 gives spoken practice
+  // a full screen of its own (§4.2) rather than a control squeezed into the
+  // composer, and these are the on-device recogniser and synthesiser it will
+  // drive — the two packages the whole business model rests on (§3).
+  'lib/services/speech_service.dart': 'M4 — the live session screen',
+  'lib/services/voice_service.dart': 'M4 — the live session screen',
 
   // Paywall debris. §14 and R0.5.6 both put the paywall on the list of screens
   // that must not ship as the default, so Milestone 6 rebuilds rather than
   // rewires these.
   'lib/services/subscription_service_extensions.dart': 'M6 — paywall rebuild',
   'lib/widgets/subscription_widgets.dart': 'M6 — paywall rebuild',
+
+  // RESOLVED IN MILESTONE 3, listed here only so the record is legible:
+  //   waveform.dart / waveform_painter.dart — now the chat loading state and
+  //     the partner marks. W1.1's "built, tested, and completely unused" is
+  //     no longer true of the signature element.
+  //   constants/personas.dart — replaced by rows in `partners` (§5.3.2).
+  //   models/conversation.dart — replaced by `threads`.
+  //   services/clipboard_service.dart — the copy button uses
+  //     `flutter/services` Clipboard directly, which §2.2 asked for.
+  // All five are deleted or wired up; none needs an entry.
 };
 
 /// Executable versions of the layering rules in PRD §9.1.

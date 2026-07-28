@@ -5,7 +5,8 @@ import '../screens/welcome_screen.dart';
 import '../screens/signup_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/forgot_password_screen.dart';
-import '../screens/chat_screen.dart';
+import '../features/chat/presentation/chat_screen.dart';
+import '../features/memory/presentation/memory_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/subscription_screen.dart';
 
@@ -16,6 +17,7 @@ Map<String, WidgetBuilder> buildAppRoutes() {
     '/login': (_) => const LoginScreen(),
     '/forgot-password': (_) => const ForgotPasswordScreen(),
     '/chat': (_) => const ChatScreen(),
+    '/memory': (_) => const MemoryScreen(),
     '/settings': (_) => const SettingsScreen(),
     '/subscription': (_) => const SubscriptionScreen(),
   };

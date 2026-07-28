@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/themes_provider.dart'; // Add theme provider import
 import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
-import 'personas_screen.dart';
 import 'welcome_screen.dart';
 import '../app/providers.dart';
 import 'package:ai_chatbot_app/core/result/result.dart';
@@ -168,14 +167,21 @@ class SettingsScreen extends ConsumerWidget {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
                         },
                       ),
+                      // Was "Personalization", opening a persona picker that
+                      // read a hardcoded map and drew padlocks from a local
+                      // `isPremium` boolean (F2). Partners are now chosen per
+                      // conversation from the chat title, where the choice
+                      // actually applies.
+                      //
+                      // Memory takes the slot because R5.2.2 calls showing it
+                      // "a trust feature and a differentiator", and a
+                      // differentiator nobody can find differentiates nothing.
                       _buildOptionTile(
                         context,
-                        Icons.person_pin_circle, 
-                        'Personalization', 
-                        'Customize your experience',
-                        () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonaScreen()));
-                        },
+                        Icons.bookmark_border_rounded,
+                        'Memory',
+                        'See and delete what the app remembers',
+                        () => Navigator.pushNamed(context, '/memory'),
                       ),
                       _buildOptionTile(
                         context,
