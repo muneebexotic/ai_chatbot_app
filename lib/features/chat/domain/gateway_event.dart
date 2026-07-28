@@ -1,4 +1,4 @@
-import 'package:ai_chatbot_app/features/chat/domain/chat_usage.dart';
+import 'package:speakwise/features/chat/domain/chat_usage.dart';
 
 /// What arrives while a reply is being written.
 ///

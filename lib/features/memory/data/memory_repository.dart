@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/chat/data/chat_repository.dart'
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/chat/data/chat_repository.dart'
     show mapPostgrestError;
-import 'package:ai_chatbot_app/features/memory/domain/memory_item.dart';
+import 'package:speakwise/features/memory/domain/memory_item.dart';
 
 /// Reading and forgetting (PRD §5.2.2).
 ///

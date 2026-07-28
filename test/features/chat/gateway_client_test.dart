@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/features/chat/data/gateway_client.dart';
-import 'package:ai_chatbot_app/features/chat/domain/gateway_event.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/features/chat/data/gateway_client.dart';
+import 'package:speakwise/features/chat/domain/gateway_event.dart';
 
 /// The client half of the wire contract (PRD §9.3, F4, R11.5).
 ///

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
 
 /// Assembles the tokens into Material themes (PRD §7).
 ///
@@ -19,8 +19,8 @@ import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
 ///   the destructive colour, and not an accent. It appears only where the
 ///   microphone is capturing, which is a decision individual widgets make —
 ///   see [AppColors] for why.
-abstract final class KalaamTheme {
-  const KalaamTheme._();
+abstract final class SpeakWiseTheme {
+  const SpeakWiseTheme._();
 
   static ThemeData get dark => _build(AppColors.dark);
   static ThemeData get light => _build(AppColors.light);

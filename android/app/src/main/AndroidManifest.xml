@@ -24,7 +24,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
-        android:label="ChadGPT"
+        android:label="SpeakWise"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
@@ -56,7 +56,7 @@
                  another app on the device. It must match the Redirect URL
                  registered on the Supabase project exactly, including the
                  trailing slash on the host path:
-                     com.muscodes.kalaam://login-callback/
+                     com.muscodes.speakwise://login-callback/
 
                  `singleTop` above means the running activity is reused rather
                  than a second one being stacked on the return trip. -->
@@ -65,7 +65,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:scheme="com.muscodes.kalaam"
+                    android:scheme="com.muscodes.speakwise"
                     android:host="login-callback" />
             </intent-filter>
         </activity>

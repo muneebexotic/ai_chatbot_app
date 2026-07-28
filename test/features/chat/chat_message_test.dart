@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
 
 /// R7.4.2: "Streaming responses reveal by **word**, not by character, with no
 /// cursor artefact and no layout jump."

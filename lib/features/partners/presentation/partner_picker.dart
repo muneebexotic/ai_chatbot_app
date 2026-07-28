@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/features/partners/application/partner_providers.dart';
-import 'package:ai_chatbot_app/features/partners/domain/partner.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/features/partners/application/partner_providers.dart';
+import 'package:speakwise/features/partners/domain/partner.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// A partner's generated mark (R5.3.1), drawn by the app's one visualization.
 ///

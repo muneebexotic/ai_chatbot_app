@@ -3,11 +3,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import 'package:ai_chatbot_app/core/config/app_config.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_usage.dart';
-import 'package:ai_chatbot_app/features/chat/domain/gateway_event.dart';
+import 'package:speakwise/core/config/app_config.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/features/chat/domain/chat_usage.dart';
+import 'package:speakwise/features/chat/domain/gateway_event.dart';
 
 /// Raised inside the event stream when the gateway refuses or fails.
 ///

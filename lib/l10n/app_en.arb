@@ -1,9 +1,9 @@
 {
   "@@locale": "en",
 
-  "appName": "Kalaam",
+  "appName": "SpeakWise",
   "@appName": {
-    "description": "The product name. A proper noun (Urdu: speech) — transliterate rather than translate. TODO(muneeb): PRD §17.1 leaves the final name open; changing it here changes it everywhere except the package id, which cannot change after publishing."
+    "description": "The product name. A coined compound, not a dictionary word: do not translate it, and keep the internal capital. Settled by the owner on 2026-07-28 (PRD §17.1, DECISIONS D9); the working name was Kalaam."
   },
 
   "splashTagline": "Speak. Hear how you sounded.",
@@ -11,9 +11,9 @@
     "description": "Subtitle under the product name on the splash screen. Replaced 'AI-Powered Conversations', which §7.6 bans by name. States what the product does, not what it is built from."
   },
 
-  "welcomeTitle": "Welcome to Kalaam",
+  "welcomeTitle": "Welcome to SpeakWise",
   "@welcomeTitle": {
-    "description": "Heading on the first screen a signed-out user sees. Read 'Welcome to ChadGPT' until Milestone 3 — a product name nothing else in the app used any more. Found on a device screenshot, not by a test."
+    "description": "Heading on the first screen a signed-out user sees. Read 'Welcome to ChadGPT' until Milestone 3 — a product name nothing else in the app used any more, found on a device screenshot rather than by a test. Keep it in step with appName."
   },
 
   "welcomeSubtitle": "Practise speaking out loud, and find out how you sounded.",

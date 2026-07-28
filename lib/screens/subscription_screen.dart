@@ -10,7 +10,7 @@ import '../providers/themes_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/subscription_utils.dart';
 import '../widgets/subscription/purchase_confirmation_dialog.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 import '../app/providers.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {

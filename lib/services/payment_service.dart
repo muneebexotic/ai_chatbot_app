@@ -4,7 +4,7 @@ import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 class PaymentService {
   static final PaymentService _instance = PaymentService._internal();

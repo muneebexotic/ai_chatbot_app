@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/features/memory/application/memory_providers.dart';
-import 'package:ai_chatbot_app/features/memory/domain/memory_item.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/features/memory/application/memory_providers.dart';
+import 'package:speakwise/features/memory/domain/memory_item.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// What the app remembers, and how to make it forget (PRD R5.2.2).
 ///

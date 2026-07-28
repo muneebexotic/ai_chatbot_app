@@ -5,10 +5,10 @@ import 'dart:async';
 // dialogs and holding a BuildContext (F3).
 import 'package:flutter/foundation.dart';
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/auth/data/auth_repository.dart';
-import 'package:ai_chatbot_app/features/auth/domain/auth_user.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/auth/data/auth_repository.dart';
+import 'package:speakwise/features/auth/domain/auth_user.dart';
 
 import '../services/payment_service.dart';
 
@@ -195,7 +195,7 @@ class AuthProvider with ChangeNotifier {
   ///
   /// An [Ok] here means the browser opened, **not** that anyone is signed in.
   /// The session arrives later through the auth stream, when Android routes
-  /// the `com.muscodes.kalaam://login-callback/` redirect back to the app.
+  /// the `com.muscodes.speakwise://login-callback/` redirect back to the app.
   ///
   /// So callers must not do `await signInWithGoogle(); if (isLoggedIn) ...` —
   /// that reads false every time, because the user has not seen the consent

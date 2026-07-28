@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 /// Utility class for form validation
 /// 

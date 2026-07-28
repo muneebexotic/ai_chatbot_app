@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_providers.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/ai_turn.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/chat_failure_bar.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/composer.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/thread_drawer.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/user_turn.dart';
-import 'package:ai_chatbot_app/features/partners/presentation/partner_picker.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/features/chat/application/chat_providers.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/presentation/widgets/ai_turn.dart';
+import 'package:speakwise/features/chat/presentation/widgets/chat_failure_bar.dart';
+import 'package:speakwise/features/chat/presentation/widgets/composer.dart';
+import 'package:speakwise/features/chat/presentation/widgets/thread_drawer.dart';
+import 'package:speakwise/features/chat/presentation/widgets/user_turn.dart';
+import 'package:speakwise/features/partners/presentation/partner_picker.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// Typed chat, rebuilt on the design system (PRD §5.1, §7.4).
 ///

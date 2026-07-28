@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_providers.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_state.dart';
-import 'package:ai_chatbot_app/features/chat/data/gateway_client.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
-import 'package:ai_chatbot_app/features/chat/domain/gateway_event.dart';
-import 'package:ai_chatbot_app/features/memory/application/memory_providers.dart';
-import 'package:ai_chatbot_app/features/partners/application/partner_providers.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/chat/application/chat_providers.dart';
+import 'package:speakwise/features/chat/application/chat_state.dart';
+import 'package:speakwise/features/chat/data/gateway_client.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/domain/gateway_event.dart';
+import 'package:speakwise/features/memory/application/memory_providers.dart';
+import 'package:speakwise/features/partners/application/partner_providers.dart';
 
 /// Drives one conversation.
 ///

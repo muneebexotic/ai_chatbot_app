@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/design/theme/kalaam_theme.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/ai_turn.dart';
-import 'package:ai_chatbot_app/features/chat/presentation/widgets/user_turn.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/theme/speakwise_theme.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/presentation/widgets/ai_turn.dart';
+import 'package:speakwise/features/chat/presentation/widgets/user_turn.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// Widget tests for the chat surface (PRD §7.4, §14).
 ///
@@ -26,7 +26,7 @@ import 'package:ai_chatbot_app/l10n/app_localizations.dart';
 /// `Scaffold` would have passed while the app showed a blank screen.
 void main() {
   Widget host(Widget child) => MaterialApp(
-    theme: KalaamTheme.dark,
+    theme: SpeakWiseTheme.dark,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     // The real parent. Not a Scaffold, not a Center.
@@ -86,7 +86,7 @@ void main() {
       // is ever in — and the difference is the whole point of the assertion.
       await tester.pumpWidget(
         MaterialApp(
-          theme: KalaamTheme.dark,
+          theme: SpeakWiseTheme.dark,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(

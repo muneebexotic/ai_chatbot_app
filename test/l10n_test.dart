@@ -147,7 +147,7 @@ void main() {
       //
       // These fixtures are parsed exactly as `lib/` is, so a change to the
       // detector shows up here before it shows up as a silently empty result.
-      final tmp = Directory.systemTemp.createTempSync('kalaam_l10n_test');
+      final tmp = Directory.systemTemp.createTempSync('speakwise_l10n_test');
       addTearDown(() => tmp.deleteSync(recursive: true));
 
       final file = File('${tmp.path}/sample.dart')

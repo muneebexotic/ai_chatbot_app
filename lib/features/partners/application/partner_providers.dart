@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/features/auth/application/auth_providers.dart';
-import 'package:ai_chatbot_app/features/partners/data/partner_repository.dart';
-import 'package:ai_chatbot_app/features/partners/domain/partner.dart';
+import 'package:speakwise/features/auth/application/auth_providers.dart';
+import 'package:speakwise/features/partners/data/partner_repository.dart';
+import 'package:speakwise/features/partners/domain/partner.dart';
 
 final partnerRepositoryProvider = Provider<PartnerRepository>((ref) {
   return PartnerRepository(ref.watch(supabaseClientProvider));

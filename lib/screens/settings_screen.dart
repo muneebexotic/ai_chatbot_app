@@ -1,4 +1,4 @@
-import 'package:ai_chatbot_app/screens/subscription_screen.dart';
+import 'package:speakwise/screens/subscription_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,9 +7,9 @@ import '../components/ui/app_text.dart';
 import '../utils/app_theme.dart';
 import 'welcome_screen.dart';
 import '../app/providers.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/auth/presentation/auth_failure_copy.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

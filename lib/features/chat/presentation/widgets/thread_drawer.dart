@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_providers.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_thread.dart';
-import 'package:ai_chatbot_app/features/memory/presentation/memory_screen.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/features/chat/application/chat_providers.dart';
+import 'package:speakwise/features/chat/domain/chat_thread.dart';
+import 'package:speakwise/features/memory/presentation/memory_screen.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// Conversation history.
 ///

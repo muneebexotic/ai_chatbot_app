@@ -1,6 +1,6 @@
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_usage.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/domain/chat_usage.dart';
 
 /// What the chat screen renders.
 ///

@@ -1,28 +1,194 @@
-# Product Overview
+# SpeakWise
 
-## AI Chatbot App
+A voice-first AI you speak to, which tells you how you actually sounded.
 
-A Flutter-based AI chatbot application that provides conversational AI capabilities with advanced features including:
+Speak → get a report → see a weak spot → come back tomorrow. Typed chat is the
+quiet half; the spoken Session is the product.
 
-- **Chat Interface**: Real-time conversations with AI using Google's Gemini API
-- **Image Generation**: AI-powered image creation using multiple providers (OpenAI DALL-E, Hugging Face, Stability AI)
-- **Voice Integration**: Speech-to-text and text-to-speech functionality
-- **User Authentication**: Firebase Auth with Google Sign-In support
-- **Cloud Storage**: Firebase Firestore for chat history and user data
-- **Subscription System**: In-app purchases for premium features
-- **Multi-Platform**: Supports Android, iOS, Web, Windows, macOS, and Linux
+The governing document is `PRD-kalaam-rebuild.md`, one directory up at the
+workspace root — **outside this repo**, so `git grep` will never find it. Read
+it before writing code. `CLAUDE.md` summarises it and does not replace it.
 
-## Key Features
+> **This README described a different app until 2026-07-28.** It advertised
+> image generation across three providers, Firebase, and six platform targets —
+> none of which this product has, and the first of which §16 bans outright. It
+> had been wrong for four milestones because nothing reads a README, which is
+> also why the §16 rule in `test/architecture_test.dart` only scans `lib/` and
+> did not catch it. Noted in `CRITIQUE.md`.
 
-- Persistent chat conversations with history
-- Multiple AI personas/characters
-- Image upload and analysis capabilities
-- Voice input and audio responses
-- Dark/light theme support
-- Offline capability with sync
-- User settings and preferences
-- Subscription management
+## Status
 
-## Target Platforms
+Milestones 0–3 complete (PRD §15). Milestone 4, Sessions, is next and is the
+one the product lives or dies on.
 
-Cross-platform Flutter application targeting mobile (Android/iOS) as primary platforms with desktop and web support.
+| | |
+|---|---|
+| Backend | Supabase — Postgres with RLS on every table, Edge Functions, Auth |
+| Model calls | Groq, **server-side only**, through the gateway Edge Function |
+| State | Riverpod |
+| Local data | none yet — Drift arrives with Milestone 4 (§9.4) |
+| Platforms | Android, with iOS kept compiling |
+
+**No model key ships in the client.** The built APK contains no key and does
+not mention the provider's hostname; `qa/m3-device-pass.md` has the evidence.
+
+**A purchase currently grants nothing.** R8.2 forbids granting on an unverified
+token and `verify-purchase` is Milestone 6, so the paywall is reachable and
+inert. That is deliberate (`CRITIQUE.md` W3.3), not a regression.
+
+## Running it
+
+```bash
+git config core.hooksPath .githooks   # first thing in a new clone; hooks do
+                                      # not survive git clone, and without this
+                                      # the secret scanner never runs
+flutter pub get
+flutter run \
+  --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Both values are public by design (§9.6); security comes from RLS, and
+`test/rls/rls_policy_test.dart` is what makes that a fact rather than a hope.
+Point them at **kalaam-dev** while developing. Full command list in `CLAUDE.md`.
+
+## Owner decisions
+
+Collected here per PRD §17, with file paths.
+
+### Settled
+
+| | Decision | Where it lives |
+|---|---|---|
+| §17.1 | Name: **SpeakWise** | `lib/l10n/app_en.arb` → `appName` |
+| §17.2 | Package: **`com.muscodes.speakwise`** | `android/app/build.gradle`, `ios/Runner.xcodeproj` |
+
+Both settled 2026-07-28 — `DECISIONS.md` D9. **The package id is permanent from
+the moment it reaches Play.**
+
+### Still open
+
+| | Decision | Needed by |
+|---|---|---|
+| §17.3 | Monthly and annual price points, and whether regional pricing is on (recommended: on) | Milestone 6 |
+| §17.4 | Which locale to add after English (Urdu is the PRD's assumption) | Milestone 8 |
+| §17.5 | Whether typed chat stays prominent after seeing real usage | post-launch |
+
+---
+
+## Manual setup owed after the SpeakWise rename
+
+Renaming the Android `applicationId` changes the app's identity to Google.
+**Google sign-in is broken until the steps below are done.** Email and password
+sign-in is unaffected, and so is everything else in the app.
+
+Nothing here can be done from the repo — it is two consoles and a keystore.
+
+### 1. Get the SHA-1 fingerprints (terminal)
+
+Android OAuth clients are identified by package name **plus** signing
+certificate fingerprint, so a new package id needs the pairing registered
+again. You need two, and the second only when you first ship:
+
+```bash
+# Debug — what `flutter run` and `flutter build apk --debug` are signed with.
+keytool -list -v -alias androiddebugkey \
+  -keystore ~/.android/debug.keystore -storepass android -keypass android
+
+# Release — only if key.properties / the upload keystore already exists.
+keytool -list -v -alias <your-alias> -keystore <path-to-your.jks>
+```
+
+Copy the **SHA1** line from each. It looks like
+`A1:B2:C3:...` — 20 pairs of hex.
+
+> Is SHA-1 required? **Yes for the Android OAuth client, and only for it.** It
+> is how Google proves a callback came from your app rather than an app that
+> merely claims your package name. It is not needed for the Web client, for
+> Supabase, or for email sign-in.
+
+### 2. Create the Android OAuth client (browser)
+
+**console.cloud.google.com** → pick the project → **APIs & Services** →
+**Credentials** → **+ Create credentials** → **OAuth client ID**.
+
+- Application type: **Android**
+- Name: anything, e.g. `SpeakWise Android debug`
+- Package name: **`com.muscodes.speakwise`**
+- SHA-1: the **debug** fingerprint from step 1
+
+Create a **second** Android client with the same package name and the
+**release** SHA-1 when you have an upload keystore. One client cannot hold two
+fingerprints.
+
+Leave the existing `com.muscodes.kalaam` client alone for now; delete it once
+sign-in is confirmed working, so there is a way back.
+
+### 3. Check the Web client exists (browser, same page)
+
+Supabase's Google provider needs a **Web application** OAuth client, not the
+Android one — the token exchange happens on Supabase's servers. You should
+already have one from Milestone 2; it is **unaffected by the rename** and needs
+no change.
+
+If you need to confirm it: same Credentials page, type **Web application**, and
+its **Authorised redirect URI** must be
+`https://<project-ref>.supabase.co/auth/v1/callback` — one per project, so both
+refs need to be listed:
+
+- `https://kneiwapwjuuaxcenlfsu.supabase.co/auth/v1/callback` (prod)
+- `https://sbwaiindthrluqoypvqc.supabase.co/auth/v1/callback` (dev)
+
+Copy its **Client ID** and **Client secret**.
+
+### 4. Point Supabase at it — **on both projects** (browser)
+
+**supabase.com** → project → **Authentication** → **Sign In / Providers** →
+**Google**:
+
+- Enable it
+- **Client IDs**: the **Web** client ID from step 3. Add the **Android** client
+  ID from step 2 to the same field as a second comma-separated value — Supabase
+  accepts a list, and the Android client must be listed for the native flow to
+  be accepted.
+- **Client Secret**: the Web client's secret
+- Save
+
+Do this on **kalaam-dev** (`sbwaiindthrluqoypvqc`) first, confirm sign-in, then
+repeat on **kalaam** (`kneiwapwjuuaxcenlfsu`).
+
+### 5. Update the redirect URL — **on both projects** (browser)
+
+Same site → **Authentication** → **URL Configuration** → **Redirect URLs**.
+
+- **Add:** `com.muscodes.speakwise://login-callback/`
+- Keep `com.muscodes.kalaam://login-callback/` until sign-in is confirmed, then
+  remove it.
+
+The trailing slash matters. When this entry is missing Supabase does not error
+— it silently falls back to the Site URL, and the user is left on a browser tab
+wondering what happened.
+
+### 6. On the phone
+
+Uninstall the old build by hand: **Settings → Apps → Kalaam → Uninstall**. A
+changed `applicationId` is a different app to Android, so the new build installs
+alongside the old one rather than replacing it, and the old one still holds the
+old deep-link scheme.
+
+### 7. Verify
+
+Install a fresh debug build, tap **Login → Continue with Google**, and check
+that the browser returns you to the app signed in. If it leaves you on a
+browser tab, step 5 is the first thing to re-check.
+
+### Not required
+
+- **No change to the Supabase project names.** Refs are what resolve; names are
+  dashboard labels (`DECISIONS.md` D9).
+- **No change to the Web OAuth client.** It is keyed to the Supabase callback
+  URL, which did not change.
+- **No SHA-1 for iOS.** iOS uses the bundle identifier and the URL scheme,
+  both already updated in this commit. An iOS OAuth client is only needed when
+  there is an Apple developer account and a build to ship.
+- **No Play Console work yet.** That is Milestone 6.

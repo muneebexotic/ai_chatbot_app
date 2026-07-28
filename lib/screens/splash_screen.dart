@@ -160,9 +160,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       child: SlideTransition(
         position: slideAnimation,
         child: AppText.displayLarge(
-          // TODO(muneeb): final app name (README, PRD §17.1). 'Kalaam' is the
-          // working name and already the package id (com.muscodes.kalaam); the
-          // old 'ChadGPT' here contradicted both on the first frame.
+          // The app name, from one ARB key. Settled as SpeakWise on
+          // 2026-07-28 (PRD §17.1, DECISIONS D9), which closed the last
+          // TODO(muneeb) that blocked publishing — the package id
+          // com.muscodes.speakwise can never change once it reaches Play.
           AppLocalizations.of(context).appName,
           color: AppColors.getTextPrimary(isDark),
           textAlign: TextAlign.center,

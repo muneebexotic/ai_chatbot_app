@@ -9,7 +9,7 @@ import 'config/app_router.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/themes_provider.dart';
 import 'providers/auth_provider.dart';
-import 'design/theme/kalaam_theme.dart';
+import 'design/theme/speakwise_theme.dart';
 import 'screens/splash_screen.dart';
 import 'features/chat/presentation/chat_screen.dart';
 import 'screens/welcome_screen.dart';
@@ -64,7 +64,7 @@ class MyApp extends ConsumerWidget {
         // R11.7. `onGenerateTitle` rather than `title` because the delegate is
         // only resolvable below MaterialApp — and because this string is real
         // UI: Android shows it in the task switcher, and it read
-        // "AI Chatbot" while the package said com.muscodes.kalaam.
+        // "AI Chatbot" while the package said com.muscodes.speakwise.
         onGenerateTitle: (context) => AppLocalizations.of(context).appName,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         // English only in v1; Urdu is the first follow-up (R11.7, §17.4).
@@ -78,8 +78,8 @@ class MyApp extends ConsumerWidget {
         // colours from utils/app_theme.dart and are migrated per milestone
         // (CRITIQUE W1.1). Dark is the design's default; ThemeProvider already
         // defaults _isDark to true.
-        theme: KalaamTheme.light,
-        darkTheme: KalaamTheme.dark,
+        theme: SpeakWiseTheme.light,
+        darkTheme: SpeakWiseTheme.dark,
         themeMode: themeProvider.themeMode,
         home: _buildInitialScreen(authProvider, themeProvider),
         routes: buildAppRoutes(),

@@ -8,6 +8,68 @@ would reverse it.
 
 ---
 
+## D9 — The app is SpeakWise, and the package id is `com.muscodes.speakwise`
+
+**Date:** 2026-07-28 · **Status:** settled by the owner · **Closes:** PRD §17.1
+and §17.2 · **Blocks nothing further**
+
+**What.** The working name Kalaam is retired. The product is **SpeakWise**, the
+Android `applicationId` and iOS bundle identifier are `com.muscodes.speakwise`,
+the Dart package is `speakwise`, and the OAuth deep link is
+`com.muscodes.speakwise://login-callback/`.
+
+**Why now rather than later.** §17.2 says the package id "can never change
+after publishing", so this had to be settled before Milestone 6 puts anything
+in the Play Console. It was also the cheapest it will ever be: the rename
+touched 52 files of Dart imports mechanically, and every one of those would
+have been a file that also contained session, report, or paywall code if it had
+waited two milestones.
+
+The app had accumulated **three** names, which is what made it urgent rather
+than merely tidy. The splash said `ChadGPT`, the welcome screen said "Welcome
+to ChadGPT", the Android launcher label said `ChadGPT`, the package said
+`com.muscodes.kalaam`, the iOS bundle still said `com.muneeb.aichatbot`, and
+the ARB said `Kalaam`. Two of those were found in the Milestone 3 device pass;
+the iOS one was found by this rename and had survived since before Milestone 0.
+
+**Cost, and who pays it.** The Android `applicationId` is the OAuth client's
+identity, so the rename invalidates the Google Cloud OAuth client and the
+Supabase Auth configuration on both projects. **Google sign-in is broken until
+the owner recreates the Android client and re-registers the redirect URL**,
+which is manual work in two consoles and cannot be done from here. Email and
+password sign-in is unaffected. The checklist is in `README.md`.
+
+Installed debug builds do not upgrade — a new `applicationId` is a different
+app to Android — so the old build must be uninstalled by hand.
+
+**What is deliberately NOT renamed.**
+
+- **The Supabase projects.** They stay `kalaam` and `kalaam-dev`. A project
+  name is a dashboard label; the refs are what every URL, key, migration, and
+  test actually resolves against, and refs cannot change. Renaming would cost
+  confusion and buy nothing.
+- **The GitHub repository**, still `muneebexotic/ai_chatbot_app`. Renaming it
+  breaks every URL in `SECURITY-REMEDIATION.md`, which is a runbook that has to
+  work under pressure. GitHub redirects the old name, so the cost of leaving it
+  is a mismatch in the address bar and the cost of changing it is a document
+  that lies about where to clone from.
+- **The header comment on `20260727155452_initial_schema.sql`**, which still
+  reads "Kalaam initial schema". It is a historical file describing what was
+  written that day, under the name the project had.
+
+**One thing that WAS rewritten in a historical document, stated plainly.**
+`CRITIQUE.md` referred to `KalaamTheme` and `kalaam_theme.dart` in the
+Milestone 1 entries. Those identifiers are now `SpeakWiseTheme` and
+`speakwise_theme.dart`, and the references were updated so a reader following
+them lands on real code. **No claim, finding, or date was altered** — only the
+names of the things being pointed at. Recorded here rather than left for
+someone to notice in a diff.
+
+**Reverses if:** never. Once `com.muscodes.speakwise` reaches Play it is
+permanent, which is the entire reason §17.2 flagged it.
+
+---
+
 ## D8 — The read-own policies on `entitlements` and `usage_daily` are proven through the gateway, not with a service key in the test suite
 
 **Date:** 2026-07-28 · **Status:** accepted · **Closes:** CRITIQUE W2.3 ·

@@ -9,10 +9,10 @@ import 'package:http/http.dart' as http;
 // accident.
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/auth/domain/auth_user.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/auth/domain/auth_user.dart';
 
 /// Supabase-backed authentication (PRD §9.2, Milestone 2).
 ///
@@ -143,7 +143,7 @@ class AuthRepository {
   /// Returns [Ok] once the browser has been handed the request, **not** once
   /// the user is signed in. The rest of the flow arrives out-of-band: Google
   /// redirects to Supabase, Supabase redirects to
-  /// `com.muscodes.kalaam://login-callback/`, Android routes that to the
+  /// `com.muscodes.speakwise://login-callback/`, Android routes that to the
   /// activity, and the session surfaces on [authStateChanges]. Anything that
   /// needs to react to the *result* must watch that stream — a caller awaiting
   /// this future and then reading [currentUser] will usually read null,
@@ -152,7 +152,7 @@ class AuthRepository {
     return _guard(() async {
       await _auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'com.muscodes.kalaam://login-callback/',
+        redirectTo: 'com.muscodes.speakwise://login-callback/',
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
       return const Ok<void>(null);
