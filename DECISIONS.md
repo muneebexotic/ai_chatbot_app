@@ -8,6 +8,82 @@ would reverse it.
 
 ---
 
+## D7 — `abuse_events` is service-role write and no client read
+
+**Date:** 2026-07-27 · **Status:** accepted · **Interprets:** PRD R9.5.1, §10
+
+**What.** `abuse_events` has RLS enabled and **no policy at all** for the
+`authenticated` role — no select, no insert, no update, no delete. Only the
+service role touches it.
+
+**Why this is an interpretation, not the letter.** R9.5.1 says a user may read
+and write their own rows, and names only `entitlements` and `usage_daily` as
+service-role write. Read literally, a user would be able to insert, edit, and
+delete rows in `abuse_events` — the table that exists to record that user's
+abuse. That would let the party being detected rewrite the detection, which
+defeats §10 entirely and cannot be what the requirement intends.
+
+Read access is withheld as well, which goes one step further than the write
+restriction. `detail` describes what the detector matched on; exposing it to the
+account being measured is free reconnaissance for anyone probing the limits.
+
+**Cost.** No in-app path can ever show a user their own abuse history. If that
+becomes a transparency requirement — a GDPR access request would be the obvious
+trigger — it is served by an Edge Function under service role that returns a
+redacted view, not by relaxing this policy.
+
+**The absence of a policy is the mechanism.** RLS denies by default: a table
+with RLS enabled and no matching policy rejects the statement. Someone reading
+this migration may see a table with no policies and conclude it was forgotten.
+It was not, and the migration says so at the table.
+
+**Verified:** an anon insert into every one of the ten tables returns `42501`
+(row-level security violation) rather than a constraint error, confirming RLS is
+enabled and denying rather than merely declared.
+
+**Reverses if:** a regulator or Play policy requires user-visible abuse records,
+which is handled by the redacted-view function above rather than by a policy
+change.
+
+---
+
+## D6 — A debug-only launcher stands in for sign-in until Milestone 2
+
+**Date:** 2026-07-27 · **Status:** CLOSED 2026-07-28 — deleted as specified ·
+**Follows:** D0
+
+**What.** `lib/debug/debug_preview.dart` opens Chat with seeded fake messages,
+opens Settings, toggles light/dark, and enters the normal Splash flow. It is
+the initial screen when `kDebugMode` is true and is absent from release builds
+entirely, since `kDebugMode` is a compile-time constant.
+
+**Why.** D0 records that Google suspended the Firebase project, so sign-in
+cannot succeed on any device. Chat and Settings are the two screens carrying
+the most theme-dependent code — Settings alone reads `Theme.of(context)`
+21 times — and both sit behind that login. Without a bypass, Milestone 1's
+theme wiring could only ever be verified against the contrast table, which is
+precisely the weakness W1.1 exists to record. Worse, the app's only light/dark
+switch is inside Settings, so even the light-mode pass was unreachable.
+
+**Cost.** A screen and a branch in `main.dart` that must be deleted, and one
+dependency on an existing encapsulation leak: `ChatProvider.messages` returns
+the provider's own mutable list, which is how seeding works without touching
+shipped code. The leak is pre-existing and is not widened here.
+
+**Not what it is.** Not a fix for auth, not a fake user, not a mock backend.
+Nothing in `lib/` outside the debug file and the guarded branch changed. The
+conversation drawer still reads Firestore and still comes up empty.
+
+**Deletion.** Both sites are marked `TODO(m2-delete)`. Milestone 2 rewrites
+these screens against Supabase; the file and the branch go with it. If
+Milestone 2 ships with `lib/debug/` still present, that is a defect.
+
+**Reverses if:** the Firebase project is restored, or Milestone 2 lands early
+enough that real auth is available. Neither is expected — D0 abandons the
+project rather than appealing it.
+
+---
+
 ## D5 — Riverpod migration keeps `ChangeNotifier` for now
 
 **Date:** 2026-07-26 · **Status:** accepted, time-boxed · **Implements:** PRD F5

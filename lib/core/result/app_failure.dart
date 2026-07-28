@@ -107,6 +107,49 @@ final class UnauthorizedFailure extends AppFailure {
   String get code => 'unauthorized';
 }
 
+/// Sign-in, sign-up, or password reset was refused, and the reason is
+/// something the user can act on.
+///
+/// Distinct from [UnauthorizedFailure], which means "you are not signed in".
+/// This means "the attempt to sign in was rejected, and here is why" — the
+/// difference matters because §7.6 requires an error to state its cause *and*
+/// its fix, and "wrong password" and "that email is already registered" have
+/// nothing in common as fixes.
+///
+/// [AuthFailureReason.invalidCredentials] deliberately covers both a wrong
+/// password and an unknown email. Supabase does not distinguish them and
+/// neither should we: telling an anonymous caller which emails exist is an
+/// account-enumeration oracle. If a future copy change is tempted to say "no
+/// account with that email", that is the reason not to.
+final class AuthFailure extends AppFailure {
+  const AuthFailure(this.reason, {super.cause, super.stackTrace});
+
+  final AuthFailureReason reason;
+
+  @override
+  String get code => 'auth_${reason.name}';
+}
+
+enum AuthFailureReason {
+  /// Wrong password, or no such account. Not distinguished, on purpose.
+  invalidCredentials,
+
+  /// Sign-up refused because the address is already in use.
+  emailAlreadyRegistered,
+
+  /// The password does not meet the project's minimum.
+  weakPassword,
+
+  /// Correct credentials, but the address has not been confirmed yet.
+  emailNotConfirmed,
+
+  /// The address is not a valid email.
+  invalidEmail,
+
+  /// Sign-ups are disabled on the project.
+  signUpDisabled,
+}
+
 /// The server rejected the request shape. A bug in our client, not the user's
 /// problem — surface it generically but log it loudly.
 final class InvalidRequestFailure extends AppFailure {

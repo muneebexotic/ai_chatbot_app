@@ -54,6 +54,21 @@ abstract final class KalaamTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: c.bg,
       canvasColor: c.bg,
+
+      // MUST be set explicitly. Left to its default, Material 3 resolves
+      // `primaryColor` to `colorScheme.surface` in dark mode and
+      // `colorScheme.primary` only in light — see `primarySurfaceColor` in
+      // the framework's ThemeData constructor. The result is a theme that is
+      // correct in light and silently inverts in dark: 61 call sites across
+      // this app read `Theme.of(context).primaryColor`, and in dark every one
+      // of them was painting #141619 on a #0A0B0D background.
+      //
+      // Verified on a device, not in the contrast table — the table checks the
+      // nine tokens, and this value is not one of them. It cost the app every
+      // primary button, the Settings icon column, the theme switch itself, and
+      // legibility of the user's own messages. Locked by a test in
+      // test/design/theme_test.dart.
+      primaryColor: c.signal,
       extensions: <ThemeExtension<dynamic>>[c],
       textTheme: textTheme,
       // Stops any stray widget falling back to Roboto, which §7 bans by name.

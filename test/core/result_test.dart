@@ -155,7 +155,8 @@ void main() {
         QuotaExceededFailure() => 'quota',
         SafetyBlockedFailure() => 'safety',
         AtCapacityFailure() => 'capacity',
-        UnauthorizedFailure() => 'auth',
+        UnauthorizedFailure() => 'not signed in',
+        AuthFailure() => 'sign-in refused',
         InvalidRequestFailure() => 'request',
         StorageFailure() => 'storage',
         DeviceFailure() => 'device',
@@ -164,6 +165,25 @@ void main() {
 
       expect(describe(const OfflineFailure()), 'offline');
       expect(describe(const AtCapacityFailure()), 'capacity');
+      expect(
+        describe(const AuthFailure(AuthFailureReason.invalidCredentials)),
+        'sign-in refused',
+      );
+    });
+
+    test('AuthFailure is distinct from UnauthorizedFailure', () {
+      // "You are not signed in" and "your sign-in attempt was refused, and
+      // here is why" need different copy and different next steps. Collapsing
+      // them is how an app ends up telling someone who typed the wrong
+      // password that their session expired.
+      expect(
+        const AuthFailure(AuthFailureReason.invalidCredentials),
+        isNot(isA<UnauthorizedFailure>()),
+      );
+      expect(
+        const AuthFailure(AuthFailureReason.weakPassword).code,
+        isNot(const UnauthorizedFailure().code),
+      );
     });
   });
 }

@@ -15,6 +15,25 @@ allprojects {
     }
 }
 
+// Relocate the Gradle build directory to <flutter_project>/build.
+//
+// flutter_tools looks for the APK at <flutter_project>/build/app/outputs/
+// flutter-apk/. Without this, Gradle writes it to android/app/build/outputs/
+// instead and `flutter run` fails with "Gradle build failed to produce an .apk
+// file" — a build that actually succeeded, reported as a build failure.
+//
+// This block is in the current Flutter Android template but not the older one
+// this project was generated from. The android/build.gradle.kts sitting beside
+// this file has it; that file is dead, because Gradle resolves build.gradle
+// ahead of build.gradle.kts when both exist.
+def newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    project.layout.buildDirectory.value(newBuildDir.dir(project.name))
+    project.evaluationDependsOn(":app")
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.layout.buildDirectory
 }

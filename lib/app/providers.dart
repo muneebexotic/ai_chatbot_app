@@ -8,6 +8,7 @@ import '../providers/conversation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/themes_provider.dart';
+import '../features/auth/application/auth_providers.dart';
 
 /// The application's dependency graph (PRD F5).
 ///
@@ -42,9 +43,12 @@ final themeNotifierProvider = ChangeNotifierProvider<ThemeProvider>(
 
 /// Firebase auth, the current user, and usage counters.
 ///
-/// Removed in Milestone 2 when Supabase replaces Firebase (PRD §9.2).
+/// Session state, backed by Supabase since Milestone 2 (PRD §9.2).
+///
+/// The repository is injected rather than constructed inside, so this graph
+/// can be pointed at a test double without the provider knowing.
 final authNotifierProvider = ChangeNotifierProvider<AuthProvider>(
-  (ref) => AuthProvider(),
+  (ref) => AuthProvider(ref.watch(authRepositoryProvider)),
 );
 
 final forgotPasswordControllerProvider =
@@ -73,7 +77,7 @@ final conversationsNotifierProvider = ChangeNotifierProvider<ConversationsProvid
   ref,
 ) {
   final auth = ref.watch(authNotifierProvider);
-  return ConversationsProvider(userId: auth.user?.uid ?? '');
+  return ConversationsProvider(userId: auth.user?.id ?? '');
 });
 
 /// Chat state for the current thread.
@@ -85,7 +89,7 @@ final chatNotifierProvider = ChangeNotifierProvider<ChatProvider>((ref) {
   final auth = ref.watch(authNotifierProvider);
 
   return ChatProvider(
-    userId: auth.user?.uid ?? '',
+    userId: auth.user?.id ?? '',
     auth: auth,
     // Read lazily so a persona change takes effect on the next message
     // without rebuilding the provider or discarding the thread.

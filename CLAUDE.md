@@ -36,10 +36,11 @@ why the report is the flagship.
 This is a **rebuild in progress on a live codebase**, not a greenfield project.
 The repo currently contains the *old* app. Only Milestone 0 is done.
 
-| | Now (old app) | Target (PRD) |
+| | Now | Target (PRD) |
 |---|---|---|
-| State | Provider | Riverpod (`flutter_riverpod` + `riverpod_annotation`) |
-| Backend | Firebase (Auth/Firestore/Storage) | Supabase (Postgres + RLS, Edge Functions, Storage) |
+| State | Riverpod (state classes still `ChangeNotifier`, D5) | Riverpod `Notifier` throughout |
+| Auth | **Supabase** (M2 done) | Supabase |
+| Data | Firestore for chat/conversations only | Supabase Postgres + RLS |
 | Model calls | Direct from client | Server gateway only, key server-side |
 | Layout | `lib/screens|providers|services|…` | `lib/app|core|design|features/*|l10n` (PRD §13) |
 | Type | Poppins + Urbanist | Newsreader + General Sans + Geist Mono |
@@ -50,8 +51,15 @@ The repo currently contains the *old* app. Only Milestone 0 is done.
 Poppins). It is stale and contradicts the PRD. Do not follow it; the PRD wins.
 Delete or rewrite it in Milestone 1.
 
-Milestone status: **0 done** (security). 1–8 not started. Do them in order
+Milestone status: **0, 1, 2 done.** 3–8 not started. Do them in order
 (PRD §15); the order is a closed ceiling.
+
+What M2 landed: schema + RLS on both projects with an RLS test per table,
+Supabase auth (email/password and Google), account deletion via Edge Function,
+package renamed to `com.muscodes.kalaam`. What it deliberately did not: usage
+counters and entitlements are still local on `PaymentService`, because
+`usage_daily` and `entitlements` are service-role write only and the gateway
+that writes them is M3 (CRITIQUE W2.2).
 
 ## Stack
 
@@ -76,7 +84,16 @@ flutter pub get
 flutter analyze                     # must be clean, no ignored rules (§14)
 flutter test
 flutter test --coverage             # domain + application ≥70% (§14)
-flutter run --dart-define=GEMINI_API_KEY=<key>   # transitional, M0–M2 only
+# Supabase config is required. Point it at kalaam-dev while developing.
+flutter run --dart-define=GEMINI_API_KEY=<key> \n  --dart-define=SUPABASE_URL=https://<ref>.supabase.co \n  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+
+flutter test                        # 80 offline; integration tests self-skip
+flutter test --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
+                                    # +24 against kalaam-dev (RLS + auth)
+
+npx supabase link --project-ref <ref>   # dev: sbwaiindthrluqoypvqc
+npx supabase db push                    # prod: kneiwapwjuuaxcenlfsu
+npx supabase functions deploy delete-account
 flutter build apk --split-per-abi   # per-ABI under 30MB (R11.1)
 
 bash scripts/check-secrets.sh       # staged content; runs from pre-commit

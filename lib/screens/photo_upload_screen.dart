@@ -551,7 +551,7 @@ class _PhotoUploadScreenState extends ConsumerState<PhotoUploadScreen> {
       final authProvider = ref.read(authNotifierProvider);
 
       // Check if user is authenticated
-      if (authProvider.currentUser?.uid == null || authProvider.currentUser!.uid.isEmpty) {
+      if (authProvider.currentUser?.id == null || authProvider.currentUser!.id.isEmpty) {
         throw Exception('❌ User is not authenticated.');
       }
 

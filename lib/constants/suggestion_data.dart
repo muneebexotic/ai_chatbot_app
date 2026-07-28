@@ -1,5 +1,20 @@
 import 'package:flutter/material.dart';
 
+// The 'Create Image' and 'Generate Images' chips were removed here.
+//
+// Image generation is cut by PRD §2.2 and banned outright by §16. The
+// generation code went in Milestone 1, but these two chips survived it and
+// kept offering the feature on the chat empty state — the first screen a
+// signed-in user sees. Tapping one sent its prompt to a text model, which
+// answered by describing a picture it had not made.
+//
+// Found by looking at a device screenshot, not by reading code: nothing
+// referenced the deleted services, so nothing failed to compile and no test
+// covered the contents of this list.
+//
+// Image *understanding* (§5.4) is a different feature and arrives with the
+// gateway in Milestone 3. It does not belong here either until it exists.
+
 final List<Map<String, dynamic>> suggestionChipData = [
   {
     'label': 'Brainstorm',
@@ -9,16 +24,6 @@ final List<Map<String, dynamic>> suggestionChipData = [
       'Generate creative solutions for problem-solving',
       'What are some innovative approaches to marketing',
       'Brainstorm unique business name ideas',
-    ],
-  },
-  {
-    'label': 'Create Image',
-    'icon': Icons.image_outlined,
-    'suggestions': [
-      'Generate a beautiful landscape image',
-      'Create an abstract art piece',
-      'Design a logo for my business',
-      'Make a cartoon character illustration',
     ],
   },
   {
@@ -49,16 +54,6 @@ final List<Map<String, dynamic>> suggestionChipData = [
       'Share a fun riddle or brain teaser',
       'Recommend something new to try today',
       'Give me a creative writing prompt',
-    ],
-  },
-  {
-    'label': 'Generate Images',
-    'icon': Icons.palette_outlined,
-    'suggestions': [
-      'Create a futuristic city skyline',
-      'Generate a cozy coffee shop interior',
-      'Design a minimalist poster',
-      'Make a fantasy creature illustration',
     ],
   },
   {

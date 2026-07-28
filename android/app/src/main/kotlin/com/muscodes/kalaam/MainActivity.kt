@@ -1,4 +1,4 @@
-package com.example.ai_chatbot_app
+package com.muscodes.kalaam
 
 import io.flutter.embedding.android.FlutterActivity
 

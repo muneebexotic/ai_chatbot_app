@@ -1,0 +1,15 @@
+# Test tags. Declared here so using one is not a warning.
+#
+# Run everything except the tests that need a live backend:
+#   flutter test --exclude-tags integration
+#
+# The integration tests also skip themselves when their --dart-define
+# credentials are absent, so a plain `flutter test` stays offline either way.
+# The tag exists for the case where the credentials ARE in the environment and
+# you still want a fast, local-only run.
+tags:
+  integration:
+    description: >-
+      Runs against a live Supabase project. Requires --dart-define=SUPABASE_URL
+      and --dart-define=SUPABASE_PUBLISHABLE_KEY, and must be pointed at
+      kalaam-dev rather than production.
