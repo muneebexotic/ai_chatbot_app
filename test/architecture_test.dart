@@ -69,13 +69,16 @@ final _bannedInCopy = <String, RegExp>{
 /// It should be empty by the end of Milestone 6. If it is not, that is a
 /// finding for `CRITIQUE.md`, not a reason to relax the rule.
 const _expectedOrphans = <String, String>{
-  // Voice. Both were reachable only through the old chat surface, which had a
-  // microphone button beside the text field. Milestone 4 gives spoken practice
-  // a full screen of its own (§4.2) rather than a control squeezed into the
-  // composer, and these are the on-device recogniser and synthesiser it will
-  // drive — the two packages the whole business model rests on (§3).
-  'lib/services/speech_service.dart': 'M4 — the live session screen',
-  'lib/services/voice_service.dart': 'M4 — the live session screen',
+  // RESOLVED IN MILESTONE 4:
+  //   services/speech_service.dart and services/voice_service.dart — DELETED.
+  //     The quarantine asked the milestone that needed them to "wire them up or
+  //     delete them". Neither survived contact with the requirements: the first
+  //     was 42 lines that re-initialised the recogniser on every listen and
+  //     returned `bool` for failure, with no amplitude and no turn detection;
+  //     the second was 15 lines that set the language and pitch before every
+  //     utterance, three platform round trips inside R4.2.4's 1.5s budget.
+  //     Replaced by features/session/data/{speech_recognition_service,
+  //     tts_service}.dart, which are what §4.2 actually needs.
 
   // The R4.3.1 metrics engine, landed ahead of the screen that feeds it.
   //
@@ -94,6 +97,16 @@ const _expectedOrphans = <String, String>{
   'lib/core/speech_metrics/transcript.dart': 'M4 — awaiting the session controller',
   'lib/core/speech_metrics/filler_lexicon.dart': 'M4 — awaiting the session controller',
   'lib/core/speech_metrics/pace_band.dart': 'M4 — awaiting the session controller',
+
+  // The two on-device services and the sentence splitter, same in-milestone
+  // quarantine as the engine above and for the same reason: each is testable on
+  // its own and none of them should grow inside the controller that drives
+  // them. The controller imports all three.
+  'lib/features/session/data/speech_recognition_service.dart':
+      'M4 — awaiting the session controller',
+  'lib/features/session/data/tts_service.dart': 'M4 — awaiting the session controller',
+  'lib/features/session/domain/sentence_segmenter.dart':
+      'M4 — awaiting the session controller',
 
   // Paywall debris. §14 and R0.5.6 both put the paywall on the list of screens
   // that must not ship as the default, so Milestone 6 rebuilds rather than
