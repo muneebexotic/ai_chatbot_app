@@ -8,6 +8,55 @@ would reverse it.
 
 ---
 
+## D10 — `riverpod_annotation` and `riverpod_generator` are removed, though F5 names one of them
+
+**Date:** 2026-07-29 · **Status:** accepted · **Deviates from:** PRD F5's
+package list · **Implements:** F5's actual requirement, and §14's "pubspec.yaml
+contains only packages this PRD requires"
+
+**What.** Both packages are gone from `pubspec.yaml`. `flutter_riverpod` stays
+and nothing about the state management changes.
+
+**Why this is not a reduction in scope.** F5 says: "Migrate Provider to Riverpod
+(`flutter_riverpod` + `riverpod_annotation`). This is what removes F3 cleanly
+and makes quota/entitlement state testable." The requirement is the migration
+and its two named outcomes. Both are done and both are guarded executably —
+`architecture_test.dart` fails if `package:provider`, `Provider.of`,
+`context.read`, or `context.watch` reappears anywhere in `lib/`, and no service
+holds a `BuildContext`. The parenthesis names a *means*, and this project chose
+a different one.
+
+**The evidence that it was never used.** Across four milestones:
+`grep -rn "@riverpod\|riverpod_annotation" lib/` returns nothing, there is no
+`.g.dart` anywhere in `lib/`, and there is no `build.yaml`. Every provider in
+the app is declared by hand — `NotifierProvider(ChatController.new)`,
+`Provider<GatewayClient>((ref) => …)` — which is a deliberate and visible style,
+not an oversight. The annotation package was a dependency with zero imports and
+the generator was a build step with zero outputs.
+
+**Why it had to be decided now rather than left alone.** `riverpod_generator`
+pins `build ^2.0.0`. `drift_dev` requires `build >=3.0.0`. Drift is §9.4's
+local persistence, which is what makes R4.2.6's "a session that is force-killed
+MUST still produce a report from whatever transcript was persisted" true. So
+the choice was between an unused generator and a required capability, and an
+unused generator does not get to veto a dependency the product needs.
+
+**Cost.** If a later milestone wants generated providers, it re-adds both and
+pays whatever the `build` conflict costs at that time. That is a real cost and
+it is the reason this is written down rather than done quietly. It is also
+bounded: `drift_dev` and `riverpod_generator` will not conflict forever, and
+the migration would be mechanical.
+
+**What was NOT removed.** `riverpod_lint` and `custom_lint` stay. Their useful
+rules are about `ref` misuse and provider lifecycle, which apply to hand-written
+providers exactly as much as to generated ones.
+
+**Reverses if:** a milestone has enough providers that hand-declaring them
+becomes the error-prone option, and `riverpod_generator` has by then moved to
+`build ^3`.
+
+---
+
 ## D9 — The app is SpeakWise, and the package id is `com.muscodes.speakwise`
 
 **Date:** 2026-07-28 · **Status:** settled by the owner · **Closes:** PRD §17.1

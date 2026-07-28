@@ -1,27 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
 
-    <!-- ✅ Microphone permission for speech_to_text -->
+    <!-- The microphone. R4.1.2 asks for it once, with a plain explanation of
+         why, before the first session. Recognition runs on-device and R4.2.7
+         is explicit that no audio leaves the phone: this permission buys the
+         transcript, not an upload. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-
-    <!-- Camera permission -->
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Storage permissions -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Add to android/app/src/main/AndroidManifest.xml -->
     <uses-permission android:name="com.android.vending.BILLING" />
 
-    <!-- For Android 13+ photo picker -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- REMOVED IN MILESTONE 4: CAMERA, READ/WRITE_EXTERNAL_STORAGE,
+         READ_MEDIA_IMAGES, and the camera hardware feature.
+         Nothing in `lib/` has referenced any of them since §2.2 cut image
+         generation and Milestone 3 dropped `image_picker` from pubspec. A
+         permission the app declares but never uses still appears in the Play
+         data-safety form and on the store listing, so it is a claim about the
+         product that is not true. §5.4 image *understanding* may add
+         READ_MEDIA_IMAGES back if it ships; it will do so with the code that
+         needs it. -->
 
-    <!-- Camera feature -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:label="SpeakWise"
@@ -75,10 +75,27 @@
             android:value="2" />
     </application>
 
+    <!-- Android 11 package visibility (API 30+). A manifest may contain exactly
+         ONE <queries> element, so the speech entries live here beside the
+         Flutter default rather than in a second block near the permissions.
+
+         Without the two audio intents below, `resolveActivity` / `bindService`
+         for the system speech and text-to-speech engines returns nothing, and
+         `speech_to_text` and `flutter_tts` report "no recogniser available" or
+         silently do nothing on a phone that has both installed. Invisible
+         below API 30 and total above it, which is the worst shape a bug can
+         have — and it would break the two packages the whole business model
+         rests on (§3: a spoken minute costs zero because both run on-device). -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
     </queries>
 </manifest>

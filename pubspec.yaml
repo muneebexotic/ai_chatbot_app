@@ -21,8 +21,14 @@ dependencies:
 
   # State and DI (PRD F5). package:provider is gone -- the migration is
   # complete, so nothing should reintroduce it.
+  #
+  # `riverpod_annotation` is named by F5 and is NOT here. See DECISIONS.md D10:
+  # this project declares every provider by hand, so the annotation package had
+  # zero imports and its generator had zero outputs across four milestones —
+  # and `riverpod_generator` pins `build ^2.0.0`, which blocks the `drift_dev`
+  # that §9.4's offline persistence needs. An unused generator does not get to
+  # veto a required dependency.
   flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
 
   # Backend. Firebase is gone entirely as of Milestone 3 — the last three
   # packages (firebase_core, cloud_firestore, google_sign_in) went with the
@@ -58,13 +64,40 @@ dependencies:
   in_app_purchase: ^3.2.3
   in_app_purchase_android: ^0.4.0+1
 
-  # Removed here, to be re-added by the milestone that first imports them:
-  # image_picker and permission_handler (§5.4 image understanding, and the
-  # microphone in Milestone 4), connectivity_plus (R11.5 offline behaviour),
-  # path/path_provider (Drift, §9.4). Every one was unused in lib/ after the
-  # old chat surface was deleted, and §14 requires this file to contain only
-  # what the app actually uses — a dependency kept "for later" is one nobody
-  # audits and one that still ships in the APK.
+  # ── Milestone 4 re-adds four of the five packages Milestone 3 removed ──────
+  #
+  # M3 took these out with "to be re-added by the milestone that first imports
+  # them". This is that milestone, and each one is imported by code in this
+  # commit's successors rather than added speculatively.
+  #
+  # `image_picker` is the one that stays out: §5.4 image understanding is not
+  # built and may be deferred past v1 entirely.
+
+  # Local persistence (§9.4): threads, messages, sessions, and reports in
+  # SQLite so history and past reports work fully offline. It is also what
+  # makes R4.2.6's "a session that is force-killed MUST still produce a report
+  # from whatever transcript was persisted" true rather than aspirational —
+  # every finalised turn is written before it is rendered.
+  drift: ^2.28.2
+  # The bundled SQLite. Android ships its own, but the system version varies by
+  # OEM and API level, and a transcript that fails to save on one phone is the
+  # exact class of defect §16's "no feature that only works on a fast phone"
+  # exists to prevent.
+  sqlite3_flutter_libs: ^0.5.40
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # R4.1.2's microphone permission step, with the plain explanation of why.
+  # `speech_to_text` can request the permission itself, but it cannot show a
+  # rationale first or tell "denied" from "denied forever" — and permanently
+  # denied needs a route to system settings, not a second prompt that will
+  # never appear.
+  permission_handler: ^12.0.1
+
+  # R4.2.6 requires network loss to *pause the session and offer resume*, which
+  # means noticing it rather than inferring it from a failed request. R11.5
+  # then requires the offline session to keep recording locally.
+  connectivity_plus: ^6.1.5
 
 dev_dependencies:
   flutter_test:
@@ -80,9 +113,13 @@ dev_dependencies:
   # analysis_options.yaml therefore resolved to nothing and NO lint rule has
   # ever run on this codebase. Keep it here.
   flutter_lints: ^6.0.0
-  riverpod_generator: ^2.6.3
   build_runner: ^2.4.13
+  # Generates the Drift database code. Dev-only: the generated source is
+  # committed and compiled, the generator itself ships nowhere.
+  drift_dev: ^2.28.2
   custom_lint: ^0.7.0
+  # Still useful without the generator: riverpod_lint's best rules are the ones
+  # about `ref` misuse and provider scope, not the codegen ones.
   riverpod_lint: ^2.6.3
 
 flutter_icons:
