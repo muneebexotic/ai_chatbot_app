@@ -180,6 +180,44 @@ void main() {
         expect(result.failureOrNull, isA<UnauthorizedFailure>());
       });
 
+      test('deleteAccount removes the account and its rows (R9.5.2)', () async {
+        await repository.signUp(email: email, password: password);
+        final userId = repository.currentUser!.id;
+
+        // Own a row in a cascading table, so the test proves the cascade and
+        // not merely that the auth user vanished.
+        await client.from('threads').insert({
+          'user_id': userId,
+          'title': 'to be deleted',
+        });
+
+        final deleted = await repository.deleteAccount();
+        expect(deleted, isA<Ok<void>>());
+
+        // Locally signed out, so the app cannot hold a token for an account
+        // that no longer exists.
+        expect(repository.isSignedIn, isFalse);
+        expect(repository.currentUser, isNull);
+
+        // And genuinely gone server-side: the credentials no longer work.
+        // Without this the test would pass against a function that signed the
+        // user out and deleted nothing.
+        final resurrect = await repository.signIn(
+          email: email,
+          password: password,
+        );
+        expect(resurrect, isA<Err<AuthUser>>());
+        expect(
+          (resurrect.failureOrNull! as AuthFailure).reason,
+          AuthFailureReason.invalidCredentials,
+        );
+      });
+
+      test('deleteAccount without a session is refused', () async {
+        final result = await repository.deleteAccount();
+        expect(result.failureOrNull, isA<UnauthorizedFailure>());
+      });
+
       test('password reset succeeds for an address with no account', () async {
         // Deliberate: a reset endpoint that reports "no such user" is an
         // enumeration oracle. This asserts the non-leaking behaviour, which is

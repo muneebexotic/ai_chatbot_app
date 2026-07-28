@@ -8,6 +8,8 @@ import '../utils/app_theme.dart';
 import 'personas_screen.dart';
 import 'welcome_screen.dart';
 import '../app/providers.dart';
+import 'package:ai_chatbot_app/core/result/result.dart';
+import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -207,10 +209,20 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _buildOptionTile(
                         context,
-                        Icons.info_outline, 
-                        'About', 
+                        Icons.info_outline,
+                        'About',
                         'App information and version',
                         () {},
+                      ),
+                      // R9.5.2: Play requires an in-app deletion path, and §16
+                      // bans hard-to-cancel flows — so it sits in the open
+                      // here rather than behind a support email, and asks once.
+                      _buildOptionTile(
+                        context,
+                        Icons.delete_forever_outlined,
+                        'Delete account',
+                        'Permanently removes your account and everything in it',
+                        () => _confirmDeleteAccount(context, ref),
                       ),
                     ],
                   ),
@@ -544,5 +556,56 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Confirms, then permanently deletes the account (R9.5.2).
+  ///
+  /// One confirmation, not a typed-name gauntlet: §16 bans hard-to-cancel
+  /// flows, and friction placed in front of leaving is a dark pattern even
+  /// when the intent is "protecting" the user. The dialog states plainly what
+  /// goes and that it cannot be undone, which is the honest version of a
+  /// safeguard.
+  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete account'),
+        content: const Text(
+          'This permanently deletes your account, your conversations, and '
+          'everything saved about you. It cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep my account'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref.read(authNotifierProvider).deleteAccount();
+    if (!context.mounted) return;
+
+    switch (result) {
+      case Ok():
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
+        );
+      case Err(:final failure):
+        // Never claim success on a failed deletion. A user who believes their
+        // data is gone when it is not has been misled about the one thing this
+        // screen exists to promise.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authFailureMessage(failure))),
+        );
+    }
   }
 }

@@ -216,6 +216,20 @@ class AuthProvider with ChangeNotifier {
   Future<Result<void>> sendPasswordResetEmail(String email) =>
       _repository.sendPasswordReset(email);
 
+  /// Deletes the account and everything it owns (R9.5.2). Irreversible.
+  ///
+  /// Play requires an in-app deletion path, and §16 bans hard-to-cancel flows,
+  /// so this is reachable from Settings in two taps and asks once.
+  Future<Result<void>> deleteAccount() async {
+    final result = await _repository.deleteAccount();
+    if (result.isOk) {
+      _user = null;
+      await _onSignedOut();
+      notifyListeners();
+    }
+    return result;
+  }
+
   /// No avatar field exists in `profiles` (§9.5), so this cannot persist.
   ///
   /// Kept as a no-op returning a typed failure rather than deleted, because

@@ -159,6 +159,41 @@ class AuthRepository {
     });
   }
 
+  /// Permanently deletes the account and everything it owns (R9.5.2).
+  ///
+  /// Calls the `delete-account` Edge Function, which runs under the service
+  /// role because a client cannot delete its own `auth.users` row — and should
+  /// not be able to, since anything that can do that can bypass RLS.
+  ///
+  /// The server takes the user id from the caller's JWT, not from anything
+  /// sent here. There is deliberately no parameter on this method: an id
+  /// argument would be a lie, since the server would ignore it.
+  ///
+  /// Signs out locally afterwards. Without that the app holds a token for an
+  /// account that no longer exists, and every later request fails with a
+  /// confusing 401 rather than a clean signed-out state.
+  Future<Result<void>> deleteAccount() async {
+    if (currentUser == null) {
+      return const Err(UnauthorizedFailure());
+    }
+
+    return _guard(() async {
+      await _client.functions.invoke('delete-account', method: HttpMethod.post);
+
+      // Best-effort: the account is already gone server-side, so a failure to
+      // clear the local session must not be reported as a failed deletion.
+      // Saying "deletion failed" about data that is definitely deleted is the
+      // worse of the two wrong answers.
+      try {
+        await _auth.signOut();
+      } catch (e) {
+        Log.w('deleteAccount: local sign-out failed after deletion', error: e);
+      }
+
+      return const Ok<void>(null);
+    });
+  }
+
   /// Fetches the display name from `profiles`.
   ///
   /// Separate from [currentUser] because it costs a round trip and most call
@@ -208,6 +243,15 @@ class AuthRepository {
     } on PostgrestException catch (e, s) {
       Log.w('auth: postgrest error ${e.code}', error: e);
       return Err<T>(UnknownFailure(cause: e, stackTrace: s));
+    } on FunctionException catch (e, s) {
+      // An Edge Function that rejects the caller reports 401 the same way the
+      // auth endpoints do, and it means the same thing to the user.
+      Log.w('auth: function error ${e.status}', error: e);
+      return Err<T>(
+        e.status == 401 || e.status == 403
+            ? UnauthorizedFailure(cause: e, stackTrace: s)
+            : UnknownFailure(cause: e, stackTrace: s),
+      );
     } on SocketException catch (e, s) {
       return Err<T>(OfflineFailure(cause: e, stackTrace: s));
     } on http.ClientException catch (e, s) {
