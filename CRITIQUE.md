@@ -393,15 +393,130 @@ them here would be claiming credit for the wrong thing.
 
 ---
 
+## Milestone 3 — The gateway and chat
+
+### W3.1 — The rules I wrote to catch the last milestone's defects did not catch this milestone's *(FIXED, twice — and that is the finding)*
+
+Milestone 2 closed with W2.1: every real defect was found by looking at a
+screenshot, and the fix owed was a test that could see what the app *offers*.
+That test exists now, it works, and it found three live §16 violations on its
+first run — including "Unlimited image generation" on the paywall, which four
+milestones of review had walked past.
+
+Then the device pass found four more defects that it could not see.
+
+**Why it is weak.** The string rule answers "does any literal in `lib/` offer a
+banned feature". Every one of the four was a different question:
+
+- Three were **layout**. `Row(crossAxisAlignment: stretch)` inside a `ListView`
+  rendered every AI turn at zero height, so a reply arrived, was stored, and
+  was invisible — with no error, and `flutter analyze` clean. A
+  `SizedBox(width: 72)` in a list item did nothing, because list items get a
+  tight cross-axis constraint. A fixed `2.0` floor in `WaveformPainter`
+  swallowed the entire idle wave at 24dp while being invisible at 96dp. No
+  string rule can see any of that.
+- One was **ordering**. Two chained `.order()` calls send two `order=` query
+  parameters and PostgREST does not combine them, so a new account landed in
+  Debate Opponent. The code reads correctly. The database disagreed.
+
+And the welcome screen still said "Welcome to ChadGPT" — a *string*, which the
+string rule genuinely should have caught and did not, because it lived in
+`lib/constants/` as a bare `static const` with no widget context to judge. The
+same hiding place the image-generation chips used. That is the second time
+`lib/constants/` has been the answer.
+
+**What was fixed.** Both halves. The detector now reads declaration names
+inside `lib/constants/`, and `chat_surface_test.dart` — the project's first
+widget tests — pumps its subjects **inside a `ListView`**, because in a bare
+`Scaffold` the original code passes. Two of the four are now covered by tests
+that fail on the exact defect.
+
+**What is honestly still open.** Two are not: the painter floor and the
+PostgREST ordering are both fixed with no test behind them. The first needs a
+golden test, the second needs a live query. Both are cheap and neither was
+written, which is the part of this entry that is not a success story.
+
+**The general lesson, which is worth more than the fixes.** Each milestone's
+new rule catches the *previous* milestone's defect class and is silent on the
+next. Static rules over source will keep being one class behind, because the
+defects that survive review are precisely the ones review cannot see. Running
+the thing is not a supplement to the suite here; it is the only step that has
+ever found the interesting failures.
+
+### W3.2 — The gateway's streaming loop has no test at all *(NOT FIXED)*
+
+`gateway_contract.ts` is tested — 14 cases over `validateRequest` and
+`deriveTitle`. `memory_filter.ts` is tested — 15 cases, including one asserting
+the prompt and the filter name the same eight categories. The client's SSE
+parsing is tested against split frames, merged frames, and unreadable frames.
+
+The gateway's own streaming loop — the part that reads Groq's bytes, reassembles
+frames, detects `content_filter`, and persists a partial reply when the stream
+dies — has no test whatsoever. It is the most stateful code in the project and
+the only place where a provider change could silently drop text.
+
+**Why it was not fixed.** Testing it needs either a fake upstream, which is a
+test of my understanding of Groq's wire format rather than of the code, or a
+live call, which spends the free quota per run and cannot exercise the failure
+paths at all. Neither is worthless; both were deferred.
+
+**What would fix it.** Extracting the frame-reassembly loop into a pure
+function over a `ReadableStream`, the way `validateRequest` was extracted, and
+feeding it recorded byte sequences including a mid-frame cut. That is an
+afternoon and it is owed.
+
+### W3.3 — Entitlements are server truth now, and the purchase path is dead *(NOT FIXED — deliberate, and it is the honest state)*
+
+W2.2 recorded that entitlements were "a number in local storage, resettable by
+reinstalling". Half of that is fixed: `usage_daily` and `entitlements` are
+written only by the gateway, the client reads its own rows through RLS, and
+DECISIONS D8's test proves both read-own policies work against a live project.
+
+The other half went the opposite way. `PaymentService` used to grant Pro on a
+purchase by writing `isPremium: true` to a document it also owned. R8.2 and §14
+forbid exactly that — an unverified token must grant nothing — so the write is
+gone and **a purchase now does nothing at all**. Restore returns false.
+
+**Why it is weak.** The app has a paywall that cannot sell anything. Anyone
+reading "monetization" as present would be wrong, and the screen is still
+reachable from settings.
+
+**Why it was not fixed.** The fix is `verify-purchase`: the client sends the
+Play token, the gateway checks it against the Play Developer API with a service
+account, writes the entitlement, acknowledges. That is Milestone 6 and it needs
+a Play Console the project does not have yet. A visible gap is the correct
+intermediate state; a silent client-side grant is the defect §14 makes you
+prove you do not have.
+
+**Fixed before moving on: W3.1.** It is the one where a control I had just
+written failed to do the job I wrote it for, which is the failure mode R0.5.5
+exists to catch — the same shape as W1.3, one level up. W3.2 is real work that
+was not done. W3.3 is blocked on a milestone, by design rather than neglect.
+
+---
+
 ## Standing items not yet counted against a milestone
 
-- **No screen has a widget test.** All 58 tests are unit or architectural.
-  §14 requires widget tests for session, report, and paywall; those screens do
-  not exist yet, but the existing screens have none either.
+- **~~No screen has a widget test.~~** *(partly closed in Milestone 3.)* The
+  chat surface has six, in `test/features/chat/chat_surface_test.dart`. Session,
+  report, and paywall — the three §14 names — still have none, because the
+  first two do not exist and the third is rebuilt in Milestone 6.
 - **Coverage is unmeasured.** §14 sets a 70% floor on `domain` and
-  `application`. Neither layer exists in the PRD's shape yet, so the number
-  would be meaningless — but that means the floor is currently unverifiable
-  rather than met.
-- **`app_message_bubble.dart` is still 607 lines** carrying three markdown
-  packages (`DECISIONS.md` D4). Scheduled for deletion in Milestone 3; until
-  then it is the largest single file in the UI.
+  `application`. Both layers now exist in the PRD's shape for `chat`,
+  `partners`, and `memory`, so the number would finally mean something — and it
+  has still not been run. `flutter test --coverage` is one command; the reason
+  it is not in this document is that nobody typed it.
+- **~~`app_message_bubble.dart` is still 607 lines~~** — deleted in Milestone 3
+  with the rest of the old chat surface, and the three extra markdown packages
+  went with it (`DECISIONS.md` D4 closed as written).
+- **Nothing verifies 200% text scale.** R7.2.3 calls it "the most commonly
+  broken accessibility requirement in Flutter apps", and the two layout bugs
+  this milestone found were both constraint bugs — the exact class that text
+  scaling exposes. §14 puts it in the Milestone 8 matrix; given the hit rate, it
+  should be pulled forward.
+- **`lib/` still holds 127 hardcoded user-facing strings** across 13 files
+  (`test/l10n_baseline.txt`). All of it is the pre-rebuild app. The ratchet
+  stops it growing; only finishing the rebuild empties it.
+- **`_expectedOrphans` in `architecture_test.dart` has four entries** — two for
+  Milestone 4's voice services, two for Milestone 6's paywall. It should be
+  empty by the end of Milestone 6. If it is not, that is a finding.
