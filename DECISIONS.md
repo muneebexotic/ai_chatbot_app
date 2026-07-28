@@ -49,7 +49,7 @@ change.
 
 ## D6 — A debug-only launcher stands in for sign-in until Milestone 2
 
-**Date:** 2026-07-27 · **Status:** accepted, expires with Milestone 2 ·
+**Date:** 2026-07-27 · **Status:** CLOSED 2026-07-28 — deleted as specified ·
 **Follows:** D0
 
 **What.** `lib/debug/debug_preview.dart` opens Chat with seeded fake messages,

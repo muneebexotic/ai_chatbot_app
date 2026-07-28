@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'debug/debug_preview.dart';
 import 'design/tokens/app_colors.dart';
 import 'core/ui/app_messenger.dart';
 import 'config/bootstrap.dart';
@@ -93,17 +91,6 @@ class MyApp extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FlutterNativeSplash.remove();
     });
-
-    // TODO(m2-delete): temporary. The Firebase project is suspended, so
-    // sign-in cannot succeed and Chat and Settings are unreachable on a
-    // device. This launcher opens them with fake state so the Milestone 1
-    // theme can be verified on real hardware. It does not alter the normal
-    // flow — `Normal flow` inside it pushes this same SplashScreen. Deleted
-    // with lib/debug/ when Supabase auth lands. kDebugMode is a compile-time
-    // constant, so release builds never contain this branch.
-    if (kDebugMode) {
-      return const DebugPreviewScreen();
-    }
 
     return const SplashScreen();
   }

@@ -29,10 +29,14 @@ class AppBootstrap {
       ),
     );
 
-    // Firebase. Still here because it owns auth and Firestore until the
-    // Milestone 2 port lands; both back ends run side by side during the
-    // transition rather than leaving the app half-wired mid-milestone (F5).
-    // TODO(m2-delete): remove with the last Firebase call site.
+    // Firebase. Auth is gone from it as of Milestone 2 — nothing in lib/
+    // imports firebase_auth — but Firestore still backs chat history and the
+    // conversation list, so the SDK still has to start.
+    //
+    // TODO(m3-delete): retagged from m2. Milestone 3 rebuilds chat on Postgres
+    // (§9.5 threads/messages), and this call goes with the last Firestore
+    // reference. Leaving it labelled m2 would have made a marker that was
+    // already overdue on the day the milestone closed.
     await Firebase.initializeApp();
 
     // Supabase (PRD §9.2). Tolerates being unconfigured so the app still runs
