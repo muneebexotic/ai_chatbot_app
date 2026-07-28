@@ -82,7 +82,7 @@ cheap remedy.
 
 ### W1.1 — The design system is built, tested, and completely unused *(NOT FIXED — the biggest weakness here)*
 
-`AppColors`, `AppTypography`, `KalaamTheme`, `Space`/`Radii`/`Motion`, and the
+`AppColors`, `AppTypography`, `SpeakWiseTheme`, `Space`/`Radii`/`Motion`, and the
 `Waveform` all exist, all have tests, and the contrast table is committed. None
 of them are wired into a single screen. Every screen still calls the old
 `utils/app_theme.dart` with its indigo palette and its own hardcoded colours,
@@ -99,19 +99,19 @@ The one thing that genuinely landed is the font swap — Poppins and Urbanist ar
 deleted and the 45 references repointed — but they repoint to `GeneralSans` via
 the *old* `AppText` scale, not `AppTypography`. So even that is half-wired.
 
-**Why it was not fixed.** Swapping `KalaamTheme` in wholesale would change every
+**Why it was not fixed.** Swapping `SpeakWiseTheme` in wholesale would change every
 screen at once with no visual verification available in this environment (no
 device, no screenshots), and §7.4 redesigns the chat surface completely in
 Milestone 3 anyway. Doing it blind risked breaking working screens to satisfy a
 checklist.
 
-**What would fix it.** Wire `KalaamTheme` into `MaterialApp` and migrate screens
+**What would fix it.** Wire `SpeakWiseTheme` into `MaterialApp` and migrate screens
 one at a time with screenshots, starting with the smallest. That is real work
 and should be scheduled explicitly rather than assumed.
 
 #### Status update — root wiring landed *(partial fix, device verification pending)*
 
-`main.dart` now passes `KalaamTheme.light` / `KalaamTheme.dark` instead of
+`main.dart` now passes `SpeakWiseTheme.light` / `SpeakWiseTheme.dark` instead of
 `AppTheme.lightTheme` / `AppTheme.darkTheme`. Root only: no screen was
 restyled, because §7.4 rewrites the chat surface and Milestone 2 rewrites the
 auth screens. `flutter analyze` is clean and all 57 tests pass.
@@ -147,7 +147,7 @@ owed rather than optional.
 
 Material 3 resolves an unset `ThemeData.primaryColor` to `colorScheme.surface`
 when the scheme is dark, and to `colorScheme.primary` only when it is light
-(`primarySurfaceColor` in the framework's `ThemeData` constructor). `KalaamTheme`
+(`primarySurfaceColor` in the framework's `ThemeData` constructor). `SpeakWiseTheme`
 never set it. So the theme was correct in light and inverted in dark, and 61
 call sites across 9 files read `Theme.of(context).primaryColor`.
 
@@ -171,7 +171,7 @@ None of this was visible to `contrast_test.dart`, because the failing colour
 was never a token. The tokens were all correct. The theme assembled from them
 was not.
 
-**Fixed:** `primaryColor: c.signal` in `kalaam_theme.dart`, plus
+**Fixed:** `primaryColor: c.signal` in `speakwise_theme.dart`, plus
 `test/design/theme_test.dart` — ten assertions on the *assembled* `ThemeData`
 rather than on the tokens, including a 3:1 floor for `primaryColor` against the
 scaffold and 4.5:1 for `onPrimary` on `primaryColor`. Both would have failed

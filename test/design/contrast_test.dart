@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
 
 /// Verifies PRD R7.1.3: every token pair MUST pass WCAG AA — 4.5:1 for body
 /// text, 3:1 for large text and UI boundaries — in BOTH modes, "verified

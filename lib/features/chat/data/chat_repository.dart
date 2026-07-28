@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_thread.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
+import 'package:speakwise/features/chat/domain/chat_thread.dart';
 
 /// Reads and deletes threads and messages.
 ///

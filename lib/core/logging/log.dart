@@ -21,21 +21,21 @@ abstract final class Log {
   const Log._();
 
   /// Verbose detail. Off in release. Use for tracing flow while debugging.
-  static void d(String message, {String name = 'kalaam'}) {
+  static void d(String message, {String name = 'speakwise'}) {
     if (kDebugMode) {
       developer.log(message, name: name, level: _Level.debug);
     }
   }
 
   /// Notable but expected events: a session started, a route pushed.
-  static void i(String message, {String name = 'kalaam'}) {
+  static void i(String message, {String name = 'speakwise'}) {
     if (kDebugMode) {
       developer.log(message, name: name, level: _Level.info);
     }
   }
 
   /// Something recoverable went wrong and the user may notice.
-  static void w(String message, {String name = 'kalaam', Object? error}) {
+  static void w(String message, {String name = 'speakwise', Object? error}) {
     if (kDebugMode) {
       developer.log(message, name: name, level: _Level.warning, error: error);
     }
@@ -50,7 +50,7 @@ abstract final class Log {
   /// is how personal data ends up leaving the device by accident.
   static void e(
     String message, {
-    String name = 'kalaam',
+    String name = 'speakwise',
     Object? error,
     StackTrace? stackTrace,
   }) {

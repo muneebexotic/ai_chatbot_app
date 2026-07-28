@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/subscription_models.dart';
 import '../services/payment_service.dart';
 import '../constants/subscription_constants.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   final PaymentService _paymentService;

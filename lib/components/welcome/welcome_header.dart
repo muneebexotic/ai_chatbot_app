@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 import '../ui/app_logo.dart';
 import '../ui/app_text.dart';
 import '../../constants/welcome_screen_constants.dart';

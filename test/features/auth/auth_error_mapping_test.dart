@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/features/auth/data/auth_repository.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/features/auth/data/auth_repository.dart';
 
 /// Verifies that Supabase auth errors land on the right [AppFailure].
 ///

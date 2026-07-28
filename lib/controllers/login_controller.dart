@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../providers/auth_provider.dart';
 import '../constants/login_constants.dart';
 import '../utils/app_theme.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 /// Controller to handle login screen business logic
 /// Navigation and messaging are handed in per call rather than stored.

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import '../providers/auth_provider.dart';
 import '../utils/validation_utils.dart'; // Changed from validation_service
 import '../constants/signup_constants.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/auth/presentation/auth_failure_copy.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/core/logging/log.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/auth/presentation/auth_failure_copy.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// Controller for SignUp screen following clean architecture principles
 /// 

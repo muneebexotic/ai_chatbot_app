@@ -1,5 +1,5 @@
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// Turns an [AppFailure] into something to show a person (PRD §7.6, R11.5).
 ///

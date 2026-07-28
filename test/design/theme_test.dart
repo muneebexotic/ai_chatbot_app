@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/design/theme/kalaam_theme.dart';
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
+import 'package:speakwise/design/theme/speakwise_theme.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
 
 /// Guards the values widgets actually read off [ThemeData], as opposed to the
 /// nine tokens `contrast_test.dart` already checks.
@@ -22,10 +22,10 @@ import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
 /// The lesson generalised: a token being correct is not the same as the theme
 /// built from it being correct. Assert on the assembled [ThemeData].
 void main() {
-  group('KalaamTheme derived colours', () {
+  group('SpeakWiseTheme derived colours', () {
     for (final entry in {
-      'dark': (theme: KalaamTheme.dark, tokens: AppColors.dark),
-      'light': (theme: KalaamTheme.light, tokens: AppColors.light),
+      'dark': (theme: SpeakWiseTheme.dark, tokens: AppColors.dark),
+      'light': (theme: SpeakWiseTheme.light, tokens: AppColors.light),
     }.entries) {
       final mode = entry.key;
       final theme = entry.value.theme;

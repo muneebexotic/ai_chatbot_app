@@ -2,7 +2,7 @@
 import '../constants/subscription_constants.dart';
 import '../models/subscription_models.dart';
 import '../services/payment_service.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 /// Extensions for PaymentService to support subscription features
 extension PaymentServiceSubscriptionExtensions on PaymentService {

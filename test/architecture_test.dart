@@ -362,8 +362,8 @@ void main() {
       );
 
       String? resolve(String from, String uri) {
-        if (uri.startsWith('package:ai_chatbot_app/')) {
-          return 'lib/${uri.substring('package:ai_chatbot_app/'.length)}';
+        if (uri.startsWith('package:speakwise/')) {
+          return 'lib/${uri.substring('package:speakwise/'.length)}';
         }
         if (uri.startsWith('package:') || uri.startsWith('dart:')) return null;
         // Relative: resolve against the importing file's directory.

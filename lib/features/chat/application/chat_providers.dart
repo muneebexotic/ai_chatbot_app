@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/features/auth/application/auth_providers.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_controller.dart';
-import 'package:ai_chatbot_app/features/chat/application/chat_state.dart';
-import 'package:ai_chatbot_app/features/chat/data/chat_repository.dart';
-import 'package:ai_chatbot_app/features/chat/data/gateway_client.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_thread.dart';
-import 'package:ai_chatbot_app/features/partners/application/partner_providers.dart';
-import 'package:ai_chatbot_app/features/partners/domain/partner.dart';
+import 'package:speakwise/features/auth/application/auth_providers.dart';
+import 'package:speakwise/features/chat/application/chat_controller.dart';
+import 'package:speakwise/features/chat/application/chat_state.dart';
+import 'package:speakwise/features/chat/data/chat_repository.dart';
+import 'package:speakwise/features/chat/data/gateway_client.dart';
+import 'package:speakwise/features/chat/domain/chat_thread.dart';
+import 'package:speakwise/features/partners/application/partner_providers.dart';
+import 'package:speakwise/features/partners/domain/partner.dart';
 
 /// The chat feature's slice of the graph (PRD F5, §9.1).
 

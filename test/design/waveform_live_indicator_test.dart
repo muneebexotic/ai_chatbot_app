@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/waveform/waveform.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
 /// The live-microphone state must be perceivable without colour.
 ///

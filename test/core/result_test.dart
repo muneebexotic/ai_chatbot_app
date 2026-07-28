@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/core/result/result.dart';
 
 void main() {
   group('Result', () {

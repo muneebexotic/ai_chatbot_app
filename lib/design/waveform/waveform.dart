@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/design/waveform/waveform_painter.dart';
-import 'package:ai_chatbot_app/l10n/app_localizations.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/design/waveform/waveform_painter.dart';
+import 'package:speakwise/l10n/app_localizations.dart';
 
-export 'package:ai_chatbot_app/design/waveform/waveform_painter.dart'
+export 'package:speakwise/design/waveform/waveform_painter.dart'
     show WaveformMode;
 
 /// The app's signature element (PRD §7.5), and the only visualization style it

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ai_chatbot_app/features/auth/application/auth_providers.dart';
-import 'package:ai_chatbot_app/features/memory/data/memory_repository.dart';
-import 'package:ai_chatbot_app/features/memory/domain/memory_item.dart';
+import 'package:speakwise/features/auth/application/auth_providers.dart';
+import 'package:speakwise/features/memory/data/memory_repository.dart';
+import 'package:speakwise/features/memory/domain/memory_item.dart';
 
 final memoryRepositoryProvider = Provider<MemoryRepository>((ref) {
   return MemoryRepository(ref.watch(supabaseClientProvider));

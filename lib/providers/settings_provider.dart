@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 class SettingsProvider with ChangeNotifier {
 

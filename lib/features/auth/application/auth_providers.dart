@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
-import 'package:ai_chatbot_app/features/auth/data/auth_repository.dart';
-import 'package:ai_chatbot_app/features/auth/domain/auth_user.dart';
+import 'package:speakwise/features/auth/data/auth_repository.dart';
+import 'package:speakwise/features/auth/domain/auth_user.dart';
 
 /// The Riverpod graph for authentication (PRD F5, §9.1).
 ///

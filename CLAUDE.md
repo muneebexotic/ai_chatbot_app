@@ -23,9 +23,13 @@ Two rules from it that decide most arguments:
 
 ## What this project is
 
-**Kalaam** — a voice-first AI you speak to, which reports back on how you
+**SpeakWise** — a voice-first AI you speak to, which reports back on how you
 sounded. Not a chat wrapper. A Session (live spoken conversation → report) is
 the product; typed chat is the quiet half.
+
+The name was settled on 2026-07-28 (DECISIONS D9); the PRD and older commits
+call it **Kalaam**, which was the working name. The Supabase projects are still
+named `kalaam` / `kalaam-dev` on purpose — refs are what matter, not labels.
 
 The loop that pays: speak → report → weak spot → return tomorrow → hit the free
 minute cap → subscribe. Retention and monetization are the same loop, which is
@@ -317,7 +321,7 @@ emoji in UI copy, no "AI-powered", no congratulating the user for existing.
 - Floor before ceiling, within every milestone. Never leave a PRD requirement
   unmet to build something more interesting (R0.5.4).
 - Owner decisions are marked `TODO(muneeb)` and collected in `README.md` with
-  file paths. Still open: **final app name** (the app now says "Kalaam" on the
-  splash, the welcome screen, and the task switcher, all from one ARB key —
-  changing it is one string), **price points**, and the **second locale**.
-  Closed: the package id, which became `com.muscodes.kalaam` in Milestone 2.
+  file paths. Still open: **price points** and the **second locale**. Closed:
+  the app name (SpeakWise) and the package id
+  (`com.muscodes.speakwise`), both settled 2026-07-28 in DECISIONS D9 — and the
+  package id is permanent the moment it reaches Play.

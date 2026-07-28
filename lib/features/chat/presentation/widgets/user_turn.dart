@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:ai_chatbot_app/design/tokens/app_colors.dart';
-import 'package:ai_chatbot_app/design/tokens/app_metrics.dart';
-import 'package:ai_chatbot_app/design/tokens/app_typography.dart';
-import 'package:ai_chatbot_app/features/chat/domain/chat_message.dart';
+import 'package:speakwise/design/tokens/app_colors.dart';
+import 'package:speakwise/design/tokens/app_metrics.dart';
+import 'package:speakwise/design/tokens/app_typography.dart';
+import 'package:speakwise/features/chat/domain/chat_message.dart';
 
 /// The user's turn — PRD R7.4.1.
 ///

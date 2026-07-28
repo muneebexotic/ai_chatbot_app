@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../providers/auth_provider.dart';
 import '../constants/welcome_screen_constants.dart';
 import '../utils/app_theme.dart';
-import 'package:ai_chatbot_app/core/logging/log.dart';
+import 'package:speakwise/core/logging/log.dart';
 
 /// Navigation and messaging take a BuildContext per call rather than storing
 /// one. See CRITIQUE.md W1.3.

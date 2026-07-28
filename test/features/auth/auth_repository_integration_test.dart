@@ -4,10 +4,10 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
-import 'package:ai_chatbot_app/core/result/app_failure.dart';
-import 'package:ai_chatbot_app/core/result/result.dart';
-import 'package:ai_chatbot_app/features/auth/data/auth_repository.dart';
-import 'package:ai_chatbot_app/features/auth/domain/auth_user.dart';
+import 'package:speakwise/core/result/app_failure.dart';
+import 'package:speakwise/core/result/result.dart';
+import 'package:speakwise/features/auth/data/auth_repository.dart';
+import 'package:speakwise/features/auth/domain/auth_user.dart';
 
 /// Exercises [AuthRepository] against a live project.
 ///
