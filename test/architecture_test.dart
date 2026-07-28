@@ -108,6 +108,11 @@ const _expectedOrphans = <String, String>{
   'lib/features/session/domain/sentence_segmenter.dart':
       'M4 — awaiting the session controller',
 
+  // R10.6's client half, same in-milestone quarantine. The controller examines
+  // every user turn with the detector and the live screen renders the card.
+  'lib/core/safety/crisis_detector.dart': 'M4 — awaiting the session controller',
+  'lib/core/safety/crisis_resources.dart': 'M4 — awaiting the session screen',
+
   // Paywall debris. §14 and R0.5.6 both put the paywall on the list of screens
   // that must not ship as the default, so Milestone 6 rebuilds rather than
   // rewires these.
