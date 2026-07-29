@@ -24,7 +24,13 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.muscodes.speakwise"
     compileSdk = flutter.compileSdkVersion
-    // ndkVersion = "27.0.12077973"
+
+    // Pinned in Milestone 4. `sqlite3_flutter_libs` pulls in `jni`, which
+    // requires 28.2.13676358; leaving Flutter's default (27.0.12077973) makes
+    // every build print a warning telling you to raise it, and NDK versions are
+    // backward compatible so the highest requirement wins. Left as a warning it
+    // is noise that trains people to ignore build output.
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -52,11 +52,20 @@ class GatewayClient {
   /// [accessToken] is the caller's Supabase JWT. The gateway derives the user
   /// id from it and ignores anything the body might claim, so this is the only
   /// identity that travels.
+  /// [sessionId] marks the turn as spoken (Milestone 4, §4.2).
+  ///
+  /// It does not let the client choose which budget to spend — the server looks
+  /// the session up, requires it to belong to the caller and to be open, and
+  /// only then treats the turn as voice. Omitting it makes the turn typed,
+  /// which is the more expensive of the two, so there is nothing to gain by
+  /// forging it. §8 gives a free user 30 typed messages AND 10 spoken minutes,
+  /// and charging one to the other would end a session at message 30.
   Stream<GatewayEvent> send({
     required String accessToken,
     required String partnerId,
     required String text,
     String? threadId,
+    String? sessionId,
   }) async* {
     final request = http.Request(
       'POST',
@@ -68,12 +77,13 @@ class GatewayClient {
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
       })
-      // Exactly the three fields in the contract. Adding a fourth would be
+      // Exactly the fields in the contract. Adding one outside it would be
       // rejected, which is deliberate on both ends.
       ..body = jsonEncode({
         'threadId': threadId,
         'partnerId': partnerId,
         'text': text,
+        'sessionId': sessionId,
       });
 
     http.StreamedResponse response;

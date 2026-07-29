@@ -94,6 +94,17 @@ dependencies:
   # never appear.
   permission_handler: ^12.0.1
 
+  # R10.6's crisis card offers a helpline directory, and a permanently denied
+  # microphone needs a route to the system settings page (R4.1.2) — an in-app
+  # prompt cannot undo that denial, so "try again" would be advice that does not
+  # work.
+  #
+  # It was already present transitively through supabase_flutter's OAuth
+  # browser leg. Naming it here is the point: a transitive dependency can
+  # disappear in a patch release of the package that pulled it in, and the
+  # failure would land on the crisis card.
+  url_launcher: ^6.3.1
+
   # R4.2.6 requires network loss to *pause the session and offer resume*, which
   # means noticing it rather than inferring it from a failed request. R11.5
   # then requires the offline session to keep recording locally.

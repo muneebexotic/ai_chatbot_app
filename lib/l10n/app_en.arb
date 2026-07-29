@@ -416,5 +416,328 @@
         "example": "Session with Interviewer"
       }
     }
+  },
+
+  "sessionStartSpeaking": "Start speaking",
+  "@sessionStartSpeaking": {
+    "description": "R4.1.1's single primary action on the session home. §7.6 requires a button to say what happens, so it is a verb phrase rather than 'Begin' or 'Go'."
+  },
+
+  "sessionHomeTitle": "Who are you talking to?",
+  "@sessionHomeTitle": {
+    "description": "Heading above the partner rail on the session home (R4.1.1)."
+  },
+
+  "sessionHomeEmptyHistory": "No sessions yet. The first one takes 60 seconds.",
+  "@sessionHomeEmptyHistory": {
+    "description": "Empty state for session history. §7.6 gives this exact sentence as its worked example of an empty state that invites an action rather than describing a void."
+  },
+
+  "sessionHistoryTitle": "Recent sessions",
+  "@sessionHistoryTitle": {
+    "description": "Heading above the list of past sessions on the session home."
+  },
+
+  "sessionRecoveredTitle": "A session ended unexpectedly",
+  "@sessionRecoveredTitle": {
+    "description": "Shown when a session was force-killed and its transcript survived (R4.2.6). Deliberately not an apology and not an error: the user's work is intact, and this is the offer to see it."
+  },
+
+  "sessionRecoveredBody": "{minutes} minutes were saved. You can still see the transcript.",
+  "@sessionRecoveredBody": {
+    "description": "Body of the recovered-session notice. States what survived, in the user's terms.",
+    "placeholders": { "minutes": { "type": "int", "example": "4" } }
+  },
+
+  "sessionBriefExample": "How it opens",
+  "@sessionBriefExample": {
+    "description": "Label above the partner's example opening line on the brief screen (R4.1.3)."
+  },
+
+  "sessionBriefGoalLabel": "What do you want to practise?",
+  "@sessionBriefGoalLabel": {
+    "description": "Label for R4.1.3's optional one-line goal, which is passed into the session prompt and stored on the session record."
+  },
+
+  "sessionBriefGoalHint": "I have a frontend interview on Tuesday",
+  "@sessionBriefGoalHint": {
+    "description": "Placeholder for the goal field. The PRD's own example in R4.1.3. Concrete on purpose: an abstract hint produces abstract goals."
+  },
+
+  "sessionBriefGoalOptional": "Optional. The partner will work to it.",
+  "@sessionBriefGoalOptional": {
+    "description": "Helper text under the goal field, saying plainly that it can be skipped and what it does if it is not."
+  },
+
+  "sessionPermissionTitle": "SpeakWise needs the microphone",
+  "@sessionPermissionTitle": {
+    "description": "Step 1 of R4.1.2's first-run flow. Names the app rather than saying 'we', so it reads the same as the system dialog that follows it."
+  },
+
+  "sessionPermissionBody": "It listens while you speak, so it can show your words and measure how you sounded.",
+  "@sessionPermissionBody": {
+    "description": "R4.1.2 requires 'a plain explanation of why'. States the benefit rather than the mechanism."
+  },
+
+  "sessionPrivacyTitle": "Your voice stays on this phone",
+  "@sessionPrivacyTitle": {
+    "description": "R4.2.7 requires this to be stated plainly in the UI on first run, 'because it is both true and a genuine selling point'."
+  },
+
+  "sessionPrivacyBody": "Speech is recognised on the device. No audio is recorded, uploaded, or stored. Only the text of what you said is sent, so the partner can reply.",
+  "@sessionPrivacyBody": {
+    "description": "R4.2.7 in full. The last clause is load-bearing: claiming nothing leaves the device would be false, and a privacy claim with an unstated exception is worse than no claim."
+  },
+
+  "sessionPermissionGrant": "Allow the microphone",
+  "@sessionPermissionGrant": {
+    "description": "Button that triggers the system permission dialog."
+  },
+
+  "sessionPermissionDeniedTitle": "The microphone is blocked",
+  "@sessionPermissionDeniedTitle": {
+    "description": "Shown when the permission was permanently denied, which no in-app prompt can undo."
+  },
+
+  "sessionPermissionDeniedBody": "Turn it on in Settings to speak. You can still practise by typing.",
+  "@sessionPermissionDeniedBody": {
+    "description": "§7.6 requires an error to state its cause and its fix. Names the real fix and the real alternative, rather than offering a retry that cannot work."
+  },
+
+  "sessionOpenSettings": "Open Settings",
+  "@sessionOpenSettings": {
+    "description": "Sends the user to the system app-settings page to grant a permanently denied permission."
+  },
+
+  "sessionCalibrateTitle": "Say something",
+  "@sessionCalibrateTitle": {
+    "description": "Step 2 of R4.1.2: a five-second microphone level check with a live waveform."
+  },
+
+  "sessionCalibrateBody": "Anything at all, in your normal voice. This checks the microphone is picking you up.",
+  "@sessionCalibrateBody": {
+    "description": "Instruction for the level check. 'Normal voice' is load-bearing: a user who projects for the test will be under-detected in the session itself."
+  },
+
+  "sessionCalibrateGood": "That came through clearly.",
+  "@sessionCalibrateGood": {
+    "description": "Result of a successful microphone level check."
+  },
+
+  "sessionCalibrateQuiet": "That was very quiet. Move somewhere calmer, or hold the phone closer.",
+  "@sessionCalibrateQuiet": {
+    "description": "Result of a level check that never rose above the floor. Names two fixes the user can actually apply."
+  },
+
+  "sessionLengthTitle": "How long?",
+  "@sessionLengthTitle": {
+    "description": "Step 3 of R4.1.2: the session-length choice."
+  },
+
+  "sessionLengthMinutes": "{minutes} minutes",
+  "@sessionLengthMinutes": {
+    "description": "A session-length option in R4.1.2's third step.",
+    "placeholders": { "minutes": { "type": "int", "example": "10" } }
+  },
+
+  "sessionLengthOpen": "Open-ended",
+  "@sessionLengthOpen": {
+    "description": "The session-length option with no timer."
+  },
+
+  "sessionStateListening": "Listening",
+  "@sessionStateListening": {
+    "description": "R4.2.1 requires the live screen to show partner state. The microphone is open."
+  },
+
+  "sessionStateThinking": "Thinking",
+  "@sessionStateThinking": {
+    "description": "R4.2.1 state: the user's turn is finished and the reply has not started."
+  },
+
+  "sessionStateSpeaking": "Speaking",
+  "@sessionStateSpeaking": {
+    "description": "R4.2.1 state: the partner is talking. The only state in which barge-in applies."
+  },
+
+  "sessionStateStarting": "Starting",
+  "@sessionStateStarting": {
+    "description": "R4.2.1 state: permissions and setup, before the first listen."
+  },
+
+  "sessionStatePaused": "Paused",
+  "@sessionStatePaused": {
+    "description": "R4.2.6 state: interrupted, and resumable with nothing lost."
+  },
+
+  "sessionMute": "Mute",
+  "@sessionMute": {
+    "description": "One of R4.2.1's three controls. Closes the microphone without ending the session."
+  },
+
+  "sessionUnmute": "Unmute",
+  "@sessionUnmute": {
+    "description": "Reopens the microphone after muting."
+  },
+
+  "sessionEnd": "End session",
+  "@sessionEnd": {
+    "description": "R4.2.1's third control. §7.6 names this exact wording as an example of a button that says what happens."
+  },
+
+  "sessionModeHandsFree": "Hands-free",
+  "@sessionModeHandsFree": {
+    "description": "R4.2.2's continuous-listening mode, where a pause in speech ends the turn."
+  },
+
+  "sessionModePushToTalk": "Push to talk",
+  "@sessionModePushToTalk": {
+    "description": "R4.2.2's held-control mode. Also the automatic suggestion in a noisy room."
+  },
+
+  "sessionHoldToSpeak": "Hold to speak",
+  "@sessionHoldToSpeak": {
+    "description": "Instruction on the waveform control while in push-to-talk mode."
+  },
+
+  "sessionNoisyTitle": "It is loud where you are",
+  "@sessionNoisyTitle": {
+    "description": "R4.2.2's noisy-room suggestion. A statement rather than a warning: the room is not the user's fault."
+  },
+
+  "sessionNoisySwitch": "Use push to talk",
+  "@sessionNoisySwitch": {
+    "description": "Accepts the noisy-room suggestion. R4.2.2 requires this to be a suggestion the user accepts, never a forced switch."
+  },
+
+  "sessionNoisyType": "Type instead",
+  "@sessionNoisyType": {
+    "description": "PROPOSALS P8: keep the session, switch to typing, keep the transcript and the report. Answers the category's top functional complaint, recognition failing in noise, where the incumbents leave the user stuck."
+  },
+
+  "sessionNoisyDismiss": "Keep going",
+  "@sessionNoisyDismiss": {
+    "description": "Declines the noisy-room suggestion and carries on unchanged."
+  },
+
+  "sessionTypeHint": "Type what you want to say",
+  "@sessionTypeHint": {
+    "description": "Placeholder in the typing fallback composer (P8)."
+  },
+
+  "sessionBackToSpeaking": "Back to speaking",
+  "@sessionBackToSpeaking": {
+    "description": "Leaves the typing fallback and reopens the microphone."
+  },
+
+  "sessionYou": "You",
+  "@sessionYou": {
+    "description": "Speaker label on the user's transcript lines (R4.2.5)."
+  },
+
+  "sessionHeardPoorly": "The microphone was not sure about this line.",
+  "@sessionHeardPoorly": {
+    "description": "Shown with a user line the recogniser had low confidence in, so a strange transcript reads as a mishearing rather than as the user's own words (R4.2.5)."
+  },
+
+  "sessionInterruptedCall": "Something else took the audio.",
+  "@sessionInterruptedCall": {
+    "description": "R4.2.6 pause reason: a call, an alarm, or another app took audio focus. Deliberately not 'incoming call' — audio focus covers more than calls, and naming only calls would be wrong most of the time."
+  },
+
+  "sessionInterruptedBackground": "You left the session.",
+  "@sessionInterruptedBackground": {
+    "description": "R4.2.6 pause reason: the app was backgrounded."
+  },
+
+  "sessionInterruptedHeadphones": "Your headphones came out.",
+  "@sessionInterruptedHeadphones": {
+    "description": "R4.2.6 pause reason: the audio route changed. Paused rather than continued, because the session would otherwise start playing aloud in a room."
+  },
+
+  "sessionInterruptedNetwork": "No internet. Your transcript is saved.",
+  "@sessionInterruptedNetwork": {
+    "description": "R4.2.6 pause reason. §7.6 gives almost exactly this sentence as its example of an error that states the cause and reassures about the work."
+  },
+
+  "sessionInterruptedMicrophone": "The microphone stopped responding.",
+  "@sessionInterruptedMicrophone": {
+    "description": "R4.2.6 pause reason: the recogniser failed permanently."
+  },
+
+  "sessionNothingLost": "Nothing is lost. Pick up where you stopped.",
+  "@sessionNothingLost": {
+    "description": "Reassurance under every pause reason. R4.2.6 requires that nothing is lost, and a user who does not believe that will end the session rather than resume it."
+  },
+
+  "sessionResume": "Resume",
+  "@sessionResume": {
+    "description": "Continues a paused session (R4.2.6)."
+  },
+
+  "sessionRemaining": "{minutes} minutes left today",
+  "@sessionRemaining": {
+    "description": "§8's spoken-minute allowance, as the SERVER reported it (F2). Appears only near the end: a counter visible from the first second is manufactured scarcity, which §16 bans.",
+    "placeholders": { "minutes": { "type": "int", "example": "2" } }
+  },
+
+  "sessionQuotaReachedTitle": "That is your ten minutes for today",
+  "@sessionQuotaReachedTitle": {
+    "description": "§8's free daily spoken cap. R8.3 requires the exchange in progress to finish first, so this never appears mid-sentence."
+  },
+
+  "sessionQuotaReachedBody": "Your report is ready, and it counts everything you just did.",
+  "@sessionQuotaReachedBody": {
+    "description": "Follows the cap. R8.3 puts the paywall at the moment of maximum felt value; leading with what the user gets rather than what they lost is the difference between an offer and a wall."
+  },
+
+  "sessionCrisisTitle": "If you need to talk to someone",
+  "@sessionCrisisTitle": {
+    "description": "R10.6's persistent resource card, shown when the user's own speech indicates crisis or self-harm. The heading is an offer and never a diagnosis: the app has matched a sentence, not assessed a person."
+  },
+
+  "sessionCrisisBody": "Practice can wait. Help is available now, and it is free and confidential.",
+  "@sessionCrisisBody": {
+    "description": "Body of R10.6's card. 'Practice can wait' is the requirement's 'must not continue a practice exercise', said to the user."
+  },
+
+  "sessionCrisisEmergency": "Call your local emergency number",
+  "@sessionCrisisEmergency": {
+    "description": "R10.6 resource. No digits: no build of this app can know the reader's country, and §16 forbids inventing facts — a wrong crisis number is the worst one available."
+  },
+
+  "sessionCrisisDirectory": "Find a helpline in your country",
+  "@sessionCrisisDirectory": {
+    "description": "R10.6 resource, linking to an international directory that resolves by country. Chosen over a hardcoded number because a hardcoded list starts going stale the day it ships and nothing in the release process would notice."
+  },
+
+  "sessionElapsedSemantics": "Elapsed {minutes} minutes {seconds} seconds",
+  "@sessionElapsedSemantics": {
+    "description": "Screen-reader reading of the session timer, which is rendered in mono digits a screen reader would otherwise spell out character by character (§11.6).",
+    "placeholders": {
+      "minutes": { "type": "int", "example": "4" },
+      "seconds": { "type": "int", "example": "20" }
+    }
+  },
+
+  "sessionTranscriptSemantics": "Live transcript, {count} lines",
+  "@sessionTranscriptSemantics": {
+    "description": "Screen-reader label for the scrolling transcript region (§11.6).",
+    "placeholders": { "count": { "type": "int", "example": "8" } }
+  },
+
+  "sessionStarting": "Getting the microphone ready",
+  "@sessionStarting": {
+    "description": "Shown during the brief setup phase before the first listen."
+  },
+
+  "sessionContinue": "Continue",
+  "@sessionContinue": {
+    "description": "Advances a step in R4.1.2's first-run flow."
+  },
+
+  "sessionSkip": "Skip",
+  "@sessionSkip": {
+    "description": "Skips the optional goal on the brief screen (R4.1.3 makes the goal optional)."
   }
 }

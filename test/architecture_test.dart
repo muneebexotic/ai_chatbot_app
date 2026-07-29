@@ -80,38 +80,20 @@ const _expectedOrphans = <String, String>{
   //     Replaced by features/session/data/{speech_recognition_service,
   //     tts_service}.dart, which are what §4.2 actually needs.
 
-  // The R4.3.1 metrics engine, landed ahead of the screen that feeds it.
+  // RESOLVED IN MILESTONE 4, all ten of them:
+  //   core/speech_metrics/* (5 files) — the R4.3.1 engine, written and proved
+  //     against a hand-checked transcript (§14) BEFORE anything consumed it,
+  //     because DECISIONS D2 requires it to be standalone with Drill Mode as a
+  //     known consumer. It is now imported by the session controller.
+  //   features/session/data/{speech_recognition_service,tts_service}.dart and
+  //     domain/sentence_segmenter.dart — the on-device recogniser, the
+  //     synthesiser, and R4.2.4's first-sentence splitter.
+  //   core/safety/crisis_{detector,resources}.dart — R10.6's client half.
   //
-  // These entries are IN-MILESTONE and short-lived, which is different from
-  // every other entry in this map. DECISIONS D2 requires the engine to be "a
-  // standalone, independently testable module with Drill Mode as a known
-  // consumer" — so it is written and proved against a hand-checked transcript
-  // (§14) before anything consumes it, rather than growing inside the session
-  // controller where Drill Mode could not reach it in Milestone 5.
-  //
-  // The session controller imports all five. If these entries are still here
-  // when Milestone 4 closes, the engine was never wired up and the milestone
-  // is not done.
-  'lib/core/speech_metrics/metrics_engine.dart': 'M4 — awaiting the session controller',
-  'lib/core/speech_metrics/speech_metrics.dart': 'M4 — awaiting the session controller',
-  'lib/core/speech_metrics/transcript.dart': 'M4 — awaiting the session controller',
-  'lib/core/speech_metrics/filler_lexicon.dart': 'M4 — awaiting the session controller',
-  'lib/core/speech_metrics/pace_band.dart': 'M4 — awaiting the session controller',
-
-  // The two on-device services and the sentence splitter, same in-milestone
-  // quarantine as the engine above and for the same reason: each is testable on
-  // its own and none of them should grow inside the controller that drives
-  // them. The controller imports all three.
-  'lib/features/session/data/speech_recognition_service.dart':
-      'M4 — awaiting the session controller',
-  'lib/features/session/data/tts_service.dart': 'M4 — awaiting the session controller',
-  'lib/features/session/domain/sentence_segmenter.dart':
-      'M4 — awaiting the session controller',
-
-  // R10.6's client half, same in-milestone quarantine. The controller examines
-  // every user turn with the detector and the live screen renders the card.
-  'lib/core/safety/crisis_detector.dart': 'M4 — awaiting the session controller',
-  'lib/core/safety/crisis_resources.dart': 'M4 — awaiting the session screen',
+  // Those ten entries were IN-MILESTONE quarantine, which is a different thing
+  // from the entries below: they were written ahead of their consumer on
+  // purpose, and the stale-entry check is what made "wire it up before the
+  // milestone closes" enforceable rather than aspirational. It fired.
 
   // Paywall debris. §14 and R0.5.6 both put the paywall on the list of screens
   // that must not ship as the default, so Milestone 6 rebuilds rather than
