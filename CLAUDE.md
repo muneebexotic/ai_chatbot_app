@@ -1,8 +1,10 @@
 # CLAUDE.md
 
-Guidance for Claude Code working in this repository. Created in Milestone 0 per
-PRD §0.7. Keep it current — if you change the stack, a command, or a token,
-update this file in the same commit.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
+
+Created in Milestone 0 per PRD §0.7. Keep it current — if you change the stack,
+a command, or a token, update this file in the same commit.
 
 ## Read first
 
@@ -47,7 +49,9 @@ for its milestone.
 | Auth | **Supabase** (M2) | Supabase |
 | Data | **Supabase Postgres + RLS.** Firebase is gone entirely (M3) | Supabase Postgres + RLS |
 | Model calls | **Server gateway only, key server-side** (M3) | Server gateway only |
-| Layout | `features/{chat,partners,memory,auth}` are PRD-shaped; `screens/`, `providers/`, `services/` still hold auth, settings, subscription | `lib/app`, `core`, `design`, `features/*`, `l10n` (§13) |
+| Layout | `features/{session,chat,partners,memory,auth}` are PRD-shaped; `screens/`, `providers/`, `services/` still hold auth, settings, subscription | `lib/app`, `core`, `design`, `features/*`, `l10n` (§13) |
+| Local data | **Drift** for sessions and transcripts (M4). Chat threads still read Postgres directly | Drift for threads/messages/sessions/reports (§9.4) |
+| Quota | **Server-truth for both budgets** (M4): messages counted per call, voice seconds metered from the database clock | same |
 | Type | Newsreader + General Sans + Geist Mono, rendering on the chat surface | same |
 | Errors | `Result<T>` / sealed `AppFailure` | same |
 | Copy | ARB from `lib/l10n`, with a ratchet over the 127 strings still hardcoded | no hardcoded strings in `lib/` |
@@ -56,8 +60,9 @@ for its milestone.
 **`.kiro/steering/*.md` describes the OLD architecture** (Provider, Firebase,
 Poppins). It is stale and contradicts the PRD. Do not follow it; the PRD wins.
 
-Milestone status: **0, 1, 2, 3 done.** 4–8 not started. Do them in order
-(PRD §15); the order is a closed ceiling.
+Milestone status: **0, 1, 2, 3 merged to `main`. 4 built on
+`milestone-4-sessions`, not merged and not finished.** 5–8 not started. Do them
+in order (PRD §15); the order is a closed ceiling.
 
 What M3 landed: the gateway Edge Function (JWT, entitlement, quota, §10 abuse
 checks, Groq streaming, atomic usage recording), typed chat rebuilt on §7.4,
@@ -71,6 +76,22 @@ forbid granting on an unverified token, `entitlements` is service-role write
 only, and `verify-purchase` is M6 — so the paywall is reachable and inert
 (CRITIQUE W3.3). Read "monetization" as absent, not partial.
 
+**What M4 landed, and what it did NOT.** The live session runs on a device:
+R4.1.1–4.1.3, R4.2.1, R4.2.5–4.2.7, R4.3.1's metrics engine, §9.4 Drift
+persistence, R10.6's crisis card, and server-side voice metering that charges
+the *database clock* rather than anything the client reports (F2).
+
+**R4.2.3 (barge-in under 200ms) and R4.2.4 (under 1.5s to the first spoken word)
+have no measurements.** Both are implemented and instrumented; neither has a
+number, because both need a human speaking into the phone. §15.4 calls this "the
+milestone the product lives or dies on" and those are the two requirements that
+carry it — so M4 is **not done**, and CRITIQUE W4.1 says so. Do not read
+"Sessions: built" as "Sessions: verified".
+
+Also open: `qa/m4-device-pass.md` D6, D9 and D11. D9 is the one to expect first —
+the screen kept saying "Listening" after `dumpsys audio` showed the microphone
+had closed.
+
 ## Stack
 
 - Flutter 3.38.6 / Dart 3.10.7 (SDK constraint `^3.8.1`)
@@ -81,10 +102,15 @@ only, and `verify-purchase` is M6 — so the paywall is reachable and inert
   `gateway_config`, not a release.
 - Deno 2.x to run the Edge Function tests. Not on PATH — installed at
   `~/.deno/bin/deno.exe`.
-- Drift (SQLite) for local threads/messages/sessions/reports — **not added
-  yet**; §9.4 offline history arrives with Milestone 4. Today the client reads
-  Postgres directly and has no offline story. `shared_preferences` for settings
-  only.
+- **Drift (SQLite)** for local sessions and transcripts (§9.4), added in M4.
+  Code-generated: run `build_runner` after touching `session_database.dart`.
+  `shared_preferences` for settings only — and it is **awaited in `main()` and
+  injected**, never read asynchronously behind a synchronous default (see the
+  architecture rules).
+- **No Riverpod code generation.** `riverpod_annotation` and
+  `riverpod_generator` are gone (DECISIONS D10) — every provider is declared by
+  hand. Do not add `@riverpod`; `riverpod_generator` pins `build ^2` and would
+  block `drift_dev`.
 - `speech_to_text` and `flutter_tts` — both **on-device**. This is the whole
   business model: a spoken minute costs zero, so voice practice is free to run
   for a solo developer and expensive for a funded competitor. Never replace
@@ -109,24 +135,69 @@ flutter run \
   --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
-flutter test                        # 119 offline; integration tests self-skip
+flutter test                        # 259 offline; integration tests self-skip
+flutter test test/path/to/one_test.dart          # a single file
+flutter test --plain-name "substring of the test name"   # a single test
 flutter test --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
-                                    # +34 against kalaam-dev (RLS, auth, gateway)
+                                    # +43 against kalaam-dev (RLS, auth,
+                                    # gateway, voice quota)
+
+dart run build_runner build --delete-conflicting-outputs
+                                    # after editing the Drift schema
 
 ~/.deno/bin/deno.exe test --allow-read --allow-net supabase/functions/tests/
-                                    # 29 Edge Function tests (§14)
+                                    # 40 Edge Function tests (§14)
 
 dart run test/tool/update_l10n_baseline.dart   # after extracting strings, never
                                                # to make a failing test pass
 
 npx supabase link --project-ref <ref>   # dev: sbwaiindthrluqoypvqc
-npx supabase db push                    # prod: kneiwapwjuuaxcenlfsu
+                                        # prod: kneiwapwjuuaxcenlfsu
+
+# `db push --linked` failed on every attempt in M4 even with a correct
+# password. Pass an explicit pooler connection string instead. Assemble it in a
+# shell variable — never write one into a file, which is what the secret
+# scanner is watching for and is right to block.
+#
+#   scheme  postgresql        user  postgres.<project-ref>
+#   host    aws-0-ap-northeast-1.pooler.supabase.com   <- aws-0, NOT aws-1
+#   port    5432              db    postgres
+#   The password must be percent-encoded.
+#
+npx supabase db push --db-url "$DB_URL"
+npx supabase migration list --db-url "$DB_URL"  # read-only; tests a password
 npx supabase functions deploy gateway
 npx supabase functions deploy extract-memory
 npx supabase functions deploy delete-account
 npx supabase secrets set GROQ_API_KEY=...   # server-only, never a --dart-define
 flutter build apk --split-per-abi   # per-ABI under 30MB (R11.1)
+```
 
+### Getting a build onto the phone
+
+The device is wireless-adb only, and `flutter run` does not survive it. This
+sequence does; `qa/m4-device-pass.md` has the full reasoning.
+
+```bash
+adb mdns services            # the port AND the IP rotate — re-read every time
+adb connect <ip>:<port>      # flutter cannot parse an mDNS-named serial
+
+flutter build apk --debug --split-per-abi    # 91MB arm64 vs 155MB fat
+# PowerShell, not Git Bash: Git Bash rewrites /data/local/tmp to a Windows path
+adb -s <ip>:<port> push <apk> /data/local/tmp/sw.apk
+adb -s <ip>:<port> shell pm install -r -t /data/local/tmp/sw.apk
+```
+
+`adb install` of the fat APK times out or fails with an empty error.
+`flutter run --target-platform` does not exist in Flutter 3.38.6.
+
+**`Log` output reaches neither logcat nor `flutter attach`.** It uses
+`dart:developer`. Diagnose by reading the code and `adb shell dumpsys audio`;
+do not plan on reading a log line.
+
+### Secret scanner
+
+```bash
 bash scripts/check-secrets.sh       # staged content; runs from pre-commit
 bash scripts/check-secrets.sh --all # whole tracked tree; use in CI
 bash scripts/check-secrets.test.sh  # 40 cases, must stay green
@@ -216,10 +287,63 @@ data          (repositories, remote + local data sources)
 - **Pump widget tests inside the parent they actually have.** A `ListView`
   gives its items a tight cross-axis constraint and an unbounded main-axis one.
   Both Milestone 3 layout bugs pass in a bare `Scaffold`.
+- **`SizedBox(width: n)` inside a vertical `ListView` does nothing.** The item
+  gets a tight cross-axis constraint and `SizedBox` only enforces its own within
+  the incoming one, so `n` clamps back up to the viewport. Wrap in `Align`
+  first. **This has now shipped to a device twice** — M3's chat indicator and
+  M4's `PartnerMark` — and it renders *correctly* in a horizontal list, which is
+  why reading the call site never catches it (CRITIQUE W4.2).
+- **A synchronous default is only safe when it is indistinguishable from the
+  loaded value.** `SessionSettings` returned `hasCompletedFirstRun: false` while
+  preferences loaded asynchronously, so R4.1.2's "before the first session only"
+  flow ran before *every* session. Preferences are awaited in `main()` and
+  injected through `sharedPreferencesProvider`; do the same for anything else
+  whose default changes behaviour.
+- **`partners` has no table-level SELECT grant.** M3's
+  `revoke select (system_prompt)` made Postgres replace it with per-column
+  grants, so **every column added since starts ungranted and invisible to
+  clients**. Any migration adding a column there must `grant select (col)` in
+  the same file. A read that asks for an ungranted column returns 42501 and
+  PostgREST returns nothing at all — which took out the whole partner rail.
+- **Do not request audio focus.** `SpeechRecognizer` and `TextToSpeech` request
+  it themselves, so an app-level request is displaced by the app's own
+  components and every session pauses on a self-inflicted focus loss.
+  `MainActivity` observes `ACTION_AUDIO_BECOMING_NOISY` and the audio mode
+  instead.
 - Migrate Provider → Riverpod screen by screen, but never leave the app
   half-migrated at the end of a milestone (F5).
 - All schema changes are committed migration files in `supabase/migrations/`.
   No console-only edits (R9.2.2).
+
+## How a session works (the part that spans files)
+
+`SessionController` (`features/session/application/`) is one state machine —
+`listening → thinking → speaking → listening` — with interruptions cutting
+across it. The pieces it coordinates are deliberately separate:
+
+- **`core/speech_metrics/`** — R4.3.1, pure Dart, no Flutter/Drift/network
+  import, enforced by a test. DECISIONS D2 makes it Drill Mode's scoring layer
+  in M5, so it must stay usable without dragging Sessions in.
+- **`core/safety/`** — R10.6, runs on the user's own words before the reply is
+  requested, so the card appears offline and whether or not the model complies.
+- **`features/session/data/`** — the on-device recogniser and synthesiser, the
+  Drift store, the `session` Edge Function client, and the audio-interruption
+  channel.
+
+Three invariants that are easy to break without noticing:
+
+1. **A turn is written to Drift before it enters `state`.** R4.2.6 requires a
+   force-killed session to still produce a report, and a force-kill has no
+   warning — so the user must never see a line the report will not have.
+2. **The reply is spoken sentence-by-sentence as it streams** (`SentenceSegmenter`),
+   not after it completes. That is the whole of R4.2.4's mechanism.
+3. **The microphone stays open while the partner speaks**, so barge-in can fire
+   at all — but the phase stays `speaking` and the waveform stays amber, because
+   the user has not been given the floor yet.
+
+Quota crosses both client and server: the gateway meters a spoken turn before it
+answers (so a client cannot dodge it by not sending heartbeats), and the client
+only ever *renders* the numbers the server returned.
 
 ## Design tokens
 
@@ -278,6 +402,14 @@ scrubber, the history row thumbnail, and the app icon shape. All uses are
 literally the same code. Never add a second visualization style, and never use
 a spinner where the waveform can idle.
 
+It is driven by `repaint:` — the painter takes the `AnimationController` and an
+`AmplitudeWindow` as `Listenable`s, so it repaints without any widget rebuild
+(R11.2 forbids a per-frame rebuild by name; the original `AnimatedBuilder`
+version violated it). Callers must **hold** their `AmplitudeWindow` rather than
+build one in `build()`: `shouldRepaint` compares it by identity. Live levels go
+in via `push()`; the single ticker calls `advance()` once per frame to ease
+toward them, which is what turns a 10–20Hz microphone into 60fps motion.
+
 **Motion:** 120ms state feedback, 220ms transitions, 380ms session entry; one
 `easeOutCubic`-family curve defined once in the theme. The session screen
 expands from the pressed control — it does not slide in. Respect reduce-motion:
@@ -321,7 +453,11 @@ emoji in UI copy, no "AI-powered", no congratulating the user for existing.
 - Floor before ceiling, within every milestone. Never leave a PRD requirement
   unmet to build something more interesting (R0.5.4).
 - Owner decisions are marked `TODO(muneeb)` and collected in `README.md` with
-  file paths. Still open: **price points** and the **second locale**. Closed:
+  file paths. Still open: **price points**, the **second locale**, and
+  **R10.6's verified crisis-line numbers** — `CrisisResources.verifiedLines` is
+  deliberately empty and a test keeps it that way, because §16 forbids invented
+  facts and a wrong crisis number is the worst one available. R10.6 says "before
+  launch, not after". Closed:
   the app name (SpeakWise) and the package id
   (`com.muscodes.speakwise`), both settled 2026-07-28 in DECISIONS D9 — and the
   package id is permanent the moment it reaches Play.
