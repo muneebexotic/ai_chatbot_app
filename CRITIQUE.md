@@ -521,10 +521,22 @@ the app's own. If it does not, the design changes rather than the constants.
 were found by *reading* the controller while an install ran — the microphone
 was never open during the partner's turn, and the per-utterance completion
 callback closed the turn after the first of several sentences. Both are fixed.
-That is worth something and it is not the measurement.
+Three blocking defects between the app and a running session were also found and
+fixed, and the session now reaches `Listening` with the timer ticking. That is
+worth something and it is not the measurement.
 
-**What would fix it.** A second device pass: twenty turns with the stopwatch,
-and a barge-in attempt logged from onset to silence. It is the first thing owed.
+**The specific reason it is still missing, stated plainly.** Both requirements
+need a human voice. Barge-in is *defined* as the user speaking over the partner,
+and R4.2.4 measures from end-of-**speech**. The agent driving the device pass
+can install, tap, screenshot and read `dumpsys`, and cannot say a sentence into
+the microphone. Every other requirement in this milestone was verifiable without
+one; these two are not, and no amount of further work from this side produces
+them.
+
+**What would fix it.** Twenty spoken turns with the stopwatch running, and a
+barge-in attempt timed from voice onset to silence — with the owner speaking, or
+sitting beside it. `qa/m4-device-pass.md` D9 is the most likely thing to hit
+first, and may need fixing before a turn completes at all.
 
 ### W4.2 — The same layout defect, twice, four weeks apart *(FIXED, and the recurrence is the point)*
 
