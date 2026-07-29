@@ -36,7 +36,17 @@ class SplashConstants {
   static const double loadingStrokeWidth = 2.0;
 
   // Route names
-  static const String chatRoute = '/chat';
+  /// Where a signed-in user lands.
+  ///
+  /// Milestone 4 pointed this at the session home. §4: "A Session is a live
+  /// spoken conversation with an AI partner, followed by a report. It is the
+  /// app's reason to exist and its highest-value screen. Build it as the centre
+  /// of the product, not as a mode hidden behind a microphone icon." Landing on
+  /// typed chat made chat the product and Sessions the mode.
+  ///
+  /// The name is kept so the three constants files stay in step; §5.1's typed
+  /// chat is still one tap away and shares the same threads.
+  static const String chatRoute = '/session';
   static const String welcomeRoute = '/welcome';
 
   // Log messages

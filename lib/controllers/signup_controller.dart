@@ -130,7 +130,8 @@ class SignUpController extends ChangeNotifier {
     // Clear entire navigation stack and navigate to chat
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/chat', // or use a constant
+      // §4: the session home is the product's centre, not typed chat.
+      '/session',
       (route) => false, // Remove ALL previous routes
     );
   }

@@ -11,7 +11,7 @@ import 'providers/themes_provider.dart';
 import 'providers/auth_provider.dart';
 import 'design/theme/speakwise_theme.dart';
 import 'screens/splash_screen.dart';
-import 'features/chat/presentation/chat_screen.dart';
+import 'features/session/presentation/session_home_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'app/providers.dart';
 
@@ -86,7 +86,9 @@ class MyApp extends ConsumerWidget {
         onUnknownRoute: (settings) {
           return MaterialPageRoute(
             builder: (context) => authProvider.isLoggedIn
-                ? const ChatScreen()
+                // §4: the session home, not typed chat. A bad deep link should
+                // land on the product, and the product is Sessions.
+                ? const SessionHomeScreen()
                 : const WelcomeScreen(),
           );
         },

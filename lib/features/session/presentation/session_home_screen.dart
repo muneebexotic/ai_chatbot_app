@@ -40,6 +40,14 @@ class SessionHomeScreen extends ConsumerWidget {
           style: AppTypography.title2.copyWith(color: colors.ink),
         ),
         actions: [
+          // §5.1: typed chat "stays, as the quiet half of the product". One
+          // tap from here rather than the landing screen — §4 makes Sessions
+          // the centre, and Milestone 3 had this the other way round.
+          IconButton(
+            tooltip: l10n.chatNewConversation,
+            onPressed: () => Navigator.of(context).pushNamed('/chat'),
+            icon: Icon(Icons.forum_outlined, color: colors.ink),
+          ),
           IconButton(
             tooltip: l10n.settingsTitle,
             onPressed: () => Navigator.of(context).pushNamed('/settings'),
