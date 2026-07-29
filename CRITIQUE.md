@@ -495,6 +495,84 @@ was not done. W3.3 is blocked on a milestone, by design rather than neglect.
 
 ---
 
+## Milestone 4 — Sessions
+
+### W4.1 — The two requirements this milestone exists for are still unmeasured *(NOT FIXED — and this is the finding)*
+
+§15.4 calls Milestone 4 "the milestone the product lives or dies on", and the
+two requirements that carry that weight are R4.2.3 (barge-in within 200ms) and
+R4.2.4 (under 1.5s from end-of-speech to first spoken word). §14 asks for the
+latency median over 20 turns on 4G.
+
+**Neither number exists.** The device pass reached the live session screen and
+stopped there, because the session paused on the microphone before a single
+turn completed. Both requirements are implemented, instrumented, and argued for
+at length in the code — and an argument is not a measurement.
+
+**Why it is weak.** Everything else in this milestone could be perfect and the
+product would still be unproven, because the thing that makes a session feel
+like a conversation is the two numbers nobody has seen. Worse, the barge-in
+design contains a genuine unknown that only a device can settle: whether
+Android's recogniser stays alive while text-to-speech plays through the
+speaker, and whether the echo-floor heuristic separates the user's voice from
+the app's own. If it does not, the design changes rather than the constants.
+
+**What was done instead.** Two bugs that would have made barge-in impossible
+were found by *reading* the controller while an install ran — the microphone
+was never open during the partner's turn, and the per-utterance completion
+callback closed the turn after the first of several sentences. Both are fixed.
+That is worth something and it is not the measurement.
+
+**What would fix it.** A second device pass: twenty turns with the stopwatch,
+and a barge-in attempt logged from onset to silence. It is the first thing owed.
+
+### W4.2 — The same layout defect, twice, four weeks apart *(FIXED, and the recurrence is the point)*
+
+`qa/m3-device-pass.md` D2 records that `SizedBox(width: 72)` inside a `ListView`
+does nothing, because a list item receives a tight cross-axis constraint. It was
+fixed in the chat thinking-indicator with an `Align`, documented in a nine-line
+comment, and written up in the milestone evidence.
+
+Milestone 4 reproduced it exactly, in `PartnerMark`, and shipped it to a device.
+
+**Why it is weak.** The knowledge existed, was written down, and was written
+down *by me*, in a file I read at the start of this milestone. It did not
+transfer, because the defect is invisible at the call site: `PartnerMark` sets a
+width and looks correct, and it *renders* correctly in the horizontal partner
+rail, whose items are width-bounded. Only the vertical `ListView` on the brief
+screen exposes it. A rule that lives in a comment on the one widget that already
+learned it protects nothing.
+
+**What would actually fix it.** A test helper that pumps a widget inside a
+vertical `ListView` and asserts its rendered width matches its requested width,
+applied to every component that declares one. `chat_surface_test.dart` does this
+for one widget; it should be a shared matcher. Not written, which is why this
+entry names it rather than claims it.
+
+### W4.3 — A default that lied, and the class of bug it belongs to *(FIXED)*
+
+`SessionSettings` returned a synchronous default and loaded the stored values
+asynchronously. `hasCompletedFirstRun` was therefore `false` on the first read —
+which is the read that decides whether R4.1.2's "before the first session only"
+flow runs. It ran before every session, on every launch, and it then triggered
+W4.1's blocking microphone failure by leaving the recogniser tearing down as the
+session tried to open it.
+
+**Why it is weak.** It is not a typo; it is a design that cannot be right. A
+synchronous default is safe only when it is indistinguishable from the loaded
+value, and a first-run flag is the opposite of that by definition. The same
+shape is available anywhere else in this codebase that reads preferences before
+they load, and nothing checks for it.
+
+**Fixed before moving on: W4.3, and W4.2's instance.** W4.3 is the one where a
+single wrong assumption produced two user-visible failures, one of them
+blocking, and the fix is structural rather than a patch — preferences are
+awaited in `main()` and injected, so the shape cannot recur for any other
+setting. W4.2's instance is fixed but its *class* is not, which is why it stays
+open above. W4.1 is real work that has not been done and cannot be claimed.
+
+---
+
 ## Standing items not yet counted against a milestone
 
 - **~~No screen has a widget test.~~** *(partly closed in Milestone 3.)* The
