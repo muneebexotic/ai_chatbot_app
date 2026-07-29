@@ -187,16 +187,30 @@ class SessionController extends Notifier<SessionState> {
 
   // ── Listening ──────────────────────────────────────────────────────────────
 
-  Future<void> _listen() async {
+  /// Opens the microphone.
+  ///
+  /// [watchOnly] keeps the phase where it is. It is how R4.2.3 works at all:
+  /// the microphone must be live *while the partner speaks* for an interruption
+  /// to be heard, but the screen must still say Speaking and the waveform must
+  /// still be amber, because the user has not been given the floor yet — they
+  /// are about to take it.
+  Future<void> _listen({bool watchOnly = false}) async {
     if (state.isMuted || state.isTypingFallback) return;
 
-    _heardSoFar = '';
-    _turnStartedAt = DateTime.now();
-    _amplitudes.reset();
-    state = state.copyWith(phase: SessionPhase.listening, partialText: '');
+    final speech = ref.read(speechRecognitionServiceProvider);
+
+    if (!watchOnly) {
+      // Do NOT clear `_heardSoFar` here when arriving from a barge-in: the
+      // recogniser was already running and has the first words of the
+      // interruption. Losing them would make barge-in swallow the start of
+      // whatever the user cut in to say.
+      if (state.phase != SessionPhase.listening) _heardSoFar = '';
+      _turnStartedAt = DateTime.now();
+      _amplitudes.reset();
+      state = state.copyWith(phase: SessionPhase.listening, partialText: '');
+    }
 
     _recognition?.cancel();
-    final speech = ref.read(speechRecognitionServiceProvider);
     _recognition = speech.events.listen(_onRecognition);
 
     final settings = ref.read(sessionSettingsProvider);
@@ -240,8 +254,16 @@ class SessionController extends Notifier<SessionState> {
         if (isFinal) unawaited(_finishUserTurn());
 
       case RecognitionTurnEnded(:final cancelled):
-        if (!cancelled && state.phase == SessionPhase.listening) {
+        if (cancelled) break;
+        if (state.phase == SessionPhase.listening) {
           unawaited(_finishUserTurn());
+        } else if (state.phase == SessionPhase.speaking) {
+          // The barge-in watch closed on its own silence timer while the
+          // partner was still talking. Re-arm it, or a user who stays quiet for
+          // the first second of a long reply loses the ability to interrupt for
+          // the rest of it — which is R4.2.3 failing in exactly the case it
+          // exists for.
+          unawaited(_listen(watchOnly: true));
         }
 
       case RecognitionFailed(:final code, :final permanent):
@@ -417,6 +439,10 @@ class SessionController extends Notifier<SessionState> {
 
               case GatewayDelta(:final text):
                 reply += text;
+                // Kept current on every delta, not assigned at the end. See the
+                // note on the field: the synthesiser can finish before the
+                // stream closes, and the turn is written from this.
+                _pendingPartnerText = reply.trim();
                 // R4.2.4's mechanism: speak the first complete sentence while
                 // the rest is still generating.
                 for (final sentence in _segmenter.add(text)) {
@@ -443,23 +469,71 @@ class SessionController extends Notifier<SessionState> {
 
     await completer.future;
 
-    if (reply.trim().isNotEmpty) {
-      _pendingPartnerText = reply.trim();
-    } else {
-      // Nothing came back. The transcript keeps the user's turn — they said it
-      // — and the session carries on rather than ending on a provider's bad
-      // minute (R11.5).
-      await _listen();
-    }
+    _replyComplete = true;
+
+    // If nothing is queued to speak, the turn is over now. That happens when
+    // the reply was empty, when text-to-speech is unavailable, or when the
+    // whole reply arrived and finished speaking before the stream closed.
+    if (_queuedUtterances == 0) _finishPartnerTurn();
   }
 
+  /// The partner's words as they accumulate.
+  ///
+  /// Written on every delta rather than once at the end. The end of the
+  /// gateway stream and the end of speech are two independent events, and on a
+  /// short reply the synthesiser can finish first — at which point the turn is
+  /// closed and this must already hold the text, or the transcript loses the
+  /// partner's line entirely.
   String _pendingPartnerText = '';
   DateTime? _partnerStartedAt;
 
+  /// Utterances handed to the synthesiser and not yet finished.
+  ///
+  /// `setCompletionHandler` fires once per UTTERANCE, not once per queue drain.
+  /// A three-sentence reply therefore completes three times, and treating the
+  /// first as the end of the turn would start listening while sentences two and
+  /// three were still being spoken — the app talking over itself with the
+  /// microphone open.
+  int _queuedUtterances = 0;
+  bool _replyComplete = false;
+
   Future<void> _speak(String sentence) async {
-    if (state.phase == SessionPhase.listening) return;
+    // Barged in on, or interrupted. The queue was flushed; do not refill it.
+    if (state.phase == SessionPhase.listening ||
+        state.phase == SessionPhase.paused) {
+      return;
+    }
+
+    final first = _queuedUtterances == 0;
+    _queuedUtterances++;
     state = state.copyWith(phase: SessionPhase.speaking);
+
+    // R4.2.3 depends on the microphone being OPEN while the partner talks.
+    // `_finishUserTurn` stopped the recogniser to end the user's turn, so
+    // without this there is nothing listening for an interruption and barge-in
+    // can never fire at all.
+    if (first) unawaited(_listen(watchOnly: true));
+
     await ref.read(ttsServiceProvider).speak(sentence);
+  }
+
+  /// One utterance finished. The turn is over only when they all have.
+  void _onSpeechCompleted() {
+    if (_queuedUtterances > 0) _queuedUtterances--;
+    if (state.phase != SessionPhase.speaking) return;
+    if (_queuedUtterances > 0 || !_replyComplete) return;
+    _finishPartnerTurn();
+  }
+
+  /// Records the partner's turn and hands the floor back.
+  void _finishPartnerTurn() {
+    _closePartnerTurn(interrupted: false);
+    _replyComplete = false;
+    _queuedUtterances = 0;
+
+    // Already listening — the barge-in watch opened the microphone when the
+    // partner started. This only moves the phase and re-arms silence detection.
+    unawaited(_listen());
   }
 
   /// The synthesiser has begun producing audio. R4.2.4's stopwatch stops here.
@@ -478,12 +552,6 @@ class SessionController extends Notifier<SessionState> {
         turnLatencies: [...state.turnLatencies, latency],
       );
     }
-  }
-
-  void _onSpeechCompleted() {
-    if (state.phase != SessionPhase.speaking) return;
-    _closePartnerTurn(interrupted: false);
-    unawaited(_listen());
   }
 
   void _closePartnerTurn({required bool interrupted}) {

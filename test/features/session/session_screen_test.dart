@@ -7,7 +7,6 @@ import 'package:speakwise/core/result/app_failure.dart';
 import 'package:speakwise/core/safety/crisis_detector.dart';
 import 'package:speakwise/core/speech_metrics/transcript.dart';
 import 'package:speakwise/design/tokens/app_colors.dart';
-import 'package:speakwise/design/waveform/waveform.dart';
 import 'package:speakwise/design/waveform/waveform_painter.dart';
 import 'package:speakwise/features/session/application/session_controller.dart';
 import 'package:speakwise/features/session/application/session_providers.dart';
