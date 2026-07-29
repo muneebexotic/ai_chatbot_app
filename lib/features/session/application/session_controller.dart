@@ -706,16 +706,9 @@ class SessionController extends Notifier<SessionState> {
   // ── Interruptions (R4.2.6) ─────────────────────────────────────────────────
 
   void _watchInterruptions() {
-    ref.read(audioInterruptionServiceProvider).start(
-      onInterrupted: (reason) => unawaited(pause(reason)),
-      onResumable: () {
-        // Focus came back. The session does not resume itself — R4.2.6 says
-        // "offers resume", and an app that starts listening again on its own
-        // after a phone call is an app with a hot microphone the user did not
-        // ask for.
-        Log.d('session: audio focus regained');
-      },
-    );
+    ref
+        .read(audioInterruptionServiceProvider)
+        .start(onInterrupted: (reason) => unawaited(pause(reason)));
 
     _lifecycle = AppLifecycleListener(
       onStateChange: (lifecycle) {
@@ -866,6 +859,14 @@ class SessionController extends Notifier<SessionState> {
       // Both recover: the next `open_voice_session` sweeps the stale row, and
       // `pendingSync` retries the report.
     }
+
+    // The home screen's history and unfinished lists are FutureProviders that
+    // resolved when it first built. Without this the session that just ended
+    // does not appear in "Recent sessions" — the row is on disk and the screen
+    // says "No sessions yet", which reads as the session having been thrown
+    // away.
+    ref.invalidate(sessionHistoryProvider);
+    ref.invalidate(unfinishedSessionsProvider);
 
     Log.d(
       'session: ended after ${duration.inSeconds}s, '

@@ -6,10 +6,12 @@ Evidence for PRD §14. Companion to `m3-device-pass.md`.
 **Build:** debug, `--split-per-abi` arm64, `--dart-define` at `kalaam-dev`.
 **Date:** 2026-07-29.
 
-> **Status: round 1 of 2.** The flow up to and including the live session screen
-> is verified. R4.2.3 (barge-in) and R4.2.4 (latency) are **not measured** —
-> the session paused on the microphone before any turn completed. Those two are
-> the milestone's headline requirements and they remain open; see CRITIQUE W4.1.
+> **Status: rounds 1 and 2 done, a third owed.** The session now runs — round 2
+> confirmed it reaching `Listening` with the timer ticking and all three live
+> indicators lit. R4.2.3 (barge-in) and R4.2.4 (latency) are still **not
+> measured**, because both need a human voice and the agent driving this cannot
+> speak into the phone. Those two are the milestone's headline requirements and
+> they remain open; see CRITIQUE W4.1.
 
 ---
 
@@ -107,10 +109,29 @@ fired unprompted, which is the requirement working rather than a test of it.
 
 ---
 
-## Five defects found by looking, none reachable by the suite
+## Round 2 — the session runs
 
-The pattern from CRITIQUE W2.1, for the fourth milestone running. All five are
-fixed; the two blocking ones are in `a74609d`.
+After the round-1 fixes, a second install confirmed:
+
+* **D1 fixed** — the first-run flow is skipped; Start goes straight from the
+  brief into the session.
+* **D3 fixed** — the partner mark renders at its intended 72dp on the brief.
+* **D4 fixed** — "Conversation Partner" reads in full on two lines.
+* The tolerant column read works: partners load against a database that does
+  **not** have `opening_line`, which is the state dev is in.
+* **The live session reaches `Listening`** with the timer ticking (00:16
+  observed), the `LIVE` label, the record dot, red bars, and Android's own
+  microphone indicator lit in the status bar.
+
+Then three more things were wrong.
+
+---
+
+## Eight defects found by looking, none reachable by the suite
+
+The pattern from CRITIQUE W2.1, for the fourth milestone running. D1–D5 are
+fixed in `a74609d`; D7 in the audio-focus commit; D8 is fixed; D6 and D9 are
+open and named.
 
 ### D1 — R4.1.2's first-run flow ran before every session *(BLOCKING, fixed)*
 
@@ -169,9 +190,57 @@ turns. Minor, and not fixed.
 
 ---
 
+### D7 — the app lost audio focus to itself *(BLOCKING, fixed)*
+
+With D1 and D2 fixed, every session paused instantly with a *different*
+message: "Something else took the audio."
+
+`MainActivity` requested `AUDIOFOCUS_GAIN_TRANSIENT` so that
+`AUDIOFOCUS_LOSS_TRANSIENT` would report an incoming call with no
+`READ_PHONE_STATE` permission. What that missed is that **this app's own
+components request audio focus too** — `SpeechRecognizer` takes it to listen and
+`TextToSpeech` takes it to speak. The Activity's request was displaced by the
+recogniser it existed to support, and the session paused before a word was
+spoken.
+
+Focus is now left to the plugins that actually play and capture. The class only
+observes: `ACTION_AUDIO_BECOMING_NOISY` for headphones, and
+`OnModeChangedListener` (API 31+) for a call. Below API 31 there is no
+permission-free equivalent and the session still reacts through the recogniser
+erroring — less precise wording, same behaviour.
+
+### D8 — the finished session did not appear in history *(fixed)*
+
+Ending a session returned to a home screen still reading "No sessions yet." The
+row was on disk; `sessionHistoryProvider` is a `FutureProvider` that had already
+resolved. A user cannot tell that apart from their session being thrown away.
+`end()` now invalidates both list providers.
+
+### D9 — the screen said "Listening" after the microphone had closed *(OPEN)*
+
+`dumpsys audio` shows the last `rec stop` at 15:35:16 — the exact second the
+screenshot showed "Listening" at 00:16. From then on the UI claimed a live
+microphone that was not open.
+
+The likely path: in hands-free mode silence ends a turn, `_finishUserTurn` finds
+no text and calls `_listen()` again — but `SpeechRecognitionService.listen`
+returns early when `_speech.isListening` is still true, so on a stale `true` the
+restart is skipped and nothing reopens the microphone. The state machine
+believes it is listening forever.
+
+**Not fixed.** It needs the recogniser's real state rather than the plugin's
+cached flag, and a watchdog that notices no level callback has arrived for a
+few seconds. Both want a device to verify, which is the same round-3 trip
+R4.2.3 and R4.2.4 need.
+
+---
+
 ## Still owed
 
 * **R4.2.3 and R4.2.4 measurements.** The headline requirements. CRITIQUE W4.1.
+  **Both need a human speaking into the phone** — the agent driving this pass
+  cannot, so they are the owner's to run or to sit beside.
+* **D9**, above, which may well be what a spoken turn hits first.
 * **R11.2's 60fps trace**, committed here.
 * The interruption matrix beyond force-kill: call, background, headphones,
   network.
