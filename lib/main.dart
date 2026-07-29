@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'features/session/application/session_providers.dart';
 import 'design/tokens/app_colors.dart';
 import 'core/ui/app_messenger.dart';
 import 'config/bootstrap.dart';
@@ -22,12 +24,27 @@ Future<void> main() async {
   
   // Initialize app
   await AppBootstrap.initialize();
-  
+
+  // Preferences are read synchronously from here on.
+  //
+  // Milestone 4 learned why that matters on a device: SessionSettings used to
+  // return a synchronous default and fill in the stored values a moment later,
+  // and `hasCompletedFirstRun` was read before the load finished — so R4.1.2's
+  // "before the first session only" permission and calibration flow ran before
+  // EVERY session. A default is only safe when it is indistinguishable from the
+  // loaded value, and that one changed what the app did.
+  final preferences = await SharedPreferences.getInstance();
+
   // ProviderScope replaces MultiProvider as the root of the dependency graph
   // (PRD F5). Providers themselves are declared in lib/app/providers.dart
   // rather than assembled here, so the graph is readable in one place and
   // usable from tests via ProviderContainer.
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {

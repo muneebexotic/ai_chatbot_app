@@ -84,7 +84,10 @@ class SessionHomeScreen extends ConsumerWidget {
 
             // The partner rail (R4.1.1).
             SizedBox(
-              height: 168,
+              // Tall enough for a two-line name plus a two-line description at
+              // 200% text scale's smaller cousins. The rail is horizontal, so
+              // height is the one axis nothing else can negotiate.
+              height: 200,
               child: partners.when(
                 data: (list) => ListView.separated(
                   scrollDirection: Axis.horizontal,
@@ -200,7 +203,13 @@ class _PartnerCard extends StatelessWidget {
             Text(
               partner.name,
               style: AppTypography.title2.copyWith(color: colors.ink),
-              maxLines: 1,
+              // Two lines, not one. At 168dp a single line ellipsised
+              // "Conversation Partner" to "Conversation ..." and "Interviewer"
+              // to "Inte..." — the partner's name is the most important thing
+              // on the card and the rail showed three cards where none of them
+              // could be read. Found on device; the widget test asserted the
+              // card existed, not that its label survived.
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: Space.xxs),

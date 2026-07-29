@@ -24,6 +24,7 @@ class Partner {
     required this.isBuiltin,
     this.voiceRate = 1.0,
     this.voicePitch = 1.0,
+    this.openingLine,
   });
 
   factory Partner.fromRow(Map<String, dynamic> row) => Partner(
@@ -35,6 +36,7 @@ class Partner {
     isBuiltin: row['is_builtin'] as bool? ?? false,
     voiceRate: (row['voice_rate'] as num?)?.toDouble() ?? 1.0,
     voicePitch: (row['voice_pitch'] as num?)?.toDouble() ?? 1.0,
+    openingLine: row['opening_line'] as String?,
   );
 
   /// The exact column list a client is permitted to read. Named here rather
@@ -43,7 +45,7 @@ class Partner {
   /// 42501 rather than a compile error.
   static const columns =
       'id, name, description, difficulty, locale, is_builtin, '
-      'voice_rate, voice_pitch';
+      'voice_rate, voice_pitch, opening_line';
 
   final String id;
   final String name;
@@ -59,6 +61,14 @@ class Partner {
   /// are part of the row and dropping them would mean a second query later.
   final double voiceRate;
   final double voicePitch;
+
+  /// R4.1.3's example opening line, shown on the brief screen.
+  ///
+  /// Data, not a constant in Dart (§5.3.2): a hardcoded line would go stale the
+  /// first time somebody edited this partner's prompt in the database, and the
+  /// mismatch would be invisible — the brief would promise one thing and the
+  /// partner would do another. Null for a partner that has not been given one.
+  final String? openingLine;
 
   /// The partner's geometric mark, as waveform amplitudes (R5.3.1).
   ///

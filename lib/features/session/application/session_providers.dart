@@ -79,6 +79,18 @@ final unfinishedSessionsProvider = FutureProvider<List<SessionRecord>>((
   return ref.watch(sessionRepositoryProvider).unfinished();
 });
 
+/// The preferences instance, loaded once during bootstrap.
+///
+/// Overridden in `main()`. Reading it without that override throws, and that
+/// is deliberate — see [SessionSettingsNotifier.build] for what the alternative
+/// cost on a real device.
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw StateError(
+    'sharedPreferencesProvider must be overridden in main() with the instance '
+    'awaited during bootstrap.',
+  );
+});
+
 /// R4.2.2 and §5.5. `shared_preferences`, because §9.4 says settings only.
 class SessionSettingsNotifier extends Notifier<SessionSettings> {
   static const _inputMode = 'session.input_mode';
@@ -87,46 +99,55 @@ class SessionSettingsNotifier extends Notifier<SessionSettings> {
   static const _firstRun = 'session.first_run_done';
   static const _length = 'session.preferred_length_s';
 
+  SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
+
+  /// Reads synchronously from preferences already in memory.
+  ///
+  /// ## Why this is not an async load behind a synchronous default
+  ///
+  /// It was, and the default lied. `build()` returned
+  /// `SessionSettings(hasCompletedFirstRun: false)` and filled in the stored
+  /// values a moment later — but `SessionBriefScreen` reads this the instant
+  /// the user taps Start, which is usually the provider's first read. It got
+  /// `false` every time, so R4.1.2's "before the first session **only**" flow
+  /// ran before *every* session on the device.
+  ///
+  /// The general shape is worth remembering: a synchronous default is safe only
+  /// when it is indistinguishable from the loaded value. `hasCompletedFirstRun`
+  /// is not — it changes what the app does — so the load has to happen before
+  /// anything can read it. That is what the bootstrap override buys.
   @override
   SessionSettings build() {
-    // Synchronous default, then loaded. The session screen must be able to
-    // start without awaiting a disk read, and every value here has a sane
-    // default — the stored ones arrive a frame later.
-    unawaitedLoad();
-    return const SessionSettings();
-  }
-
-  void unawaitedLoad() {
-    SharedPreferences.getInstance()
-        .then((prefs) {
-          state = SessionSettings(
-            inputMode:
-                SessionInputMode.values.asNameMap()[prefs.getString(_inputMode)] ??
-                SessionInputMode.handsFree,
-            silenceThreshold: Duration(
-              milliseconds:
-                  prefs.getInt(_silence) ??
-                  SessionSettings.defaultSilence.inMilliseconds,
-            ),
-            haptics: prefs.getBool(_haptics) ?? true,
-            hasCompletedFirstRun: prefs.getBool(_firstRun) ?? false,
-            preferredLength: switch (prefs.getInt(_length)) {
-              final int s when s > 0 => Duration(seconds: s),
-              _ => null,
-            },
-          );
-        })
-        .catchError((Object error) {
-          // Defaults are correct behaviour, not a fallback. Failing to read a
-          // preference must never stop a session starting.
-          Log.w('session settings: load failed', error: error);
-        });
+    try {
+      final prefs = _prefs;
+      return SessionSettings(
+        inputMode:
+            SessionInputMode.values.asNameMap()[prefs.getString(_inputMode)] ??
+            SessionInputMode.handsFree,
+        silenceThreshold: Duration(
+          milliseconds:
+              prefs.getInt(_silence) ??
+              SessionSettings.defaultSilence.inMilliseconds,
+        ),
+        haptics: prefs.getBool(_haptics) ?? true,
+        hasCompletedFirstRun: prefs.getBool(_firstRun) ?? false,
+        preferredLength: switch (prefs.getInt(_length)) {
+          final int s when s > 0 => Duration(seconds: s),
+          _ => null,
+        },
+      );
+    } on Object catch (error) {
+      // Only reachable in a test that forgot the override. Defaults are the
+      // right behaviour there; failing to read a preference must never stop a
+      // session starting.
+      Log.w('session settings: unavailable, using defaults', error: error);
+      return const SessionSettings();
+    }
   }
 
   Future<void> setInputMode(SessionInputMode mode) async {
     state = state.copyWith(inputMode: mode);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_inputMode, mode.name);
+    await _prefs.setString(_inputMode, mode.name);
   }
 
   Future<void> setSilenceThreshold(Duration value) async {
@@ -137,14 +158,12 @@ class SessionSettingsNotifier extends Notifier<SessionSettings> {
       ),
     );
     state = state.copyWith(silenceThreshold: clamped);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_silence, clamped.inMilliseconds);
+    await _prefs.setInt(_silence, clamped.inMilliseconds);
   }
 
   Future<void> setHaptics(bool value) async {
     state = state.copyWith(haptics: value);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_haptics, value);
+    await _prefs.setBool(_haptics, value);
   }
 
   Future<void> completeFirstRun({Duration? preferredLength}) async {
@@ -153,12 +172,11 @@ class SessionSettingsNotifier extends Notifier<SessionSettings> {
       preferredLength: preferredLength,
       clearPreferredLength: preferredLength == null,
     );
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_firstRun, true);
+    await _prefs.setBool(_firstRun, true);
     if (preferredLength == null) {
-      await prefs.remove(_length);
+      await _prefs.remove(_length);
     } else {
-      await prefs.setInt(_length, preferredLength.inSeconds);
+      await _prefs.setInt(_length, preferredLength.inSeconds);
     }
   }
 }

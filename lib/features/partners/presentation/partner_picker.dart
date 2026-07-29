@@ -45,14 +45,29 @@ class _PartnerMarkState extends State<PartnerMark> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
-      // Static mode: no ticker, so a list of these costs nothing per frame.
-      child: Waveform(
-        amplitudes: _mark,
-        mode: WaveformMode.static_,
-        barCount: 12,
-        height: widget.width * 0.6,
+    // `Align` is load-bearing and this is the SECOND time this project has
+    // learned it. Milestone 3's device pass (`qa/m3-device-pass.md` D2) found
+    // `SizedBox(width: 72)` doing nothing inside a `ListView`, because a list
+    // item receives a TIGHT cross-axis constraint and `SizedBox` enforces its
+    // own constraints only within the incoming ones — so 72 clamps back up to
+    // the viewport width.
+    //
+    // It happened again here: the mark rendered correctly in the horizontal
+    // partner rail (whose items are width-bounded) and stretched across the
+    // whole screen on the brief screen, whose ListView is vertical. `Align`
+    // loosens the constraint first, which is what lets the width mean what it
+    // says.
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: widget.width,
+        // Static mode: no ticker, so a list of these costs nothing per frame.
+        child: Waveform(
+          amplitudes: _mark,
+          mode: WaveformMode.static_,
+          barCount: 12,
+          height: widget.width * 0.6,
+        ),
       ),
     );
   }

@@ -17,10 +17,14 @@ import 'package:speakwise/l10n/app_localizations.dart';
 /// ('I have a frontend interview on Tuesday'). The goal is passed into the
 /// session prompt and stored on the session record."
 ///
-/// The example opening line is generated from the partner's own data rather
-/// than stored, because §5.3.2 ships partners as rows so they can be edited
-/// without a release — and a hardcoded example would go stale the first time
-/// somebody edited a prompt.
+/// The opening line is a column on `partners`, not a constant here (§5.3.2:
+/// "Built-in partners ship as data, not code, so they can be edited without a
+/// release"). A line hardcoded in Dart would go stale the first time somebody
+/// edited that partner's prompt, and the mismatch would be invisible.
+///
+/// It first shipped derived from `description`, which meant the brief showed
+/// the same sentence twice — once as the summary and once under "How it opens".
+/// Found by looking at the screen; it read as a bug because it was one.
 class SessionBriefScreen extends ConsumerStatefulWidget {
   const SessionBriefScreen({super.key, required this.partner});
 
@@ -136,8 +140,8 @@ class _SessionBriefScreenState extends ConsumerState<SessionBriefScreen> {
               child: Text(
                 // Serif, like every other partner utterance in the app (§7.2).
                 // The transcript's typography starts before the session does.
-                _openingLine(partner, l10n),
-                style: AppTypography.body1.copyWith(color: colors.ink),
+                partner.openingLine ?? partner.description,
+                style: AppTypography.transcriptAi.copyWith(color: colors.ink),
               ),
             ),
 
@@ -178,13 +182,4 @@ class _SessionBriefScreenState extends ConsumerState<SessionBriefScreen> {
       ),
     );
   }
-
-  /// A plausible opening line for this partner.
-  ///
-  /// Derived from the partner's own description rather than invented per
-  /// partner, so a partner edited in the database (§5.3.2) does not leave a
-  /// stale example behind in the binary. It is presented as "how it opens",
-  /// not as a promise of the exact words.
-  String _openingLine(Partner partner, AppLocalizations l10n) =>
-      partner.description;
 }

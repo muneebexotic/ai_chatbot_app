@@ -37,6 +37,27 @@ class SpeechRecognitionService {
   bool _initialised = false;
   bool _stopping = false;
 
+  /// True while the platform recogniser may still be tearing down.
+  bool _settling = false;
+
+  /// How long to wait for that teardown. Measured rather than guessed would be
+  /// better; 300ms is comfortably longer than the gap that failed on device and
+  /// short enough to be invisible between two turns.
+  static const _settleDelay = Duration(milliseconds: 300);
+
+  /// Error codes that resolve by trying again.
+  ///
+  /// The plugin marks these permanent, which is wrong for the session's
+  /// purposes: `error_busy` means the previous recognition has not finished
+  /// closing, and `error_client` covers a family of transient binder failures.
+  /// Treating either as fatal ends a session over a race that a retry fixes.
+  static const _transientErrors = {
+    'error_busy',
+    'error_client',
+    'error_audio_error',
+    'error_recognizer_busy',
+  };
+
   final _events = StreamController<RecognitionEvent>.broadcast();
 
   /// Recognition events. Broadcast: the session controller consumes turns and
@@ -107,6 +128,21 @@ class SpeechRecognitionService {
 
     if (_speech.isListening) return const Ok(null);
 
+    // Android's SpeechRecognizer is a single system service and it does not
+    // finish tearing down synchronously. Calling `listen` while the previous
+    // recognition is still closing returns ERROR_RECOGNIZER_BUSY, which the
+    // plugin reports as a *permanent* error — so the session would pause with
+    // "the microphone stopped responding" and never recover.
+    //
+    // That is not hypothetical: R4.1.2's calibration step ends by stopping the
+    // recogniser, and the session opens it again a fraction of a second later.
+    // The one gap that matters most is the one between proving the microphone
+    // works and using it.
+    if (_settling) {
+      await Future<void>.delayed(_settleDelay);
+      _settling = false;
+    }
+
     _stopping = false;
     try {
       await _speech.listen(
@@ -148,6 +184,7 @@ class SpeechRecognitionService {
   Future<void> stop() async {
     if (!_speech.isListening) return;
     _stopping = true;
+    _settling = true;
     try {
       await _speech.stop();
     } on Object catch (error) {
@@ -164,6 +201,7 @@ class SpeechRecognitionService {
   Future<void> cancel() async {
     if (!_speech.isListening) return;
     _stopping = true;
+    _settling = true;
     try {
       await _speech.cancel();
     } on Object catch (error) {
@@ -214,8 +252,16 @@ class SpeechRecognitionService {
       return;
     }
 
-    Log.w('speech: ${error.errorMsg} (permanent: ${error.permanent})');
-    _events.add(RecognitionEvent.failed(error.errorMsg, error.permanent));
+    // A transient code is reported as recoverable regardless of what the
+    // plugin says about it. See [_transientErrors].
+    final permanent =
+        error.permanent && !_transientErrors.contains(error.errorMsg);
+    Log.w(
+      'speech: ${error.errorMsg} '
+      '(plugin permanent: ${error.permanent}, treated permanent: $permanent)',
+    );
+    _settling = true;
+    _events.add(RecognitionEvent.failed(error.errorMsg, permanent));
   }
 
   Future<void> dispose() async {
