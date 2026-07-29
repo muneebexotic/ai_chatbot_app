@@ -43,9 +43,16 @@ class Partner {
   /// than spelled out at each call site because `select('*')` now fails
   /// outright — see the migration — and a forgotten column list is a runtime
   /// 42501 rather than a compile error.
-  static const columns =
+  static const columns = '$baseColumns, opening_line';
+
+  /// The columns that have existed since the Milestone 2 schema.
+  ///
+  /// Read when the database predates a migration this build expects — see
+  /// `PartnerRepository._selectPartners`. Anything added later belongs in
+  /// [columns] and must degrade, never break the query.
+  static const baseColumns =
       'id, name, description, difficulty, locale, is_builtin, '
-      'voice_rate, voice_pitch, opening_line';
+      'voice_rate, voice_pitch';
 
   final String id;
   final String name;

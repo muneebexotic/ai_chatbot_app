@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:speakwise/core/logging/log.dart';
 import 'package:speakwise/core/result/result.dart';
 import 'package:speakwise/features/chat/data/chat_repository.dart'
     show mapPostgrestError;
@@ -37,7 +38,7 @@ class PartnerRepository {
   Future<Result<List<Partner>>> available() async {
     return Result.guardAsync(
       () async {
-        final rows = await _client.from('partners').select(Partner.columns);
+        final rows = await _selectPartners();
         final partners = rows.map(Partner.fromRow).toList();
 
         // Built-ins first, then easiest to hardest, then by name so the order
@@ -53,4 +54,43 @@ class PartnerRepository {
       onError: mapPostgrestError,
     );
   }
+
+  /// Selects the partner columns, tolerating a database that predates them.
+  ///
+  /// ## Why this exists
+  ///
+  /// `opening_line` (R4.1.3) is added by a migration. A client build always
+  /// reaches users before — or without — the migration that matches it: an APK
+  /// on a phone cannot be upgraded in lockstep with a schema, and during
+  /// development the two drift by however long a `db push` is blocked.
+  ///
+  /// PostgREST answers a request for a column that does not exist with `42703`
+  /// and returns **nothing**. Without this fallback that is not a missing
+  /// opening line — it is an empty partner rail and a disabled "Start
+  /// speaking", so the entire product is unreachable because one decorative
+  /// sentence is absent.
+  ///
+  /// So an unknown-column error retries with the columns that have existed
+  /// since Milestone 2. The feature degrades to the previous behaviour; nothing
+  /// else does.
+  ///
+  /// This is not a workaround to be removed once the migration lands. It is the
+  /// shape any additive column should be read with, and it costs one extra
+  /// round trip exactly once per app run in the mismatched case.
+  Future<List<Map<String, dynamic>>> _selectPartners() async {
+    try {
+      return await _client.from('partners').select(Partner.columns);
+    } on PostgrestException catch (error) {
+      if (error.code != _undefinedColumn) rethrow;
+      Log.w(
+        'partners: the database is missing a column this build asks for '
+        '(${error.message}). Falling back to the base columns — apply the '
+        'pending migrations.',
+      );
+      return _client.from('partners').select(Partner.baseColumns);
+    }
+  }
+
+  /// Postgres `undefined_column`.
+  static const _undefinedColumn = '42703';
 }
