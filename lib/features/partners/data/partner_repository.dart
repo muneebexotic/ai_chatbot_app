@@ -64,15 +64,21 @@ class PartnerRepository {
   /// on a phone cannot be upgraded in lockstep with a schema, and during
   /// development the two drift by however long a `db push` is blocked.
   ///
-  /// PostgREST answers a request for a column that does not exist with `42703`
-  /// and returns **nothing**. Without this fallback that is not a missing
-  /// opening line — it is an empty partner rail and a disabled "Start
-  /// speaking", so the entire product is unreachable because one decorative
-  /// sentence is absent.
+  /// Two errors mean the same thing here and BOTH were seen on a device:
   ///
-  /// So an unknown-column error retries with the columns that have existed
-  /// since Milestone 2. The feature degrades to the previous behaviour; nothing
-  /// else does.
+  /// * `42703` undefined_column — the migration has not been applied.
+  /// * `42501` insufficient_privilege — the column exists and has no grant.
+  ///   This table lost its table-level SELECT when Milestone 3 revoked
+  ///   `system_prompt` at column level, so every column added afterwards starts
+  ///   ungranted. The first version of this fallback matched only `42703` and
+  ///   the partner rail came back empty anyway.
+  ///
+  /// PostgREST returns **nothing** for either. That is not a missing opening
+  /// line — it is an empty partner rail and a disabled "Start speaking", so the
+  /// entire product is unreachable because one decorative sentence is absent.
+  ///
+  /// So either error retries with the columns that have existed since Milestone
+  /// 2. The feature degrades to the previous behaviour; nothing else does.
   ///
   /// This is not a workaround to be removed once the migration lands. It is the
   /// shape any additive column should be read with, and it costs one extra
@@ -81,7 +87,9 @@ class PartnerRepository {
     try {
       return await _client.from('partners').select(Partner.columns);
     } on PostgrestException catch (error) {
-      if (error.code != _undefinedColumn) rethrow;
+      if (error.code != _undefinedColumn && error.code != _insufficientPrivilege) {
+        rethrow;
+      }
       Log.w(
         'partners: the database is missing a column this build asks for '
         '(${error.message}). Falling back to the base columns — apply the '
@@ -91,6 +99,11 @@ class PartnerRepository {
     }
   }
 
-  /// Postgres `undefined_column`.
+  /// Postgres `undefined_column` — the migration has not run.
   static const _undefinedColumn = '42703';
+
+  /// Postgres `insufficient_privilege` — the column exists but was never
+  /// granted. See the note in [_selectPartners]: on this table that is the
+  /// DEFAULT state of any newly added column.
+  static const _insufficientPrivilege = '42501';
 }

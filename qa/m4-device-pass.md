@@ -233,6 +233,29 @@ cached flag, and a watchdog that notices no level callback has arrived for a
 few seconds. Both want a device to verify, which is the same round-3 trip
 R4.2.3 and R4.2.4 need.
 
+### D10 — adding a column made the whole product unreachable *(fixed)*
+
+With the `opening_line` migration finally applied, the partner rail came back
+**empty** and "Start speaking" was disabled.
+
+Milestone 3 ran `revoke select (system_prompt) on public.partners`. A
+column-level revoke cannot subtract from a table-level grant, so Postgres drops
+the table-wide `SELECT` and replaces it with an explicit per-column grant for
+each remaining column. That is invisible and permanent: **from that migration
+onward, every column added to this table starts with no grant at all.**
+
+So `opening_line` existed and was unreadable. And the client's own fallback did
+not save it — it matched `42703` (undefined_column), while an ungranted column
+returns `42501` (insufficient_privilege).
+
+Two fixes: `grant select (opening_line)` in its own migration, and the fallback
+now catches both codes. The column comment records the rule for the next person,
+because nothing in the schema otherwise says that this table has no table-level
+grant to inherit.
+
+**Verified after the fix:** the rail is back and the brief shows "What is on
+your mind today?" — a real opening line, distinct from the description.
+
 ---
 
 ## Still owed
