@@ -18,15 +18,24 @@ it before writing code. `CLAUDE.md` summarises it and does not replace it.
 
 ## Status
 
-Milestones 0–3 complete (PRD §15). Milestone 4, Sessions, is next and is the
-one the product lives or dies on.
+Milestones 0–3 complete and merged here (PRD §15).
+
+**Milestone 4, Sessions — the one the product lives or dies on — is built but
+not done, and is not on this branch.** It lives on `milestone-4-sessions`: the
+live session runs on a device, with the state machine, barge-in, on-device
+speech, Drift persistence, the crisis card, and server-side voice metering. What
+it does not have is a number for **R4.2.3** (barge-in under 200ms) or **R4.2.4**
+(under 1.5s to the first spoken word). Both are implemented and instrumented;
+neither can be measured without a human speaking into the phone. Those two
+requirements are what carry §15.4, so read "Sessions: built", never "Sessions:
+verified". `CRITIQUE.md` W4.1 says the same.
 
 | | |
 |---|---|
 | Backend | Supabase — Postgres with RLS on every table, Edge Functions, Auth |
 | Model calls | Groq, **server-side only**, through the gateway Edge Function |
 | State | Riverpod |
-| Local data | none yet — Drift arrives with Milestone 4 (§9.4) |
+| Local data | none on `main` — Drift lands with Milestone 4 (§9.4), on its branch |
 | Platforms | Android, with iOS kept compiling |
 
 **No model key ships in the client.** The built APK contains no key and does
@@ -73,6 +82,36 @@ the moment it reaches Play.**
 | §17.3 | Monthly and annual price points, and whether regional pricing is on (recommended: on) | Milestone 6 |
 | §17.4 | Which locale to add after English (Urdu is the PRD's assumption) | Milestone 8 |
 | §17.5 | Whether typed chat stays prominent after seeing real usage | post-launch |
+| **R10.6** | **Verified crisis-line numbers per country** — see below | **before launch** |
+
+#### R10.6 — crisis lines need your verification, not my memory
+
+`lib/core/safety/crisis_resources.dart` has a `verifiedLines` table and it is
+**deliberately empty**. The crisis card works today: it offers local emergency
+services and [findahelpline.com](https://findahelpline.com), which resolves to
+the reader's own country.
+
+> Both that file and its test arrived with Milestone 4, so they are on
+> `milestone-4-sessions` and not on this branch yet. The decision below is
+> recorded here because it is the owner's to make and it blocks launch — not
+> because the code has merged.
+
+What it does not offer is a specific phone number, because I do not have
+verified current numbers for the primary market and §16 forbids inventing
+facts. A crisis line that has been reassigned, or that is right for one country
+and wrong for the reader's, sends someone in crisis to a dead line on this
+app's authority. That is the worst failure available in this codebase and it is
+not worth a plausible guess.
+
+**To close it:** for each country you want covered, open the operator's own
+website (not a search result, not an aggregator), copy the number, and add it
+to `verifiedLines` with the date you checked. Then update the "no phone number
+is hardcoded" test in `test/core/safety/crisis_detector_test.dart` to assert
+the entries you added rather than emptiness — the test exists to stop a number
+being added casually, so it should cost you one deliberate edit.
+
+R10.6 says "Implement and test this before launch, not after", and §14 lists
+the crisis path as an acceptance criterion.
 
 ---
 
